@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src\QuizNova.Api\QuizNova.Api.csproj" />
+  <Project Path="src\QuizNova.Application\QuizNova.Application.csproj" />
+  <Project Path="src\QuizNova.Domain\QuizNova.Domain.csproj" />
+  <Project Path="src\QuizNova.Infrastructure\QuizNova.Infrastructure.csproj" />
+</Solution>

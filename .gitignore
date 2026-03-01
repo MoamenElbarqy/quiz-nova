@@ -1,0 +1,89 @@
+# ------------------------------
+# OS / Editor
+# ------------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.tmp
+*.temp
+
+.vscode/
+.idea/
+*.code-workspace
+
+# ------------------------------
+# Logs
+# ------------------------------
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ------------------------------
+# Environment / Local settings
+# ------------------------------
+.env
+.env.*
+!.env.example
+
+# Keep dev appsettings tracked only if you want shared defaults;
+# uncomment next line if your team treats it as local-only:
+# **/appsettings.Development.json
+
+# ------------------------------
+# .NET / C#
+# ------------------------------
+**/bin/
+**/obj/
+**/TestResults/
+**/publish/
+**/artifacts/
+
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+# Rider / ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+
+# ------------------------------
+# Angular / Node
+# ------------------------------
+**/node_modules/
+**/dist/
+**/.angular/
+**/.cache/
+**/coverage/
+
+# Package manager locks (keep one lock file strategy as needed)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# TypeScript incremental cache
+**/*.tsbuildinfo
+
+# ------------------------------
+# Tooling caches
+# ------------------------------
+.eslintcache
+.stylelintcache
+
+# ------------------------------
+# Temporary files
+# ------------------------------
+*.pid
+*.seed
+*.pid.lock
