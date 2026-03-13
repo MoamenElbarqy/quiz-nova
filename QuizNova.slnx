@@ -1,6 +1,25 @@
 <Solution>
-  <Project Path="src\QuizNova.Api\QuizNova.Api.csproj" />
-  <Project Path="src\QuizNova.Application\QuizNova.Application.csproj" />
-  <Project Path="src\QuizNova.Domain\QuizNova.Domain.csproj" />
-  <Project Path="src\QuizNova.Infrastructure\QuizNova.Infrastructure.csproj" />
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+
+  <Folder Name="/Solution Items/">
+    <File Path=".dockerignore" />
+    <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="README.md" />
+  </Folder>
+
+  <Folder Name="/src/">
+    <Project Path="src/QuizNova.Api/QuizNova.Api.csproj" />
+    <Project Path="src/QuizNova.Application/QuizNova.Application.csproj" />
+    <Project Path="src/QuizNova.Domain/QuizNova.Domain.csproj" />
+    <Project Path="src/QuizNova.Infrastructure/QuizNova.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+  </Folder>
 </Solution>
