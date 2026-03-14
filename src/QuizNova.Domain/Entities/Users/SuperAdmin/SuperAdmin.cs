@@ -1,30 +1,35 @@
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities..Colleges;
+using QuizNova.Domain.Entities.Identity;
+using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Domain.Entities.Users;
 
 public class SuperAdmin : User
 {
-    public List<College> Colleges { get; private set; } = [];
-
-    private SuperAdmin()
+    private SuperAdmin(
+        Guid id,
+        PersonalInformation personalInformation,
+        List<RefreshToken> refreshTokens)
+        : base(
+            id,
+            personalInformation,
+            Role.SuperAdmin,
+            refreshTokens)
     {
     }
 
-    private SuperAdmin(User user)
-        : base(user.Id, user.Name, user.Email, user.Password, user.PhoneNumber, Role.SuperAdmin)
+    public static Result<SuperAdmin> Create(
+        Guid id,
+        PersonalInformation personalInformation,
+        List<RefreshToken> refreshTokens)
     {
-    }
+        var validationError = ValidateCommon(personalInformation, Role.SuperAdmin);
 
-    public static Result<SuperAdmin> Create(Guid id, string name, string email, string password, string phoneNumber)
-    {
-        var user = User.Create(id, name, email, password, phoneNumber, Role.SuperAdmin);
-
-        if (user.IsError)
+        if (validationError is not null)
         {
-            return user.Errors;
+            return validationError;
         }
 
-        return new SuperAdmin(user.Value);
+        return new SuperAdmin(id, personalInformation, refreshTokens);
     }
 }

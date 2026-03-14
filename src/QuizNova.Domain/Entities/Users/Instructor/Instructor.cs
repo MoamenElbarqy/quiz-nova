@@ -1,44 +1,76 @@
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Quizzes;
-using QuizNova.Domain.Entities..Courses;
+using QuizNova.Domain.Entities.Courses;
+using QuizNova.Domain.Entities.Departments;
 using QuizNova.Domain.Entities.Identity;
+using QuizNova.Domain.Entities.Quizzes;
+using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Domain.Entities.Users;
 
 public class Instructor : User
 {
-    public List<Course> Courses { get; private set; } = [];
+    private readonly List<Course> _courses;
 
-    public List<Quiz> Quizzes { get; private set; } = [];
+    private readonly List<Department> _departments;
 
-    private Instructor()
+    private readonly List<Quiz> _quizzes;
+
+    private Instructor(
+        Guid id,
+        PersonalInformation personalInformation,
+        Guid collegeId,
+        List<RefreshToken> refreshTokens,
+        List<Course> courses,
+        List<Department> departments,
+        List<Quiz> quizzes)
+        : base(
+            id,
+            personalInformation,
+            Role.Instructor,
+            refreshTokens)
     {
+        CollegeId = collegeId;
+        _courses = courses;
+        _departments = departments;
+        _quizzes = quizzes;
     }
 
-    private Instructor(User user)
-        : base(user.Id,
-               user.Name,
-               user.Email,
-               user.Password,
-               user.PhoneNumber,
-               Role.Instructor)
-    {
-    }
+    public Guid CollegeId { get; private set; }
 
-    public static Result<Instructor> Create(Guid id, string name, string email, string password, string phoneNumber)
-    {
-        var user = User.Create(id,
-                               name,
-                               email,
-                               password,
-                               phoneNumber,
-                               Role.Instructor);
+    public IEnumerable<Course> Courses => _courses.AsReadOnly();
 
-        if (user.IsError)
+    public IEnumerable<Department> Departments => _departments.AsReadOnly();
+
+    public IEnumerable<Quiz> Quizzes => _quizzes.AsReadOnly();
+
+    public static Result<Instructor> Create(
+        Guid id,
+        PersonalInformation personalInformation,
+        Guid collegeId,
+        List<RefreshToken> refreshTokens,
+        List<Course> courses,
+        List<Department> departments,
+        List<Quiz> quizzes)
+    {
+        if (collegeId == Guid.Empty)
         {
-            return user.Errors;
+            return InstructorErrors.CollegeIdRequired;
         }
 
-        return new Instructor(user.Value);
+        var validationError = ValidateCommon(personalInformation, Role.Instructor);
+
+        if (validationError is not null)
+        {
+            return validationError;
+        }
+
+        return new Instructor(
+            id,
+            personalInformation,
+            collegeId,
+            refreshTokens,
+            courses,
+            departments,
+            quizzes);
     }
 }
