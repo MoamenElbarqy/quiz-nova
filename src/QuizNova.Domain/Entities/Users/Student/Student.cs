@@ -1,14 +1,42 @@
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities..Colleges;
-using QuizNova.Domain.Entities..Departments;
-using QuizNova.Domain.Entities..Levels;
-using QuizNova.Domain.Entities..StudentCourses;
+using QuizNova.Domain.Entities.Colleges;
+using QuizNova.Domain.Entities.Departments;
 using QuizNova.Domain.Entities.Identity;
+using QuizNova.Domain.Entities.Levels;
+using QuizNova.Domain.Entities.QuizAttempts;
+using QuizNova.Domain.Entities.StudentCourses;
+using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Domain.Entities.Users;
 
 public class Student : User
 {
+    private readonly List<StudentCourse> _courseEnrollments;
+
+    private readonly List<QuizAttempt> _quizAttempts;
+
+    private Student(
+        Guid id,
+        PersonalInformation personalInformation,
+        Guid collegeId,
+        Guid departmentId,
+        Guid levelId,
+        List<RefreshToken> refreshTokens,
+        List<StudentCourse> courseEnrollments,
+        List<QuizAttempt> quizAttempts)
+        : base(
+            id,
+            personalInformation,
+            Role.Student,
+            refreshTokens)
+    {
+        CollegeId = collegeId;
+        DepartmentId = departmentId;
+        LevelId = levelId;
+        _courseEnrollments = courseEnrollments;
+        _quizAttempts = quizAttempts;
+    }
+
     public Guid CollegeId { get; private set; }
 
     public Guid DepartmentId { get; private set; }
@@ -21,36 +49,19 @@ public class Student : User
 
     public Level? Level { get; private set; }
 
-    public List<StudentCourse> CourseEnrollments { get; private set; } = [];
+    public IEnumerable<StudentCourse> CourseEnrollments => _courseEnrollments.AsReadOnly();
 
-    public List<QuizAttempts.QuizAttempt> QuizAttempts { get; private set; } = [];
-
-    private Student()
-    {
-    }
-
-    private Student(User user, Guid collegeId, Guid departmentId, Guid levelId)
-        : base(user.Id,
-               user.Name,
-               user.Email,
-               user.Password,
-               user.PhoneNumber,
-               Role.Student)
-    {
-        CollegeId = collegeId;
-        DepartmentId = departmentId;
-        LevelId = levelId;
-    }
+    public IEnumerable<QuizAttempt> QuizAttempts => _quizAttempts.AsReadOnly();
 
     public static Result<Student> Create(
         Guid id,
-        string name,
-        string email,
-        string password,
-        string phoneNumber,
+        PersonalInformation personalInformation,
         Guid collegeId,
         Guid departmentId,
-        Guid levelId)
+        Guid levelId,
+        List<RefreshToken> refreshTokens,
+        List<StudentCourse> courseEnrollments,
+        List<QuizAttempts.QuizAttempt> quizAttempts)
     {
         if (collegeId == Guid.Empty)
         {
@@ -67,13 +78,21 @@ public class Student : User
             return StudentErrors.LevelIdRequired;
         }
 
-        var user = User.Create(id, name, email, password, phoneNumber, Role.Student);
+        var validationError = ValidateCommon(personalInformation, Role.Student);
 
-        if (user.IsError)
+        if (validationError is not null)
         {
-            return user.Errors;
+            return validationError;
         }
 
-        return new Student(user.Value, collegeId, departmentId, levelId);
+        return new Student(
+            id,
+            personalInformation,
+            collegeId,
+            departmentId,
+            levelId,
+            refreshTokens,
+            courseEnrollments,
+            quizAttempts);
     }
 }

@@ -1,47 +1,63 @@
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities..Colleges;
-using QuizNova.Domain.Entities.Security;
+using QuizNova.Domain.Entities.Colleges;
 using QuizNova.Domain.Entities.Identity;
+using QuizNova.Domain.Entities.Security;
+using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Domain.Entities.Users;
 
 public class Admin : User
 {
+    private readonly List<Permission> _permissions;
+
+    private readonly List<Instructor> _instructors;
+
+    private Admin(
+        Guid id,
+        PersonalInformation personalInformation,
+        Guid collegeId,
+        List<RefreshToken> refreshTokens,
+        List<Permission> permissions,
+        List<Instructor> instructors)
+        : base(
+            id,
+            personalInformation,
+            Role.Admin,
+            refreshTokens)
+    {
+        CollegeId = collegeId;
+        _permissions = permissions;
+        _instructors = instructors;
+    }
+
     public Guid CollegeId { get; private set; }
 
     public College? College { get; private set; }
 
-    public List<Permission> Permissions { get; private set; } = [];
+    public IEnumerable<Permission> Permissions => _permissions.AsReadOnly();
 
-    public List<Instructor> Instructors { get; private set; } = [];
+    public IEnumerable<Instructor> Instructors => _instructors.AsReadOnly();
 
-    private Admin()
-    {
-    }
-
-    private Admin(User user, Guid collegeId) : base(user.Id,
-                                                    user.Name,
-                                                    user.Email,
-                                                    user.Password,
-                                                    user.PhoneNumber,
-                                                    Role.Admin)
-    {
-        CollegeId = collegeId;
-    }
-
-    public static Result<Admin> Create(Guid id, string name, string email, string password, string phoneNumber, Guid collegeId)
+    public static Result<Admin> Create(
+        Guid id,
+        PersonalInformation personalInformation,
+        Guid collegeId,
+        List<RefreshToken> refreshTokens,
+        List<Permission> permissions,
+        List<Instructor> instructors)
     {
         if (collegeId == Guid.Empty)
         {
             return AdminErrors.CollegeIdRequired;
         }
 
-        var user = User.Create(id, name, email, password, phoneNumber, Role.Admin);
+        var validationError = ValidateCommon(personalInformation, Role.Admin);
 
-        if (user.IsError)
+        if (validationError is not null)
         {
-            return user.Errors;
+            return validationError;
         }
-        return new Admin(user.Value, collegeId);
+
+        return new Admin(id, personalInformation, collegeId, refreshTokens, permissions, instructors);
     }
 }

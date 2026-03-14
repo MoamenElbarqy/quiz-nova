@@ -1,74 +1,53 @@
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Identity;
-using QuizNova.Domain.Entities.Users;
+using QuizNova.Domain.Entities.Users.UserPersonalInformation;
+
 namespace QuizNova.Domain.Entities.Users;
 
-public class User : AuditableEntity
+public abstract class User : AuditableEntity
 {
-    public string Name { get; private set; } = string.Empty;
+    private readonly List<RefreshToken> _refreshTokens;
 
-    public string Email { get; private set; } = string.Empty;
+    protected User(
+        Guid id,
+        PersonalInformation personalInformation,
+        Role role,
+        List<RefreshToken> refreshTokens)
+        : base(id)
+    {
+        PersonalInformation = personalInformation;
+        Role = role;
+        _refreshTokens = refreshTokens;
+    }
 
-    public string Password { get; private set; } = string.Empty;
-
-    public string PhoneNumber { get; private set; } = string.Empty;
+    public PersonalInformation PersonalInformation { get; private set; } = null!;
 
     public Role Role { get; private set; }
 
-    public List<RefreshToken> RefreshTokens { get; private set; } = [];
+    public IEnumerable<RefreshToken> RefreshTokens => _refreshTokens.AsReadOnly();
 
-    protected User()
+    protected static Error? ValidateCommon(
+        PersonalInformation personalInformation,
+        Role role)
     {
-    }
-
-    protected User(Guid id, string name, string email, string password, string phoneNumber, Role role)
-        : base(id)
-    {
-        Name = name;
-        Email = email;
-        Password = password;
-        PhoneNumber = phoneNumber;
-        Role = role;
-    }
-
-    public static Result<User> Create(Guid id,
-                                      string name,
-                                      string email,
-                                      string password,
-                                      string phoneNumber,
-                                      Role role)
-    {
-        if (string.IsNullOrWhiteSpace(name))
+        if (personalInformation is null)
         {
-            return UserErrors.NameRequired;
+            return PersonalInformationErrors.Required;
         }
 
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            return UserErrors.EmailRequired;
-        }
+        var personalInformationError = PersonalInformation.Validate(personalInformation);
 
-        if (!email.Contains('@'))
+        if (personalInformationError is not null)
         {
-            return UserErrors.EmailInvalid;
-        }
-
-        if (string.IsNullOrWhiteSpace(password))
-        {
-            return UserErrors.PasswordRequired;
-        }
-
-        if (string.IsNullOrWhiteSpace(phoneNumber))
-        {
-            return UserErrors.PhoneNumberRequired;
+            return personalInformationError;
         }
 
         if (!Enum.IsDefined(role))
         {
-            return UserErrors.RoleInvalid;
+            return PersonalInformationErrors.RoleInvalid;
         }
 
-        return new User(id, name, email, password, phoneNumber, role);
+        return null;
     }
 }
