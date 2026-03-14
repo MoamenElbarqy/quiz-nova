@@ -4,7 +4,6 @@ public enum Role
 {
     Student,
     Instructor,
-    TeachingAssistant,
     Admin,
     SuperAdmin
 }
