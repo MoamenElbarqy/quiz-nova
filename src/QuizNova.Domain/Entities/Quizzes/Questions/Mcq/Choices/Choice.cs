@@ -7,8 +7,11 @@ namespace QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
 public class Choice : AuditableEntity
 {
     public Guid QuestionId { get; private set; }
+
     public string Text { get; private set; } = string.Empty;
+
     public int DisplayOrder { get; private set; }
+
     public Question? Question { get; private set; }
 
     private Choice()

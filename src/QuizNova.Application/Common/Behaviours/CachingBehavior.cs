@@ -1,12 +1,14 @@
+using MediatR;
+
+using Microsoft.Extensions.Logging;
+
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results.Abstractions;
-using MediatR;
-using Microsoft.Extensions.Logging;
 
 namespace QuizNova.Application.Common.Behaviours
 {
     public class CachingBehavior<TRequest, TResponse>(
-        ICacheService cache,
+        ICashingService cache,
         ILogger<CachingBehavior<TRequest, TResponse>> logger)
         : IPipelineBehavior<TRequest, TResponse>
         where TRequest : notnull
@@ -16,7 +18,6 @@ namespace QuizNova.Application.Common.Behaviours
             RequestHandlerDelegate<TResponse> next,
             CancellationToken ct)
         {
-         
             if (request is not ICachedQuery cachedRequest)
             {
                 return await next(ct);
@@ -25,7 +26,7 @@ namespace QuizNova.Application.Common.Behaviours
             logger.LogInformation("Checking cache for {RequestName}", typeof(TRequest).Name);
 
             var cachedResult = await cache.GetAsync<TResponse>(
-                cachedRequest.CacheKey, 
+                cachedRequest.CacheKey,
                 ct);
 
             if (cachedResult is not null)
@@ -33,11 +34,13 @@ namespace QuizNova.Application.Common.Behaviours
                 logger.LogInformation("Cache HIT for {RequestName}", typeof(TRequest).Name);
                 return cachedResult;
             }
+
             var result = await next(ct);
 
             if (result is IResult { IsSuccess: true })
             {
-                logger.LogInformation("Caching successful result for {RequestName}", 
+                logger.LogInformation(
+                    "Caching successful result for {RequestName}",
                     typeof(TRequest).Name);
 
                 await cache.SetAsync(

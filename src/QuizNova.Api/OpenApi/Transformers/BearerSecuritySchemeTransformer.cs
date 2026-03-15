@@ -4,7 +4,6 @@ using Microsoft.OpenApi;
 
 namespace QuizNova.Api.OpenApi.Transformers;
 
-
 internal sealed class BearerSecuritySchemeTransformer
     : IOpenApiDocumentTransformer
 {
@@ -24,7 +23,7 @@ internal sealed class BearerSecuritySchemeTransformer
                 BearerFormat = "JWT",
                 In = ParameterLocation.Header,
                 Name = "Authorization",
-                Description = "JWT Authorization header using Bearer scheme."
+                Description = "JWT Authorization header using Bearer scheme.",
             };
 
         return Task.CompletedTask;

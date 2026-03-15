@@ -21,7 +21,7 @@ public class GlobalExceptionHandler(IProblemDetailsService problemDetailsService
                 Type = exception.GetType().Name,
                 Title = "Application error",
                 Detail = exception.Message,
-            }
+            },
         });
     }
 }

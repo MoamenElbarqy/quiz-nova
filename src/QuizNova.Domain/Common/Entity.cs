@@ -2,24 +2,23 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace QuizNova.Domain.Common;
 
-public abstract class Entity 
+public abstract class Entity
 {
-    public Guid Id { get; }
-
     private readonly List<DomainEvent> _domainEvents = [];
-
-    [NotMapped]
-    public IReadOnlyCollection<DomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     protected Entity()
     {
-
     }
 
     protected Entity(Guid id)
     {
         Id = id == Guid.Empty ? Guid.NewGuid() : id;
     }
+
+    public Guid Id { get; }
+
+    [NotMapped]
+    public IReadOnlyCollection<DomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     public void AddDomainEvent(DomainEvent domainEvent)
     {

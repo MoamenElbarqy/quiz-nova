@@ -16,6 +16,6 @@ public static class QuizErrors
     public static readonly Error ScheduleInvalid =
         Error.Validation("Quiz_Schedule_Invalid", "Quiz start time must be earlier than end time.");
 
-    public static readonly Error PointsInvalid =
-        Error.Validation("Quiz_Points_Invalid", "Points must be greater than zero.");
+    public static readonly Error MarksInvalid =
+        Error.Validation("Quiz_Marks_Invalid", "Marks must be greater than zero.");
 }

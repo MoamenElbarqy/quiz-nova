@@ -1,6 +1,6 @@
 using QuizNova.Domain.Common.Results;
 
-namespace QuizNova.Domain.Entities..Levels;
+namespace QuizNova.Domain.Entities.Levels;
 
 public static class LevelErrors
 {

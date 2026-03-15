@@ -1,10 +1,10 @@
 using System.Diagnostics;
 
-using QuizNova.Application.Common.Interfaces;
-
 using MediatR;
 
 using Microsoft.Extensions.Logging;
+
+using QuizNova.Application.Common.Interfaces;
 
 namespace QuizNova.Application.Common.Behaviours;
 

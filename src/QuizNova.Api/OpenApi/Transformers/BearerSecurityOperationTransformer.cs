@@ -25,10 +25,9 @@ internal sealed class BearerSecurityOperationTransformer : IOpenApiOperationTran
 
         operation.Security.Add(new OpenApiSecurityRequirement
         {
-            [new OpenApiSecuritySchemeReference("Bearer", context.Document)] = []
+            [new OpenApiSecuritySchemeReference("Bearer", context.Document)] = [],
         });
 
         return Task.CompletedTask;
     }
 }
-

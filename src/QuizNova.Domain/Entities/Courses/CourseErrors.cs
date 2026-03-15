@@ -16,11 +16,11 @@ public static class CourseErrors
     public static readonly Error NameRequired =
         Error.Validation("Course_Name_Required", "Course name is required.");
 
-    public static readonly Error TotalPointsInvalid =
-        Error.Validation("Course_TotalPoints_Invalid", "Total points must be greater than zero.");
+    public static readonly Error TotalMarksInvalid =
+        Error.Validation("Course_TotalMarks_Invalid", "Total marks must be greater than zero.");
 
-    public static readonly Error MinimumPassingPointsInvalid =
-        Error.Validation("Course_MinimumPassingPoints_Invalid", "Minimum passing points cannot be negative.");
+    public static readonly Error MinimumPassingMarksInvalid =
+        Error.Validation("Course_MinimumPassingMarks_Invalid", "Minimum passing marks cannot be negative.");
 
     public static readonly Error MaximumMarksInvalid =
         Error.Validation("Course_MaximumMarks_Invalid", "Maximum marks must be greater than zero.");

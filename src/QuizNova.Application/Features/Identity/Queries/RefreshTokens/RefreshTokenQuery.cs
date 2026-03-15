@@ -1,6 +1,6 @@
-using QuizNova.Domain.Common.Results;
-
 using MediatR;
+
+using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Application.Features.Identity.Queries.RefreshTokens;
 
