@@ -59,9 +59,9 @@ public class Instructor : User
 
         var validationError = ValidateCommon(personalInformation, Role.Instructor);
 
-        if (validationError is not null)
+        if (validationError.IsError)
         {
-            return validationError;
+            return validationError.TopError;
         }
 
         return new Instructor(

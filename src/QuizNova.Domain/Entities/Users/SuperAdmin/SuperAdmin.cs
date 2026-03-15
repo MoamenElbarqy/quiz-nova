@@ -25,9 +25,9 @@ public class SuperAdmin : User
     {
         var validationError = ValidateCommon(personalInformation, Role.SuperAdmin);
 
-        if (validationError is not null)
+        if (validationError.IsError)
         {
-            return validationError;
+            return validationError.TopError;
         }
 
         return new SuperAdmin(id, personalInformation, refreshTokens);

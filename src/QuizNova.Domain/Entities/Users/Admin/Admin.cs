@@ -53,9 +53,9 @@ public class Admin : User
 
         var validationError = ValidateCommon(personalInformation, Role.Admin);
 
-        if (validationError is not null)
+        if (validationError.IsError)
         {
-            return validationError;
+            return validationError.TopError;
         }
 
         return new Admin(id, personalInformation, collegeId, refreshTokens, permissions, instructors);

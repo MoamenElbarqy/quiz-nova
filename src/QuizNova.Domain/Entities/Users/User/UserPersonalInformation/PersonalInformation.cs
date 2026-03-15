@@ -32,15 +32,15 @@ public sealed class PersonalInformation
     {
         var validationError = Validate(name, email, password, phoneNumber);
 
-        if (validationError is not null)
+        if (validationError.IsError)
         {
-            return validationError;
+            return validationError.TopError;
         }
 
         return new PersonalInformation(name, email, password, phoneNumber);
     }
 
-    public static Error? Validate(PersonalInformation personalInformation)
+    public static Result<Validated> Validate(PersonalInformation personalInformation)
     {
         return Validate(
             personalInformation.Name,
@@ -49,7 +49,7 @@ public sealed class PersonalInformation
             personalInformation.PhoneNumber);
     }
 
-    private static Error? Validate(
+    private static Result<Validated> Validate(
         string name,
         string email,
         string password,
@@ -80,6 +80,6 @@ public sealed class PersonalInformation
             return PersonalInformationErrors.PhoneNumberRequired;
         }
 
-        return null;
+        return Result.Validated;
     }
 }

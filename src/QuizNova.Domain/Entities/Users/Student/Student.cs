@@ -61,7 +61,7 @@ public class Student : User
         Guid levelId,
         List<RefreshToken> refreshTokens,
         List<StudentCourse> courseEnrollments,
-        List<QuizAttempts.QuizAttempt> quizAttempts)
+        List<QuizAttempt> quizAttempts)
     {
         if (collegeId == Guid.Empty)
         {
@@ -80,9 +80,9 @@ public class Student : User
 
         var validationError = ValidateCommon(personalInformation, Role.Student);
 
-        if (validationError is not null)
+        if (validationError.IsError)
         {
-            return validationError;
+            return validationError.TopError;
         }
 
         return new Student(

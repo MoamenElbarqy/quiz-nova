@@ -27,7 +27,7 @@ public abstract class User : AuditableEntity
 
     public IEnumerable<RefreshToken> RefreshTokens => _refreshTokens.AsReadOnly();
 
-    protected static Error? ValidateCommon(
+    protected static Result<Validated> ValidateCommon(
         PersonalInformation personalInformation,
         Role role)
     {
@@ -38,7 +38,7 @@ public abstract class User : AuditableEntity
 
         var personalInformationError = PersonalInformation.Validate(personalInformation);
 
-        if (personalInformationError is not null)
+        if (personalInformationError.IsError)
         {
             return personalInformationError;
         }
@@ -48,6 +48,6 @@ public abstract class User : AuditableEntity
             return PersonalInformationErrors.RoleInvalid;
         }
 
-        return null;
+        return Result.Validated;
     }
 }
