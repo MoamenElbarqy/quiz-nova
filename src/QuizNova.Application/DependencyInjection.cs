@@ -3,6 +3,7 @@ using System.Reflection;
 using FluentValidation;
 
 using MechanicShop.Application.Common.Behaviours;
+
 using QuizNova.Application.Common.Behaviours;
 
 namespace Microsoft.Extensions.DependencyInjection;

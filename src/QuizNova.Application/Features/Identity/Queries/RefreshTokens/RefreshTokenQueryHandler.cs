@@ -3,6 +3,7 @@ using System.Security.Claims;
 using MediatR;
 
 using Microsoft.Extensions.Logging;
+
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
@@ -14,7 +15,6 @@ public class RefreshTokenQueryHandler(
     IAuthService authService)
     : IRequestHandler<RefreshTokenQuery, Result<TokenResponse>>
 {
-    
     public async Task<Result<TokenResponse>> Handle(RefreshTokenQuery request, CancellationToken ct)
     {
         var principal = authService.GetPrincipalFromExpiredToken(request.ExpiredAccessToken);
@@ -47,8 +47,8 @@ public class RefreshTokenQueryHandler(
         if (isExistedAndValid == false)
         {
             return ApplicationErrors.InvalidRefreshToken;
-
         }
+
         var generateTokenResult = await authService.GenerateJwtTokenAsync(getUserResult.Value, ct);
 
         if (generateTokenResult.IsError)

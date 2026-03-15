@@ -1,5 +1,7 @@
 using MediatR;
+
 using Microsoft.Extensions.Logging;
+
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Identity.Dtos;
 using QuizNova.Domain.Common.Results;
@@ -17,7 +19,9 @@ public class GetUserByIdQueryHanlder(
 
         if (getUserByIdResult.IsError)
         {
-            logger.LogError("User with Id { UserId }{ErrorDetails}", request.UserId,
+            logger.LogError(
+                "User with Id { UserId }{ErrorDetails}",
+                request.UserId,
                 getUserByIdResult.TopError.Description);
 
             return getUserByIdResult.Errors;

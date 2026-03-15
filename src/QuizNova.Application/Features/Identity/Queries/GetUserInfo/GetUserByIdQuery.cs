@@ -1,7 +1,7 @@
+using MediatR;
+
 using QuizNova.Application.Features.Identity.Dtos;
 using QuizNova.Domain.Common.Results;
-
-using MediatR;
 
 namespace QuizNova.Application.Features.Identity.Queries.GetUserInfo;
 

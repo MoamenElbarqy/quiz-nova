@@ -3,47 +3,40 @@ using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
 namespace QuizNova.Domain.Entities.Quizzes.Questions.Essay;
 
-public class EssayQuestion : Question
+public sealed class EssayQuestion : Question
 {
-    public string Prompt { get; private set; } = string.Empty;
-
     private EssayQuestion()
     {
     }
 
-    private EssayQuestion(Guid id, Guid quizId, string prompt, int displayOrder, int points)
-        : base(id, quizId, displayOrder, points)
+    private EssayQuestion(
+        Guid id,
+        Guid quizId,
+        string questionText,
+        int displayOrder,
+        int marks)
+        : base(id, quizId, questionText, displayOrder, marks)
     {
-        Prompt = prompt;
     }
 
     public static Result<EssayQuestion> Create(
         Guid id,
         Guid quizId,
-        string prompt,
+        string questionText,
         int displayOrder,
-        int points)
+        int marks)
     {
-        if (quizId == Guid.Empty)
+        var validationError = ValidateCommon(
+            quizId,
+            questionText,
+            displayOrder,
+            marks);
+
+        if (validationError.IsError)
         {
-            return EssayQuestionErrors.QuizIdRequired;
+            return validationError.TopError;
         }
 
-        if (string.IsNullOrWhiteSpace(prompt))
-        {
-            return EssayQuestionErrors.PromptRequired;
-        }
-
-        if (displayOrder < 0)
-        {
-            return EssayQuestionErrors.DisplayOrderInvalid;
-        }
-
-        if (points <= 0)
-        {
-            return EssayQuestionErrors.PointsInvalid;
-        }
-
-        return new EssayQuestion(id, quizId, prompt, displayOrder, points);
+        return new EssayQuestion(id, quizId, questionText, displayOrder, marks);
     }
 }

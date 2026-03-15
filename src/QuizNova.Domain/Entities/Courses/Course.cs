@@ -1,45 +1,22 @@
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.StudentCourses;
 using QuizNova.Domain.Entities.Colleges;
 using QuizNova.Domain.Entities.Departments;
 using QuizNova.Domain.Entities.Quizzes;
+using QuizNova.Domain.Entities.StudentCourses;
 using QuizNova.Domain.Entities.Users;
 
 namespace QuizNova.Domain.Entities.Courses;
 
-public class Course : AuditableEntity
+public sealed class Course : AuditableEntity
 {
-    public Guid CollegeId { get; private set; }
+    private readonly List<Department> _departments;
 
-    public Guid InstructorId { get; private set; }
+    private readonly List<StudentCourse> _studentEnrollments;
 
-    public string Name { get; private set; } = string.Empty;
+    private readonly List<Student> _students;
 
-    public int TotalPoints { get; private set; }
-
-    public int MinimumPassingPoints { get; private set; }
-
-    public int MaximumMarks { get; private set; }
-
-    public bool IsGraceMarksActivated { get; private set; }
-    public int? MaxGraceMarks { get; private set; }
-
-    public College? College { get; private set; }
-
-    public List<Department>? Departments = [];
-
-    public Instructor? Instructor { get; private set; }
-
-    public List<StudentCourse> StudentEnrollments { get; private set; } = [];
-
-    public List<Student> Students { get; private set; } = [];
-
-    public List<Quiz> Quizzes { get; private set; } = [];
-
-    private Course()
-    {
-    }
+    private readonly List<Quiz> _quizzes;
 
     private Course(
         Guid id,
@@ -49,17 +26,53 @@ public class Course : AuditableEntity
         int minimumPassingMarks,
         int maximumMarks,
         bool isGraceMarksActivated,
-        int? maxGraceMarks)
+        int? maxGraceMarks,
+        List<Department> departments,
+        List<StudentCourse> studentEnrollments,
+        List<Student> students,
+        List<Quiz> quizzes)
         : base(id)
     {
         CollegeId = collegeId;
         InstructorId = instructorId;
         Name = name;
-        MinimumPassingPoints = minimumPassingMarks;
+        MinimumPassingMarks = minimumPassingMarks;
         MaximumMarks = maximumMarks;
         IsGraceMarksActivated = isGraceMarksActivated;
         MaxGraceMarks = maxGraceMarks;
+        _departments = departments;
+        _studentEnrollments = studentEnrollments;
+        _students = students;
+        _quizzes = quizzes;
     }
+
+    public Guid CollegeId { get; private set; }
+
+    public Guid InstructorId { get; private set; }
+
+    public string Name { get; private set; } = string.Empty;
+
+    public int TotalMarks { get; private set; }
+
+    public int MinimumPassingMarks { get; private set; }
+
+    public int MaximumMarks { get; private set; }
+
+    public bool IsGraceMarksActivated { get; private set; }
+
+    public int? MaxGraceMarks { get; private set; }
+
+    public College? College { get; private set; }
+
+    public Instructor? Instructor { get; private set; }
+
+    public IEnumerable<Department> Departments => _departments.AsReadOnly();
+
+    public IEnumerable<StudentCourse> StudentEnrollments => _studentEnrollments.AsReadOnly();
+
+    public IEnumerable<Student> Students => _students.AsReadOnly();
+
+    public IEnumerable<Quiz> Quizzes => _quizzes.AsReadOnly();
 
     public static Result<Course> Create(
         Guid id,
@@ -70,7 +83,11 @@ public class Course : AuditableEntity
         int minimumPassingMarks,
         int maximumMarks,
         bool isGraceMarksActivated,
-        int? maxGraceMarks)
+        int? maxGraceMarks,
+        List<Department> departments,
+        List<StudentCourse> studentEnrollments,
+        List<Student> students,
+        List<Quiz> quizzes)
     {
         if (collegeId == Guid.Empty)
         {
@@ -92,10 +109,9 @@ public class Course : AuditableEntity
             return CourseErrors.NameRequired;
         }
 
-
         if (minimumPassingMarks < 0)
         {
-            return CourseErrors.MinimumPassingPointsInvalid;
+            return CourseErrors.MinimumPassingMarksInvalid;
         }
 
         if (maximumMarks <= 0)
@@ -112,6 +128,7 @@ public class Course : AuditableEntity
         {
             return CourseErrors.MaxGraceMarksRequired;
         }
+
         if (isGraceMarksActivated && maxGraceMarks < 0)
         {
             return CourseErrors.MaxGraceMarksInvalid;
@@ -125,6 +142,10 @@ public class Course : AuditableEntity
             minimumPassingMarks,
             maximumMarks,
             isGraceMarksActivated,
-            maxGraceMarks);
+            maxGraceMarks,
+            departments,
+            studentEnrollments,
+            students,
+            quizzes);
     }
 }

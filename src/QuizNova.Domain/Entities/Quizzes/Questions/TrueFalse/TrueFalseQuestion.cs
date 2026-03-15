@@ -6,8 +6,6 @@ namespace QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
 
 public class TrueFalseQuestion : Question
 {
-    public string Statement { get; private set; } = string.Empty;
-
     public bool CorrectChoice { get; private set; }
 
     private TrueFalseQuestion()
@@ -17,44 +15,40 @@ public class TrueFalseQuestion : Question
     private TrueFalseQuestion(
         Guid id,
         Guid quizId,
-        string statement,
+        string questionText,
         bool correctChoice,
         int displayOrder,
-        int points)
-        : base(id, quizId, displayOrder, points)
+        int marks)
+        : base(id, quizId, questionText, displayOrder, marks)
     {
-        Statement = statement;
         CorrectChoice = correctChoice;
     }
 
     public static Result<TrueFalseQuestion> Create(
         Guid id,
         Guid quizId,
-        string statement,
+        string questionText,
         bool correctChoice,
         int displayOrder,
-        int points)
+        int marks)
     {
-        if (quizId == Guid.Empty)
+        var validationError = ValidateCommon(
+            quizId,
+            questionText,
+            displayOrder,
+            marks);
+
+        if (validationError.IsError)
         {
-            return TrueFalseQuestionErrors.QuizIdRequired;
+            return validationError.TopError;
         }
 
-        if (string.IsNullOrWhiteSpace(statement))
-        {
-            return TrueFalseQuestionErrors.StatementRequired;
-        }
-
-        if (displayOrder < 0)
-        {
-            return TrueFalseQuestionErrors.DisplayOrderInvalid;
-        }
-
-        if (points <= 0)
-        {
-            return TrueFalseQuestionErrors.PointsInvalid;
-        }
-
-        return new TrueFalseQuestion(id, quizId, statement, correctChoice, displayOrder, points);
+        return new TrueFalseQuestion(
+            id,
+            quizId,
+            questionText,
+            correctChoice,
+            displayOrder,
+            marks);
     }
 }

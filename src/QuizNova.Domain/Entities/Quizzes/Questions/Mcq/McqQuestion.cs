@@ -1,56 +1,54 @@
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
+using QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
 
 namespace QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
 
 public class McqQuestion : Question
 {
-    public string Prompt { get; private set; } = string.Empty;
-
-    public int NumberOfChoices { get; private set; }
-
-    public Guid CorrectChoiceId { get; private set; }
-
-    public Choices.Choice? CorrectChoice { get; private set; }
-
-    public List<Choices.Choice> Choices { get; private set; } = [];
-
-    private McqQuestion()
-    {
-    }
+    private readonly List<Choice> _choices;
 
     private McqQuestion(
         Guid id,
         Guid quizId,
-        string prompt,
-        int numberOfChoices,
+        string questionText,
         Guid correctChoiceId,
         int displayOrder,
-        int points)
-        : base(id, quizId, displayOrder, points)
+        int marks,
+        List<Choice> choices)
+        : base(id, quizId, questionText, displayOrder, marks)
     {
-        Prompt = prompt;
-        NumberOfChoices = numberOfChoices;
         CorrectChoiceId = correctChoiceId;
+        _choices = choices;
     }
+
+    public int NumberOfChoices => Choices.Count();
+
+    public Guid CorrectChoiceId { get; private set; }
+
+    public Choice? CorrectChoice { get; private set; }
+
+    public IEnumerable<Choice> Choices => _choices.AsReadOnly();
 
     public static Result<McqQuestion> Create(
         Guid id,
         Guid quizId,
-        string prompt,
+        string questionText,
         int numberOfChoices,
         Guid correctChoiceId,
         int displayOrder,
-        int points)
+        int marks,
+        List<Choice> choices)
     {
-        if (quizId == Guid.Empty)
-        {
-            return McqQuestionErrors.QuizIdRequired;
-        }
+        var validationError = ValidateCommon(
+            quizId,
+            questionText,
+            displayOrder,
+            marks);
 
-        if (string.IsNullOrWhiteSpace(prompt))
+        if (validationError.IsError)
         {
-            return McqQuestionErrors.PromptRequired;
+            return validationError.TopError;
         }
 
         if (numberOfChoices < 2)
@@ -63,16 +61,13 @@ public class McqQuestion : Question
             return McqQuestionErrors.CorrectChoiceIdRequired;
         }
 
-        if (displayOrder < 0)
-        {
-            return McqQuestionErrors.DisplayOrderInvalid;
-        }
-
-        if (points <= 0)
-        {
-            return McqQuestionErrors.PointsInvalid;
-        }
-
-        return new McqQuestion(id, quizId, prompt, numberOfChoices, correctChoiceId, displayOrder, points);
+        return new McqQuestion(
+            id,
+            quizId,
+            questionText,
+            correctChoiceId,
+            displayOrder,
+            marks,
+            choices);
     }
 }

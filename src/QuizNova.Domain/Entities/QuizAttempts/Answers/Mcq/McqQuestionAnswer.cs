@@ -8,6 +8,7 @@ namespace QuizNova.Domain.Entities.QuizAttempts.Answers.Mcq;
 public class McqQuestionAnswer : AuditableEntity
 {
     public Guid StudentId { get; private set; }
+
     public Guid QuestionId { get; private set; }
 
     public Guid SelectedChoiceId { get; private set; }

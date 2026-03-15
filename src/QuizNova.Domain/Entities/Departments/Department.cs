@@ -1,36 +1,42 @@
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Colleges;
+using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Users;
-using QuizNova.Domain.Entities.Departments;
 
 namespace QuizNova.Domain.Entities.Departments;
 
-public class Department : AuditableEntity
+public sealed class Department : AuditableEntity
 {
+    private readonly List<Student> _students;
+
+    private readonly List<Course> _courses;
+
+    private Department(Guid id, Guid collegeId, string name, List<Student> students, List<Course> courses)
+       : base(id)
+    {
+        CollegeId = collegeId;
+        Name = name;
+        _students = students;
+        _courses = courses;
+    }
+
     public Guid CollegeId { get; private set; }
 
     public string Name { get; private set; } = string.Empty;
 
     public College? College { get; private set; }
 
-    public List<Student> Students { get; private set; } = [];
+    public IEnumerable<Student> Students => _students.AsReadOnly();
 
-    public List<Course> Courses { get; private set; } = [];
+    public IEnumerable<Course> Courses => _courses.AsReadOnly();
 
-    private Department()
-    {
-    }
-
-    private Department(Guid id, Guid collegeId, string name)
-        : base(id)
-    {
-        CollegeId = collegeId;
-        Name = name;
-    }
-
-    public static Result<Department> Create(Guid id, Guid collegeId, string name)
+    public static Result<Department> Create(
+        Guid id,
+        Guid collegeId,
+        string name,
+        List<Student> students,
+        List<Course> courses)
     {
         if (collegeId == Guid.Empty)
         {
@@ -42,6 +48,6 @@ public class Department : AuditableEntity
             return DepartmentErrors.NameRequired;
         }
 
-        return new Department(id, collegeId, name);
+        return new Department(id, collegeId, name, students, courses);
     }
 }

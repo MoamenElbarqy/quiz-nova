@@ -2,31 +2,30 @@ using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Users;
 
-namespace QuizNova.Domain.Entities..Levels;
+namespace QuizNova.Domain.Entities.Levels;
 
-public class Level : AuditableEntity
+public sealed class Level : AuditableEntity
 {
-    public string Name { get; private set; } = string.Empty;
+    private readonly List<Student> _students;
 
-    public List<Student> Students { get; private set; } = [];
-
-    private Level()
-    {
-    }
-
-    private Level(Guid id, string name)
+    private Level(Guid id, string name, List<Student> students)
         : base(id)
     {
         Name = name;
+        _students = students;
     }
 
-    public static Result<Level> Create(Guid id, string name)
+    public string Name { get; private set; } = string.Empty;
+
+    public IEnumerable<Student> Students => _students.AsReadOnly();
+
+    public static Result<Level> Create(Guid id, string name, List<Student> students)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
             return LevelErrors.NameRequired;
         }
 
-        return new Level(id, name);
+        return new Level(id, name, students);
     }
 }
