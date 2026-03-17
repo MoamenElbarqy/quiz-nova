@@ -1,0 +1,57 @@
+services:
+  db:
+    image: postgres:18.3
+    container_name: quiznova-db
+    environment:
+      POSTGRES_DB: admin
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: Moamen@SQL123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api.dev
+    container_name: quiznova-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=admin;Username=admin;Password=Moamen@SQL123
+    ports:
+      - "7100:8080"
+    volumes:
+      - ./:/src
+      - /src/src/QuizNova.Api/bin
+      - /src/src/QuizNova.Api/obj
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client.dev
+    container_name: quiznova-client
+    depends_on:
+      - api
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "100"
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./:/workspace
+      - client_node_modules:/workspace/src/QuizNova.Client/node_modules
+    command: sh -c "cd src/QuizNova.Client && npm run ng -- serve --ssr --host 0.0.0.0 --port 4200"
+
+volumes:
+  postgres_data:
+  client_node_modules:

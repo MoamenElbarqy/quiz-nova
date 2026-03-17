@@ -19,10 +19,56 @@ csharp_new_line_before_open_brace = all
 csharp_preserve_single_line_blocks = true
 csharp_preserve_single_line_statements = false
 
+# SA1200: Allow using directives outside of namespace
+dotnet_diagnostic.SA1200.severity = none
+
+# SA1600: Disable mandatory XML documentation for all public elements
+dotnet_diagnostic.SA1600.severity = none
+
+# SA1309: Allow fields to begin with an underscore (Private fields like _name)
+dotnet_diagnostic.SA1309.severity = none
+
+# SA1101: Don't force 'this.' prefix for local members
+dotnet_diagnostic.SA1101.severity = none
+
+# SA1402: Allow multiple types in a single file (Useful for small records/markers)
+dotnet_diagnostic.SA1402.severity = none
+
+# SA1201: A record struct can follow a class
+dotnet_diagnostic.SA1201.severity = none
+
+# SA0001: Disable XML comment analysis warning (e.g. when documentation file is not generated)
+dotnet_diagnostic.SA0001.severity = none
+
+# SA1633: File should have XML documentation at the top (File header)
+dotnet_diagnostic.SA1633.severity = none
+
+# SA1601: Partial elements should be documented
+dotnet_diagnostic.SA1601.severity = none
+
+# SA1602: Enumeration items should be documented
+dotnet_diagnostic.SA1602.severity = none
+
+# SA1518 File not required to end with a single newline character
+dotnet_diagnostic.SA1518.severity = none
+
 [*.{ts,tsx,js,jsx}]
 indent_size = 2
 quote_type = single
 ij_typescript_use_double_quotes = false
+max_line_length = 100
+end_of_line = lf
+insert_final_newline = true
+
+# Angular specific
+[*.{component.html,component.ts,service.ts,module.ts}]
+indent_size = 2
+quote_type = single
+
+# Angular template files
+[*.component.html]
+indent_size = 2
+max_line_length = 100
 
 [*.{html,css,scss,sass,less,json,yml,yaml}]
 indent_size = 2
@@ -30,5 +76,3 @@ indent_size = 2
 [*.md]
 max_line_length = off
 trim_trailing_whitespace = false
-
-dotnet_diagnostic.SA1200.severity = none

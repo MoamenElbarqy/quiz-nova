@@ -1,0 +1,22 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0
+
+WORKDIR /src
+
+EXPOSE 8080
+
+ENV DOTNET_USE_POLLING_FILE_WATCHER=1
+ENV ASPNETCORE_URLS=http://+:8080
+
+COPY ["Directory.Build.props", "."]
+COPY ["Directory.Packages.props", "."]
+COPY ["QuizNova.slnx", "."]
+COPY ["src/QuizNova.Api/QuizNova.Api.csproj", "src/QuizNova.Api/"]
+COPY ["src/QuizNova.Application/QuizNova.Application.csproj", "src/QuizNova.Application/"]
+COPY ["src/QuizNova.Domain/QuizNova.Domain.csproj", "src/QuizNova.Domain/"]
+COPY ["src/QuizNova.Infrastructure/QuizNova.Infrastructure.csproj", "src/QuizNova.Infrastructure/"]
+
+RUN dotnet restore "src/QuizNova.Api/QuizNova.Api.csproj"
+
+COPY . .
+
+CMD ["dotnet", "watch", "--project", "src/QuizNova.Api/QuizNova.Api.csproj", "run", "--no-launch-profile"]
