@@ -1,5 +1,6 @@
 using MediatR;
 
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Interfaces;
@@ -8,7 +9,7 @@ using QuizNova.Domain.Common.Results.Abstractions;
 namespace QuizNova.Application.Common.Behaviours
 {
     public class CachingBehavior<TRequest, TResponse>(
-        ICashingService cache,
+        HybridCache cache,
         ILogger<CachingBehavior<TRequest, TResponse>> logger)
         : IPipelineBehavior<TRequest, TResponse>
         where TRequest : notnull

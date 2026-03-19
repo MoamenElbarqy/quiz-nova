@@ -5,4 +5,4 @@ using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Application.Features.Identity.Queries.GetUserInfo;
 
-public sealed record GetUserByIdQuery(string? UserId) : IRequest<Result<AppUserDto>>;
+public sealed record GetUserByIdQuery(string? UserId) : IRequest<Result<UserDto>>;
