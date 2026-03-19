@@ -10,9 +10,9 @@ namespace QuizNova.Application.Features.Identity.Queries.GenerateTokens;
 public class GenerateTokenQueryHandler(
     ILogger<GenerateTokenQueryHandler> logger,
     IAuthService authService)
-    : IRequestHandler<GenerateTokenQuery, Result<TokenResponse>>
+    : IRequestHandler<GenerateTokenQuery, Result<TokenDto>>
 {
-    public async Task<Result<TokenResponse>> Handle(GenerateTokenQuery query, CancellationToken ct)
+    public async Task<Result<TokenDto>> Handle(GenerateTokenQuery query, CancellationToken ct)
     {
         var userResponse = await authService.AuthenticateAsync(query.Email, query.Password);
 

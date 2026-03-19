@@ -13,9 +13,9 @@ namespace QuizNova.Application.Features.Identity.Queries.RefreshTokens;
 public class RefreshTokenQueryHandler(
     ILogger<RefreshTokenQueryHandler> logger,
     IAuthService authService)
-    : IRequestHandler<RefreshTokenQuery, Result<TokenResponse>>
+    : IRequestHandler<RefreshTokenQuery, Result<TokenDto>>
 {
-    public async Task<Result<TokenResponse>> Handle(RefreshTokenQuery request, CancellationToken ct)
+    public async Task<Result<TokenDto>> Handle(RefreshTokenQuery request, CancellationToken ct)
     {
         var principal = authService.GetPrincipalFromExpiredToken(request.ExpiredAccessToken);
         if (principal is null)

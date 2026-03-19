@@ -1,6 +1,6 @@
 namespace QuizNova.Application.Features.Identity;
 
-public class TokenResponse
+public class TokenDto
 {
     public string? AccessToken { get; set; }
 
