@@ -1,57 +1,85 @@
 services:
   db:
-    image: postgres:18.3
+    image: postgres:17-alpine
     container_name: quiznova-db
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: admin
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: Moamen@SQL123
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d admin"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    container_name: quiznova-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
 
   api:
     build:
       context: .
       dockerfile: Dockerfile.api.dev
     container_name: quiznova-api
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=admin;Username=admin;Password=Moamen@SQL123
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Redis__Host: redis
+      Redis__Port: 6379
+      Redis__Password: ${REDIS_PASSWORD}
     ports:
-      - "7100:8080"
-    volumes:
-      - ./:/src
-      - /src/src/QuizNova.Api/bin
-      - /src/src/QuizNova.Api/obj
+      - "${API_PORT:-7100}:8080"
+    networks:
+      - frontend
+      - backend
 
   client:
     build:
       context: .
       dockerfile: Dockerfile.client.dev
     container_name: quiznova-client
+    restart: unless-stopped
     depends_on:
-      - api
+      api:
+        condition: service_started
     environment:
-      CHOKIDAR_USEPOLLING: "true"
-      CHOKIDAR_INTERVAL: "100"
+      NODE_ENV: Production
+      HOST: 0.0.0.0
+      PORT: 4000
     ports:
-      - "4200:4200"
-    volumes:
-      - ./:/workspace
-      - client_node_modules:/workspace/src/QuizNova.Client/node_modules
-    command: sh -c "cd src/QuizNova.Client && npm run ng -- serve --ssr --host 0.0.0.0 --port 4200"
+      - "${CLIENT_PORT:-4200}:4000"
+    networks:
+      - frontend
 
 volumes:
   postgres_data:
-  client_node_modules:
+  redis_data:
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
