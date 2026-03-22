@@ -1,11 +1,6 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 WORKDIR /src
-
-EXPOSE 8080
-
-ENV DOTNET_USE_POLLING_FILE_WATCHER=1
-ENV ASPNETCORE_URLS=http://+:8080
 
 COPY ["Directory.Build.props", "."]
 COPY ["Directory.Packages.props", "."]
@@ -19,4 +14,21 @@ RUN dotnet restore "src/QuizNova.Api/QuizNova.Api.csproj"
 
 COPY . .
 
-CMD ["dotnet", "watch", "--project", "src/QuizNova.Api/QuizNova.Api.csproj", "run", "--no-launch-profile"]
+# UseAppHost=false mean don't make .exe for windows and the equivalent for linux
+RUN dotnet publish "src/QuizNova.Api/QuizNova.Api.csproj" \
+    -c Release \
+    -o /app/publish \
+    /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+
+WORKDIR /app
+
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+EXPOSE 8080
+
+COPY --from=build /app/publish .
+
+CMD ["dotnet", "QuizNova.Api.dll"]
