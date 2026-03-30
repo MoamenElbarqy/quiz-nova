@@ -17,7 +17,6 @@ public class Quiz : AuditableEntity
         string title,
         DateTimeOffset startsAtUtc,
         DateTimeOffset endsAtUtc,
-        int marks,
         List<Question> questions)
         : base(id)
     {
@@ -77,11 +76,85 @@ public class Quiz : AuditableEntity
             return QuizErrors.ScheduleInvalid;
         }
 
-        if (marks <= 0)
+        if (questions.Sum(q => q.Marks) <= 0)
         {
             return QuizErrors.MarksInvalid;
         }
 
-        return new Quiz(id, courseId, instructorId, title, startsAtUtc, endsAtUtc, marks, questions);
+        if (questions == null || questions.Count() == 0)
+        {
+            return QuizErrors.QuestionsRequired;
+        }
+
+        if (questions.Any(q => q.QuizId != id))
+        {
+            var invalidQuestion = questions.First(q => q.QuizId != id);
+            return QuizErrors.QuestionBelongsToDifferentQuiz(invalidQuestion.Id);
+        }
+
+        return new Quiz(
+            id,
+            courseId,
+            instructorId,
+            title,
+            startsAtUtc,
+            endsAtUtc,
+            questions);
+    }
+
+    public Result<Updated> Update(
+        string title,
+        DateTimeOffset startsAtUtc,
+        DateTimeOffset endsAtUtc)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return QuizErrors.TitleRequired;
+        }
+
+        if (startsAtUtc >= endsAtUtc)
+        {
+            return QuizErrors.ScheduleInvalid;
+        }
+
+        if (DateTimeOffset.UtcNow >= StartsAtUtc)
+        {
+            return QuizErrors.CannotUpdateStartedQuiz;
+        }
+
+        Title = title;
+        StartsAtUtc = startsAtUtc;
+        EndsAtUtc = endsAtUtc;
+
+        return Result.Updated;
+    }
+
+    public Result<Added> AddQuestion(Question question)
+    {
+        if (question.QuizId != Id)
+        {
+            return QuizErrors.QuestionBelongsToDifferentQuiz(question.Id);
+        }
+
+        if (_questions.Any(q => q.Id == question.Id))
+        {
+            return QuizErrors.QuestionAlreadyExists(question.Id);
+        }
+
+        _questions.Add(question);
+
+        return Result.Added;
+    }
+
+    public Result<Deleted> DeleteQuestion(Question question)
+    {
+        if (question.QuizId != Id)
+        {
+            return QuizErrors.QuestionBelongsToDifferentQuiz(question.Id);
+        }
+
+        _questions.Remove(question);
+
+        return Result.Deleted;
     }
 }
