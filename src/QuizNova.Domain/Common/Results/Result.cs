@@ -7,6 +7,8 @@ namespace QuizNova.Domain.Common.Results;
 
 public static class Result
 {
+    public static Added Added => default;
+
     public static Success Success => default;
 
     public static Created Created => default;
@@ -109,3 +111,5 @@ public readonly record struct Deleted;
 public readonly record struct Updated;
 
 public readonly record struct Validated;
+
+public readonly record struct Added;

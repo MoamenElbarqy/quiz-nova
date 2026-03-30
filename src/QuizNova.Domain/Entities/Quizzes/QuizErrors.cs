@@ -18,4 +18,20 @@ public static class QuizErrors
 
     public static readonly Error MarksInvalid =
         Error.Validation("Quiz_Marks_Invalid", "Marks must be greater than zero.");
+
+    public static readonly Error QuestionsRequired =
+        Error.Validation("Quiz_Questions_Required", "At least one question is required to instantiate a quiz.");
+
+    public static readonly Error CannotUpdateStartedQuiz =
+        Error.Validation("Quiz_CannotUpdateStartedQuiz", "Cannot update a quiz that has already started.");
+
+    public static Error QuestionBelongsToDifferentQuiz(Guid questionId) =>
+        Error.Validation(
+            "Quiz_Question_BelongsToDifferentQuiz",
+            $"Question with ID '{questionId}' belongs to a different quiz.");
+
+    public static Error QuestionAlreadyExists(Guid questionId) =>
+        Error.Validation(
+            "Quiz_Question_AlreadyExists",
+            $"Question with ID '{questionId}' already exists in the quiz.");
 }
