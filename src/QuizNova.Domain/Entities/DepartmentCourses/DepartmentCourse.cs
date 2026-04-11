@@ -1,5 +1,7 @@
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Courses;
+using QuizNova.Domain.Entities.Departments;
 
 namespace QuizNova.Domain.Entities.DepartmentCourses;
 
@@ -22,6 +24,10 @@ public sealed class DepartmentCourse : AuditableEntity
         CourseId = courseId;
         DepartmentId = departmentId;
     }
+
+    public Department? Department { get; private set; }
+
+    public Course? Course { get; private set; }
 
     public static Result<DepartmentCourse> Create(Guid id, Guid courseId, Guid departmentId)
     {

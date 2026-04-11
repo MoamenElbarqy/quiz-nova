@@ -3,12 +3,18 @@ using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Users;
+using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Domain.Entities.QuizAttempts;
 
 public class QuizAttempt : AuditableEntity
 {
-    private readonly List<StudentAnswer> _studentAnswers;
+    private readonly List<QuestionAnswer> _studentAnswers;
+
+    private QuizAttempt()
+    {
+        _studentAnswers = new List<QuestionAnswer>();
+    }
 
     private QuizAttempt(
         Guid id,
@@ -16,7 +22,7 @@ public class QuizAttempt : AuditableEntity
         Guid quizId,
         DateTime startedAt,
         DateTime? submittedAt,
-        List<StudentAnswer> studentAnswers)
+        List<QuestionAnswer> studentAnswers)
         : base(id)
     {
         StudentId = studentId;
@@ -38,7 +44,7 @@ public class QuizAttempt : AuditableEntity
 
     public Quiz? Quiz { get; private set; }
 
-    public IEnumerable<StudentAnswer> StudentAnswers => _studentAnswers.AsReadOnly();
+    public IEnumerable<QuestionAnswer> StudentAnswers => _studentAnswers.AsReadOnly();
 
     public static Result<QuizAttempt> Create(
         Guid id,
@@ -46,7 +52,7 @@ public class QuizAttempt : AuditableEntity
         Guid quizId,
         DateTime startedAt,
         DateTime? submittedAt,
-        List<StudentAnswer> studentAnswers)
+        List<QuestionAnswer> studentAnswers)
     {
         if (studentId == Guid.Empty)
         {

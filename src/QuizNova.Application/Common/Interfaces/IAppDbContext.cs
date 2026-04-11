@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
+using QuizNova.Domain.Common;
 using QuizNova.Domain.Entities.Colleges;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.DepartmentCourses;
@@ -7,11 +8,19 @@ using QuizNova.Domain.Entities.Departments;
 using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.Levels;
 using QuizNova.Domain.Entities.QuizAttempts;
+using QuizNova.Domain.Entities.Quizzes;
+using QuizNova.Domain.Entities.Quizzes.Questions.Base;
+using QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
+using QuizNova.Domain.Entities.StudentCourses;
+using QuizNova.Domain.Entities.Users;
+using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Application.Common.Interfaces;
 
 public interface IAppDbContext
 {
+    public DbSet<Entity> Entities { get; }
+
     public DbSet<College> Colleges { get; }
 
     public DbSet<Course> Courses { get; }
@@ -24,7 +33,21 @@ public interface IAppDbContext
 
     public DbSet<QuizAttempt> QuizAttempts { get; }
 
+    public DbSet<Quiz> Quizzes { get; }
+
+    public DbSet<Question> Questions { get; }
+
+    public DbSet<Choice> Choices { get; }
+
     public DbSet<RefreshToken> RefreshTokens { get; }
+
+    public DbSet<Instructor> Instructors { get; }
+
+    public DbSet<Student> Students { get; }
+
+    public DbSet<Admin> Admins { get; }
+
+    public DbSet<StudentCourse> StudentCourses { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

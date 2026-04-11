@@ -15,7 +15,7 @@ public abstract class Entity
         Id = id == Guid.Empty ? Guid.NewGuid() : id;
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
 
     [NotMapped]
     public IReadOnlyCollection<DomainEvent> DomainEvents => _domainEvents.AsReadOnly();

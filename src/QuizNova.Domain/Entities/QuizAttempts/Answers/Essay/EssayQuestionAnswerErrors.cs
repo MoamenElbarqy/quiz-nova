@@ -4,12 +4,6 @@ namespace QuizNova.Domain.Entities.QuizAttempts.Answers.Essay;
 
 public static class EssayQuestionAnswerErrors
 {
-    public static readonly Error StudentIdRequired =
-        Error.Validation("EssayQuestionAnswer_StudentId_Required", "Student ID is required.");
-
-    public static readonly Error QuestionIdRequired =
-        Error.Validation("EssayQuestionAnswer_QuestionId_Required", "Question ID is required.");
-
     public static readonly Error AnswerTextRequired =
         Error.Validation("EssayQuestionAnswer_AnswerText_Required", "Answer text is required.");
 }

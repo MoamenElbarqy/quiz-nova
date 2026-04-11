@@ -52,6 +52,23 @@ dotnet_diagnostic.SA1602.severity = none
 # SA1518 File not required to end with a single newline character
 dotnet_diagnostic.SA1518.severity = none
 
+# SA1313: Allow field names to begin with a lowercase letter (e.g. for record parameters)
+dotnet_diagnostic.SA1313.severity = none
+
+# SA1009: Closing parenthesis should not be followed by a space
+dotnet_diagnostic.SA1009.severity = none
+
+# SA1106: Code should not contain empty statements (e.g. for switch cases)
+dotnet_diagnostic.SA1106.severity = none
+
+dotnet_diagnostic.CS0108.severity = none
+
+dotnet_diagnostic.SA1118.severity = none
+
+dotnet_diagnostic.SA1000.severity = none
+
+dotnet_diagnostic.SA1001.severity = none
+
 [*.{ts,tsx,js,jsx}]
 indent_size = 2
 quote_type = single

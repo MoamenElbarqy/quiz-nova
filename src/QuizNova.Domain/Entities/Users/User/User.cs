@@ -9,6 +9,11 @@ public abstract class User : AuditableEntity
 {
     private readonly List<RefreshToken> _refreshTokens;
 
+    protected User()
+    {
+        _refreshTokens = new List<RefreshToken>();
+    }
+
     protected User(
         Guid id,
         PersonalInformation personalInformation,

@@ -15,10 +15,16 @@ public class Instructor : User
 
     private readonly List<Quiz> _quizzes;
 
+    private Instructor()
+    {
+        _courses = new List<Course>();
+        _departments = new List<Department>();
+        _quizzes = new List<Quiz>();
+    }
+
     private Instructor(
         Guid id,
         PersonalInformation personalInformation,
-        Guid collegeId,
         List<RefreshToken> refreshTokens,
         List<Course> courses,
         List<Department> departments,
@@ -29,13 +35,11 @@ public class Instructor : User
             Role.Instructor,
             refreshTokens)
     {
-        CollegeId = collegeId;
         _courses = courses;
         _departments = departments;
         _quizzes = quizzes;
     }
 
-    public Guid CollegeId { get; private set; }
 
     public IEnumerable<Course> Courses => _courses.AsReadOnly();
 
@@ -46,16 +50,11 @@ public class Instructor : User
     public static Result<Instructor> Create(
         Guid id,
         PersonalInformation personalInformation,
-        Guid collegeId,
         List<RefreshToken> refreshTokens,
         List<Course> courses,
         List<Department> departments,
         List<Quiz> quizzes)
     {
-        if (collegeId == Guid.Empty)
-        {
-            return InstructorErrors.CollegeIdRequired;
-        }
 
         var validationError = ValidateCommon(personalInformation, Role.Instructor);
 
@@ -67,7 +66,6 @@ public class Instructor : User
         return new Instructor(
             id,
             personalInformation,
-            collegeId,
             refreshTokens,
             courses,
             departments,

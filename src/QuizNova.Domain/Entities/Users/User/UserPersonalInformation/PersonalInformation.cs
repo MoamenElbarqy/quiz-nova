@@ -4,6 +4,10 @@ namespace QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 public sealed class PersonalInformation
 {
+    private PersonalInformation()
+    {
+    }
+
     private PersonalInformation(
         string name,
         string email,
@@ -16,13 +20,13 @@ public sealed class PersonalInformation
         PhoneNumber = phoneNumber;
     }
 
-    public string Name { get; }
+    public string Name { get; private set; } = null!;
 
-    public string Email { get; }
+    public string Email { get; private set; } = null!;
 
-    public string Password { get; }
+    public string Password { get; private set; } = null!;
 
-    public string PhoneNumber { get; }
+    public string PhoneNumber { get; private set; } = null!;
 
     public static Result<PersonalInformation> Create(
         string name,
