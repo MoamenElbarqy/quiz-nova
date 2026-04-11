@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
 using QuizNova.Domain.Common;
-using QuizNova.Domain.Entities.Colleges;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.DepartmentCourses;
 using QuizNova.Domain.Entities.Departments;
@@ -20,8 +19,6 @@ namespace QuizNova.Application.Common.Interfaces;
 public interface IAppDbContext
 {
     public DbSet<Entity> Entities { get; }
-
-    public DbSet<College> Colleges { get; }
 
     public DbSet<Course> Courses { get; }
 
