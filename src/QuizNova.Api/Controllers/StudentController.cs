@@ -2,7 +2,8 @@ using MediatR;
 
 using Microsoft.AspNetCore.Mvc;
 
-using QuizNova.Application.Features.Students.Queries.GetCollegeStudents;
+using QuizNova.Application.Features.Students.Queries.GetAllStudents;
+
 
 namespace QuizNova.Api.Controllers;
 

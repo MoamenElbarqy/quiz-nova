@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
-using QuizNova.Application.Features.Quizzes.Queries.GetCollegeQuizzes;
+using QuizNova.Application.Features.Quizzes.Queries.GetAllQuizzes;
 
 namespace QuizNova.Api.Controllers;
 
