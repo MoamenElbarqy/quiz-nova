@@ -2,7 +2,7 @@ using MediatR;
 
 using Microsoft.AspNetCore.Mvc;
 
-using QuizNova.Application.Features.Instructor.Queries.GetCollegeInstructors;
+using QuizNova.Application.Features.Instructor.Queries.GetAllInstructors;
 
 namespace QuizNova.Api.Controllers;
 
@@ -11,9 +11,9 @@ namespace QuizNova.Api.Controllers;
 public class InstructorController(ISender sender) : ApiController
 {
     [HttpGet]
-    public async Task<IActionResult> GetCollegeInstructors()
+    public async Task<IActionResult> GetAllInstructors()
     {
-        var result = await sender.Send(new GetCollegeInstructorsQuery());
+        var result = await sender.Send(new GetAllInstructorsQuery());
 
         return result.Match(
             Ok,
