@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:17-alpine
+    image: postgres:18.3
     container_name: quiznova-db
     restart: unless-stopped
     environment:
@@ -8,48 +8,29 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
     networks:
       - backend
-
-  redis:
-    image: redis:7-alpine
-    container_name: quiznova-redis
-    restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep PONG"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - backend
-
   api:
     build:
       context: .
-      dockerfile: Dockerfile.api.dev
+      dockerfile: Dockerfile.api
     container_name: quiznova-api
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-      Redis__Host: redis
-      Redis__Port: 6379
-      Redis__Password: ${REDIS_PASSWORD}
+      ConnectionStrings__DefaultConnection: Host=db;Port=${DATABASE_PORT:-5432};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
     ports:
       - "${API_PORT:-7100}:8080"
     networks:
@@ -59,14 +40,14 @@ services:
   client:
     build:
       context: .
-      dockerfile: Dockerfile.client.dev
+      dockerfile: Dockerfile.client
     container_name: quiznova-client
     restart: unless-stopped
     depends_on:
       api:
         condition: service_started
     environment:
-      NODE_ENV: Production
+      NODE_ENV: Development
       HOST: 0.0.0.0
       PORT: 4000
     ports:
@@ -76,7 +57,6 @@ services:
 
 volumes:
   postgres_data:
-  redis_data:
 
 networks:
   frontend:

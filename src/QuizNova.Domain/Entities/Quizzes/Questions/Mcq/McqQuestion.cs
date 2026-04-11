@@ -8,6 +8,11 @@ public class McqQuestion : Question
 {
     private readonly List<Choice> _choices;
 
+    private McqQuestion()
+    {
+        _choices = new List<Choice>();
+    }
+
     private McqQuestion(
         Guid id,
         Guid quizId,

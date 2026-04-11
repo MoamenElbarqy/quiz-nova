@@ -87,3 +87,6 @@ _ReSharper*/
 *.pid
 *.seed
 *.pid.lock
+.codex
+.gemini
+appsettings.Development.json

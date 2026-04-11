@@ -10,6 +10,11 @@ public class Quiz : AuditableEntity
 {
     private readonly List<Question> _questions;
 
+    private Quiz()
+    {
+        _questions = new List<Question>();
+    }
+
     private Quiz(
         Guid id,
         Guid courseId,
@@ -81,7 +86,7 @@ public class Quiz : AuditableEntity
             return QuizErrors.MarksInvalid;
         }
 
-        if (questions == null || questions.Count() == 0)
+        if (!questions.Any())
         {
             return QuizErrors.QuestionsRequired;
         }

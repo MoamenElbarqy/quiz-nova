@@ -4,8 +4,6 @@ namespace QuizNova.Domain.Entities.Courses;
 
 public static class CourseErrors
 {
-    public static readonly Error CollegeIdRequired =
-        Error.Validation("Course_CollegeId_Required", "College ID is required.");
 
     public static readonly Error DepartmentIdRequired =
         Error.Validation("Course_DepartmentId_Required", "Department ID is required.");

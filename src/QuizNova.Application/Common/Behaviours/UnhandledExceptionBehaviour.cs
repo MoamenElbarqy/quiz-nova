@@ -2,7 +2,7 @@ using MediatR;
 
 using Microsoft.Extensions.Logging;
 
-namespace MechanicShop.Application.Common.Behaviours;
+namespace QuizNova.Application.Common.Behaviours;
 
 public class UnhandledExceptionBehaviour<TRequest, TResponse>(ILogger<TRequest> logger)
     : IPipelineBehavior<TRequest, TResponse>

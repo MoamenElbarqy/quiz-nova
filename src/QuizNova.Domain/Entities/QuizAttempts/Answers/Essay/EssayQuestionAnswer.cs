@@ -1,33 +1,36 @@
-using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.Essay;
-using QuizNova.Domain.Entities.Users;
 
 namespace QuizNova.Domain.Entities.QuizAttempts.Answers.Essay;
 
-public class EssayQuestionAnswer : AuditableEntity
+public class EssayQuestionAnswer : QuestionAnswer
 {
-    public Guid StudentId { get; private set; }
-
-    public Guid QuestionId { get; private set; }
-
     public string AnswerText { get; private set; } = string.Empty;
 
     public bool? IsCorrect { get; private set; }
 
-    public Student? Student { get; private set; }
+    public EssayQuestion? Question => base.Question as EssayQuestion;
 
-    public EssayQuestion? Question { get; private set; }
-
+    // Required by EF Core
     private EssayQuestionAnswer()
+        : base(
+            Guid.Empty,
+            Guid.Empty,
+            Guid.Empty,
+            Guid.Empty)
     {
     }
 
-    private EssayQuestionAnswer(Guid id, Guid studentId, Guid questionId, string answerText, bool isCorrect)
-        : base(id)
+    private EssayQuestionAnswer(
+        Guid id,
+        Guid studentId,
+        Guid questionId,
+        Guid quizAttemptId,
+        string answerText,
+        bool isCorrect)
+        : base(id, studentId, questionId, quizAttemptId)
     {
-        StudentId = studentId;
-        QuestionId = questionId;
         AnswerText = answerText;
         IsCorrect = isCorrect;
     }
@@ -36,17 +39,15 @@ public class EssayQuestionAnswer : AuditableEntity
         Guid id,
         Guid studentId,
         Guid questionId,
+        Guid quizAttemptId,
         string answerText,
         bool isCorrect)
     {
-        if (studentId == Guid.Empty)
-        {
-            return EssayQuestionAnswerErrors.StudentIdRequired;
-        }
+        var commonValidationError = ValidateCommon(studentId, questionId, quizAttemptId);
 
-        if (questionId == Guid.Empty)
+        if (commonValidationError.IsError)
         {
-            return EssayQuestionAnswerErrors.QuestionIdRequired;
+            return commonValidationError.TopError;
         }
 
         if (string.IsNullOrWhiteSpace(answerText))
@@ -54,6 +55,12 @@ public class EssayQuestionAnswer : AuditableEntity
             return EssayQuestionAnswerErrors.AnswerTextRequired;
         }
 
-        return new EssayQuestionAnswer(id, studentId, questionId, answerText, isCorrect);
+        return new EssayQuestionAnswer(
+            id,
+            studentId,
+            questionId,
+            quizAttemptId,
+            answerText,
+            isCorrect);
     }
 }

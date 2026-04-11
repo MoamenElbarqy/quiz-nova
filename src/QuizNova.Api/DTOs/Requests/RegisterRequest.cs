@@ -1,6 +1,6 @@
 namespace QuizNova.Api.DTOs.Requests;
 
-public sealed class RegisterRequest
+public sealed record RegisterRequest
 {
     public string Email { get; init; } = string.Empty;
 

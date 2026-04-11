@@ -25,16 +25,9 @@
   </ItemGroup>
   <!-- Database -->
   <ItemGroup>
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.5" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5" />
-  </ItemGroup>
-  <!-- Caching -->
-  <ItemGroup>
-    <PackageVersion Include="Microsoft.Extensions.Caching.Hybrid" Version="10.3.0" />
-  </ItemGroup>
-  <!-- Logging -->
-  <ItemGroup>
-    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.4" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.4" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
   </ItemGroup>
   <!-- Analyzers -->
   <ItemGroup>

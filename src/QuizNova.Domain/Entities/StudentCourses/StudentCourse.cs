@@ -2,6 +2,7 @@ using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Users;
+using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Domain.Entities.StudentCourses;
 

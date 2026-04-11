@@ -1,46 +1,45 @@
-using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
-using QuizNova.Domain.Entities.Users;
 
 namespace QuizNova.Domain.Entities.QuizAttempts.Answers.Mcq;
 
-public class McqQuestionAnswer : AuditableEntity
+public class McqQuestionAnswer : QuestionAnswer
 {
-    public Guid StudentId { get; private set; }
-
-    public Guid QuestionId { get; private set; }
-
     public Guid SelectedChoiceId { get; private set; }
 
-    public Student? Student { get; private set; }
-
-    public McqQuestion? Question { get; private set; }
+    public McqQuestion? Question => base.Question as McqQuestion;
 
     public bool IsCorrect => Question is not null && Question.CorrectChoiceId == SelectedChoiceId;
 
+    // Required by EF Core
     private McqQuestionAnswer()
+        : base(
+        Guid.Empty,
+        Guid.Empty,
+        Guid.Empty,
+        Guid.Empty)
     {
     }
 
-    private McqQuestionAnswer(Guid id, Guid studentId, Guid questionId, Guid selectedChoiceId)
-        : base(id)
+    private McqQuestionAnswer(
+        Guid id,
+        Guid studentId,
+        Guid questionId,
+        Guid quizAttemptId,
+        Guid selectedChoiceId)
+        : base(id, studentId, questionId, quizAttemptId)
     {
-        StudentId = studentId;
-        QuestionId = questionId;
         SelectedChoiceId = selectedChoiceId;
     }
 
-    public static Result<McqQuestionAnswer> Create(Guid id, Guid studentId, Guid questionId, Guid selectedChoiceId)
+    public static Result<McqQuestionAnswer> Create(Guid id, Guid studentId, Guid questionId, Guid quizAttemptId, Guid selectedChoiceId)
     {
-        if (studentId == Guid.Empty)
-        {
-            return McqQuestionAnswerErrors.StudentIdRequired;
-        }
+        var commonValidationError = ValidateCommon(studentId, questionId, quizAttemptId);
 
-        if (questionId == Guid.Empty)
+        if (commonValidationError.IsError)
         {
-            return McqQuestionAnswerErrors.QuestionIdRequired;
+            return commonValidationError.TopError;
         }
 
         if (selectedChoiceId == Guid.Empty)
@@ -48,6 +47,6 @@ public class McqQuestionAnswer : AuditableEntity
             return McqQuestionAnswerErrors.SelectedChoiceIdRequired;
         }
 
-        return new McqQuestionAnswer(id, studentId, questionId, selectedChoiceId);
+        return new McqQuestionAnswer(id, studentId, questionId, quizAttemptId, selectedChoiceId);
     }
 }
