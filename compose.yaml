@@ -21,7 +21,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: src/QuizNova.Api/Dockerfile
     container_name: quiznova-api
     restart: unless-stopped
     depends_on:
@@ -30,7 +30,11 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: Host=db;Port=${DATABASE_PORT:-5432};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=QuizNova;Username=admin;Password=Moamen@SQL123
+      JwtSettings__Issuer: ${JWT_ISSUER:-QuizNova.Api}
+      JwtSettings__Audience: ${JWT_AUDIENCE:-QuizNova.Client}
+      JwtSettings__Secret: ${JWT_SECRET:-QuizNova-Development-Secret-Key-Change-This-2026}
+      JwtSettings__ExpiryMinutes: ${JWT_EXPIRY_MINUTES:-7}
     ports:
       - "${API_PORT:-7100}:8080"
     networks:
@@ -39,19 +43,27 @@ services:
 
   client:
     build:
-      context: .
-      dockerfile: Dockerfile.client
+      context: ./src/QuizNova.Client
+      dockerfile: Dockerfile.dev
+
     container_name: quiznova-client
+
+    volumes:
+      - ./src/QuizNova.Client:/app
+      - /app/node_modules
+
     restart: unless-stopped
+
     depends_on:
       api:
         condition: service_started
+
     environment:
       NODE_ENV: Development
-      HOST: 0.0.0.0
-      PORT: 4000
+
     ports:
       - "${CLIENT_PORT:-4200}:4000"
+
     networks:
       - frontend
 

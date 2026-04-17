@@ -1,13 +1,16 @@
 using MediatR;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using QuizNova.Application.Features.Colleges.Queries.GetCollegeSummary;
+using QuizNova.Domain.Entities.Identity;
 
 namespace QuizNova.Api.Controllers;
 
 [ApiController]
 [Route("colleges")]
+[Authorize(Roles = nameof(UserRole.Admin))]
 public sealed class CollegeController(ISender sender) : ApiController
 {
     public async Task<IActionResult> GetSummary()

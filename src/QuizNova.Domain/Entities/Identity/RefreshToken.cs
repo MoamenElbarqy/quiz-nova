@@ -4,7 +4,7 @@ using QuizNova.Domain.Entities.Users;
 
 namespace QuizNova.Domain.Entities.Identity;
 
-public sealed class RefreshToken : AuditableEntity
+public sealed class RefreshToken : Entity
 {
     public string Token { get; private set; } = string.Empty;
 
@@ -58,5 +58,16 @@ public sealed class RefreshToken : AuditableEntity
         }
 
         return new RefreshToken(id, token, userId, expiresOnUtc);
+    }
+
+    public Result<Success> Revoke(DateTimeOffset revokedAtUtc)
+    {
+        if (RevokedAtUtc is not null)
+        {
+            return RefreshTokenErrors.AlreadyRevoked;
+        }
+
+        RevokedAtUtc = revokedAtUtc;
+        return Result.Success;
     }
 }

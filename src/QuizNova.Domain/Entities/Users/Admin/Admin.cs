@@ -17,7 +17,7 @@ public class Admin : User
         : base(
             id,
             personalInformation,
-            Role.Admin,
+            UserRole.Admin,
             refreshTokens)
     {
     }
@@ -27,7 +27,7 @@ public class Admin : User
         PersonalInformation personalInformation,
         List<RefreshToken> refreshTokens)
     {
-        var validationError = ValidateCommon(personalInformation, Role.Admin);
+        var validationError = ValidateCommon(personalInformation, UserRole.Admin);
 
         if (validationError.IsError)
         {

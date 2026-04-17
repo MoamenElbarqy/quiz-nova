@@ -10,5 +10,5 @@ public class JwtSettings
 
     public string Secret { get; init; } = string.Empty;
 
-    public int ExpirationInDays { get; init; }
+    public int ExpiryMinutes { get; init; }
 }

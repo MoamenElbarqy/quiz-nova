@@ -12,4 +12,7 @@ public static class RefreshTokenErrors
 
     public static readonly Error ExpiryInvalid =
         Error.Validation("RefreshToken_Expiry_Invalid", "Expiry must be in the future.");
+
+    public static readonly Error AlreadyRevoked =
+        Error.Conflict("RefreshToken_AlreadyRevoked", "Refresh token has already been revoked.");
 }

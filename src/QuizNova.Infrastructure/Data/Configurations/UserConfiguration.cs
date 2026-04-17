@@ -10,6 +10,9 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
     public void Configure(EntityTypeBuilder<User> builder)
     {
         builder.ToTable("Users");
+        builder.Property(user => user.UserRole)
+            .HasColumnName("Role")
+            .IsRequired();
 
         builder.OwnsOne(
             e => e.PersonalInformation,

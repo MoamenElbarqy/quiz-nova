@@ -1,21 +1,45 @@
 using MediatR;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.Features.Quizzes.Queries.GetAllQuizzes;
+using QuizNova.Application.Features.Quizzes.Queries.GetInstructorQuizzesCount;
+using QuizNova.Application.Features.Quizzes.Queries.GetQuizById;
 
 namespace QuizNova.Api.Controllers;
 
 [ApiController]
 [Route("quizzes")]
-public class QuizController(ISender sender) : ApiController
+[Authorize]
+public sealed class QuizController(ISender sender) : ApiController
 {
     [HttpGet]
-    public async Task<IActionResult> GetCollegeQuizzes()
+    public async Task<IActionResult> GetAllQuizzes()
     {
         var result = await sender.Send(new GetAllQuizzesQuery());
+
+        return result.Match(
+            Ok,
+            Problem);
+    }
+
+    [HttpGet("count")]
+    public async Task<IActionResult> GetInstructorQuizzesCount([FromQuery] Guid instructorId)
+    {
+        var result = await sender.Send(new GetInstructorQuizzesCountQuery(instructorId));
+
+        return result.Match(
+            Ok,
+            Problem);
+    }
+
+    [HttpGet("{quizId:guid}")]
+    public async Task<IActionResult> GetQuizById([FromRoute] Guid quizId)
+    {
+        var result = await sender.Send(new GetQuizByIdQuery(quizId));
 
         return result.Match(
             Ok,

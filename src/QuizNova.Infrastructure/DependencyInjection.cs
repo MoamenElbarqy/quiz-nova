@@ -22,7 +22,15 @@ public static class DependencyInjection
 
         services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<DbInitializer>();
 
         return services;
+    }
+
+    public static async Task InitializeDevelopmentDatabaseAsync(this IServiceProvider serviceProvider, CancellationToken ct = default)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var dbInitializer = scope.ServiceProvider.GetRequiredService<DbInitializer>();
+        await dbInitializer.InitializeAsync(ct);
     }
 }

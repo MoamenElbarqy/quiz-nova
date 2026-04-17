@@ -2,16 +2,14 @@ using System.Security.Claims;
 
 using MediatR;
 
-using Microsoft.Extensions.Logging;
-
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
+using QuizNova.Application.Features.Identity.Dtos;
 using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Application.Features.Identity.Queries.RefreshTokens;
 
 public class RefreshTokenQueryHandler(
-    ILogger<RefreshTokenQueryHandler> logger,
     IAuthService authService)
     : IRequestHandler<RefreshTokenQuery, Result<TokenDto>>
 {
@@ -20,8 +18,6 @@ public class RefreshTokenQueryHandler(
         var principal = authService.GetPrincipalFromExpiredToken(request.ExpiredAccessToken);
         if (principal is null)
         {
-            logger.LogError("Expired access token is not valid");
-
             return ApplicationErrors.ExpiredAccessTokenInvalid;
         }
 
@@ -29,8 +25,6 @@ public class RefreshTokenQueryHandler(
 
         if (userId is null)
         {
-            logger.LogError("Invalid userId claim");
-
             return ApplicationErrors.UserIdClaimInvalid;
         }
 
@@ -38,23 +32,19 @@ public class RefreshTokenQueryHandler(
 
         if (getUserResult.IsError)
         {
-            logger.LogError("Get user by id error occurred: {ErrorDescription}", getUserResult.TopError.Description);
             return getUserResult.Errors;
         }
 
-        var isExistedAndValid = await authService.IsExistedAndValid(request.RefreshToken);
-
-        if (isExistedAndValid == false)
+        var validateRefreshTokenResult = await authService.ValidateAndRevokeRefreshTokenAsync(userId, request.RefreshToken, ct);
+        if (validateRefreshTokenResult.IsError)
         {
-            return ApplicationErrors.InvalidRefreshToken;
+            return validateRefreshTokenResult.Errors;
         }
 
         var generateTokenResult = await authService.GenerateJwtTokenAsync(getUserResult.Value, ct);
 
         if (generateTokenResult.IsError)
         {
-            logger.LogError("Generate token error occurred: {ErrorDescription}", generateTokenResult.TopError.Description);
-
             return generateTokenResult.Errors;
         }
 

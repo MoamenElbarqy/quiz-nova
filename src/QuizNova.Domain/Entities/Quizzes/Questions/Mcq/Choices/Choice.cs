@@ -4,7 +4,7 @@ using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
 namespace QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
 
-public class Choice : AuditableEntity
+public class Choice : Entity
 {
     public Guid QuestionId { get; private set; }
 

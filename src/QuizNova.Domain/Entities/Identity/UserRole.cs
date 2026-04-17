@@ -1,9 +1,8 @@
 namespace QuizNova.Domain.Entities.Identity;
 
-public enum Role
+public enum UserRole
 {
     Student,
     Instructor,
     Admin,
-    SuperAdmin,
 }

@@ -30,7 +30,6 @@ public sealed class GetStudentQuizAttemptsQueryHandler(IAppDbContext dbContext)
             .Include(quizAttempt => quizAttempt.Quiz)
             .ThenInclude(quiz => quiz!.Questions)
             .Include(quizAttempt => quizAttempt.StudentAnswers)
-            .OrderByDescending(quizAttempt => quizAttempt.StartedAt)
             .ToListAsync(ct);
 
         var response = attempts

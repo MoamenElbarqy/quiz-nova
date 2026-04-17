@@ -4,10 +4,9 @@ namespace QuizNova.Application.Common.Errors;
 
 public static class ApplicationErrors
 {
-    public static Error InvalidRefreshToken =>
-    Error.Validation(
-        "RefreshToken.Expiry.Invalid",
-        "Expiry must be in the future.");
+    public static readonly Error InvalidRefreshToken = Error.Unauthorized(
+        code: "Auth.RefreshToken.Invalid",
+        description: "Refresh token is invalid or has expired.");
 
     public static readonly Error ExpiredAccessTokenInvalid = Error.Conflict(
          code: "Auth.ExpiredAccessToken.Invalid",
@@ -17,7 +16,7 @@ public static class ApplicationErrors
         code: "Auth.UserIdClaim.Invalid",
         description: "Invalid userId claim.");
 
-    public static readonly Error RefreshTokenExpired = Error.Conflict(
+    public static readonly Error RefreshTokenExpired = Error.Unauthorized(
         code: "Auth.RefreshToken.Expired",
         description: "Refresh token is invalid or has expired.");
 
@@ -49,6 +48,11 @@ public static class ApplicationErrors
             code: "QuizAttempt.Student.NotFound",
             description: $"Student with ID '{studentId}' was not found.");
 
+    public static Error StudentNotFound(Guid studentId) =>
+        Error.NotFound(
+            code: "Student.NotFound",
+            description: $"Student with ID '{studentId}' was not found.");
+
     public static Error QuizIdAlreadyExists(Guid quizId) =>
         Error.Conflict(
             code: "Quiz.Id.AlreadyExists",
@@ -68,6 +72,11 @@ public static class ApplicationErrors
         Error.Validation(
             code: "Quiz.InstructorCourse.Invalid",
             description: $"Instructor with ID '{instructorId}' is not assigned to course with ID '{courseId}'.");
+
+    public static Error QuizNotFound(Guid quizId) =>
+        Error.NotFound(
+            code: "Quiz.NotFound",
+            description: $"Quiz with ID '{quizId}' was not found.");
 
     public static Error QuizQuestionIdAlreadyExists(Guid questionId) =>
         Error.Conflict(

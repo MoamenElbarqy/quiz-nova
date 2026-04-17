@@ -1,12 +1,13 @@
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
+using QuizNova.Domain.Entities.Quizzes.Enums;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Users;
 
 namespace QuizNova.Domain.Entities.Quizzes;
 
-public class Quiz : AuditableEntity
+public class Quiz : Entity
 {
     private readonly List<Question> _questions;
 
@@ -50,6 +51,12 @@ public class Quiz : AuditableEntity
     public Course? Course { get; private set; }
 
     public Instructor? Instructor { get; private set; }
+
+    public QuizStatus Status => DateTimeOffset.UtcNow < StartsAtUtc
+        ? QuizStatus.Scheduled
+        : DateTimeOffset.UtcNow >= StartsAtUtc && DateTimeOffset.UtcNow <= EndsAtUtc
+            ? QuizStatus.AvailableNow
+            : QuizStatus.Completed;
 
     public static Result<Quiz> Create(
         Guid id,
