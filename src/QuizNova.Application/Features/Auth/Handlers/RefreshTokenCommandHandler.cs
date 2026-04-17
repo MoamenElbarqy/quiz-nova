@@ -8,6 +8,7 @@ using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Auth.Commands;
 using QuizNova.Application.Features.Identity;
+using QuizNova.Application.Features.Identity.Dtos;
 using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Application.Features.Auth.Handlers;
@@ -40,10 +41,10 @@ public sealed class RefreshTokenCommandHandler(
             return getUserResult.Errors;
         }
 
-        var isRefreshTokenValid = await authService.IsExistedAndValid(request.RefreshToken);
-        if (!isRefreshTokenValid)
+        var validateRefreshTokenResult = await authService.ValidateAndRevokeRefreshTokenAsync(userId, request.RefreshToken, ct);
+        if (validateRefreshTokenResult.IsError)
         {
-            return ApplicationErrors.InvalidRefreshToken;
+            return validateRefreshTokenResult.Errors;
         }
 
         var tokenResult = await authService.GenerateJwtTokenAsync(getUserResult.Value, ct);

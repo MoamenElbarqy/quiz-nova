@@ -3,7 +3,7 @@ using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
-public abstract class Question : AuditableEntity
+public abstract class Question : Entity
 {
     protected Question()
     {

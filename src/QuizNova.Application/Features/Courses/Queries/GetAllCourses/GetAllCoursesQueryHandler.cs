@@ -13,19 +13,6 @@ public sealed class GetAllCoursesQueryHandler(IAppDbContext dbContext)
 {
     public async Task<Result<List<CourseDto>>> Handle(GetAllCoursesQuery request, CancellationToken ct)
     {
-        var departmentMap = await dbContext.DepartmentCourses
-            .AsNoTracking()
-            .Join(
-                dbContext.Departments.AsNoTracking(),
-                departmentCourse => departmentCourse.DepartmentId,
-                department => department.Id,
-                (departmentCourse, department) => new
-                {
-                    departmentCourse.CourseId,
-                    DepartmentName = department.Name,
-                })
-            .ToListAsync(ct);
-
         var courses = await dbContext.Courses
             .AsNoTracking()
             .Select(course => new
@@ -46,12 +33,6 @@ public sealed class GetAllCoursesQueryHandler(IAppDbContext dbContext)
             .Select(course => new CourseDto(
                 course.Id,
                 course.Name,
-                departmentMap
-                    .Where(item => item.CourseId == course.Id)
-                    .Select(item => item.DepartmentName)
-                    .Distinct()
-                    .OrderBy(name => name)
-                    .ToList(),
                 course.InstructorName,
                 course.EnrolledStudentCount,
                 course.QuizCount))

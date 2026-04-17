@@ -14,16 +14,24 @@ public static class QuizAttemptMapper
 {
     public static QuizAttemptDto ToQuizAttemptDto(this QuizAttempt quizAttempt)
     {
-        var answeredQuestions = quizAttempt.StudentAnswers.Count();
+        ArgumentNullException.ThrowIfNull(quizAttempt);
+
+        var studentAnswers = quizAttempt.StudentAnswers.ToList();
+        var answeredQuestions = studentAnswers.Count;
 
         var questionsById = quizAttempt.Quiz?.Questions
             .ToDictionary(question => question.Id) ?? new Dictionary<Guid, Question>();
+        var totalQuestions = questionsById.Count;
 
-        var answerDtos = quizAttempt.StudentAnswers
+        var answerDtos = studentAnswers
             .Select(answer => MapAnswer(answer, questionsById))
             .ToList();
 
         var quizTotalMarks = quizAttempt.Quiz?.Marks ?? 0;
+        var correctAnswers = answerDtos.Count(answer => answer.IsCorrect == true);
+        var score = studentAnswers.Sum(answer => GetEarnedMarks(answer, questionsById));
+        var isSubmitted = quizAttempt.SubmittedAt.HasValue;
+        var isPassed = isSubmitted && quizTotalMarks > 0 && score == quizTotalMarks;
 
         return new QuizAttemptDto(
             quizAttempt.Id,
@@ -31,11 +39,13 @@ public static class QuizAttemptMapper
             quizAttempt.Quiz?.Title ?? string.Empty,
             quizAttempt.StartedAt,
             quizAttempt.SubmittedAt,
-            quizAttempt.Quiz?.Questions.Count() ?? 0,
+            totalQuestions,
             answeredQuestions,
-            answerDtos.Count(answer => answer.IsCorrect == true),
-            quizAttempt.SubmittedAt.HasValue,
-            answerDtos);
+            correctAnswers,
+            score,
+            answerDtos,
+            isSubmitted,
+            isPassed);
     }
 
     private static StudentAttemptAnswerDto MapAnswer(
@@ -108,5 +118,26 @@ public static class QuizAttemptMapper
         }
 
         return answer.StudentChoice == trueFalseQuestion.CorrectChoice;
+    }
+
+    private static int GetEarnedMarks(QuestionAnswer answer, IReadOnlyDictionary<Guid, Question> questionsById)
+    {
+        questionsById.TryGetValue(answer.QuestionId, out var question);
+
+        return answer switch
+        {
+            McqQuestionAnswer mcqAnswer when question is McqQuestion mcqQuestion &&
+                                            mcqAnswer.SelectedChoiceId == mcqQuestion.CorrectChoiceId
+                => mcqQuestion.Marks,
+
+            TrueFalseQuestionAnswer trueFalseAnswer when question is TrueFalseQuestion trueFalseQuestion &&
+                                                  trueFalseAnswer.StudentChoice == trueFalseQuestion.CorrectChoice
+                => trueFalseQuestion.Marks,
+
+            EssayQuestionAnswer { IsCorrect: true } when question is not null
+                => question.Marks,
+
+            _ => 0,
+        };
     }
 }

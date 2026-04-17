@@ -5,7 +5,7 @@ using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Domain.Entities.Users;
 
-public abstract class User : AuditableEntity
+public abstract class User : Entity
 {
     private readonly List<RefreshToken> _refreshTokens;
 
@@ -17,24 +17,24 @@ public abstract class User : AuditableEntity
     protected User(
         Guid id,
         PersonalInformation personalInformation,
-        Role role,
+        UserRole userRole,
         List<RefreshToken> refreshTokens)
         : base(id)
     {
         PersonalInformation = personalInformation;
-        Role = role;
+        UserRole = userRole;
         _refreshTokens = refreshTokens;
     }
 
     public PersonalInformation PersonalInformation { get; private set; } = null!;
 
-    public Role Role { get; private set; }
+    public UserRole UserRole { get; private set; }
 
     public IEnumerable<RefreshToken> RefreshTokens => _refreshTokens.AsReadOnly();
 
     protected static Result<Validated> ValidateCommon(
         PersonalInformation personalInformation,
-        Role role)
+        UserRole userRole)
     {
         if (personalInformation is null)
         {
@@ -48,7 +48,7 @@ public abstract class User : AuditableEntity
             return personalInformationError;
         }
 
-        if (!Enum.IsDefined(role))
+        if (!Enum.IsDefined(userRole))
         {
             return PersonalInformationErrors.RoleInvalid;
         }

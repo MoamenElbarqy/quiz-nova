@@ -30,8 +30,8 @@ public sealed class GetAllQuizzesQueryHandler(IAppDbContext dbContext)
                 quiz.Questions.Sum(question => question.Marks),
                 quiz.StartsAtUtc,
                 quiz.EndsAtUtc,
+                now,
                 quiz.StartsAtUtc > now ? "Upcoming" : quiz.EndsAtUtc < now ? "Completed" : "Active"))
-            .OrderBy(quiz => quiz.StartsAtUtc)
             .ToListAsync(ct);
 
         return quizzes;

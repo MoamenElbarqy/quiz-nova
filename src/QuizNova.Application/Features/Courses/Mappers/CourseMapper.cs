@@ -7,14 +7,16 @@ public static class CourseMapper
 {
     public static CourseDto ToCourseDto(this Course course)
     {
+        ArgumentNullException.ThrowIfNull(course);
+
+        var instructorName = course.Instructor?.PersonalInformation.Name ?? string.Empty;
+        var quizCount = course.Quizzes.Count();
+
         return new CourseDto(
             course.Id,
-            course.CollegeId,
-            course.InstructorId,
             course.Name,
-            course.MinimumPassingMarks,
-            course.MaximumMarks,
-            course.IsGraceMarksActivated,
-            course.MaxGraceMarks ?? 0);
+            instructorName,
+            EnrolledStudentCount: 0,
+            quizCount);
     }
 }

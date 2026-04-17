@@ -18,16 +18,7 @@ public sealed class GetAllStudentsQueryHandler(IAppDbContext dbContext)
             .Select(student => new StudentDto(
                 student.Id,
                 student.PersonalInformation.Name,
-                dbContext.Departments
-                    .Where(department => department.Id == student.DepartmentId)
-                    .Select(department => department.Name)
-                    .FirstOrDefault() ?? string.Empty,
-                dbContext.Levels
-                    .Where(level => level.Id == student.LevelId)
-                    .Select(selector: level => level.Name)
-                    .FirstOrDefault() ?? string.Empty,
                 dbContext.StudentCourses.Count(studentCourse => studentCourse.StudentId == student.Id)))
-            .OrderBy(student => student.Name)
             .ToListAsync(ct);
 
         return students;

@@ -1,12 +1,11 @@
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
-using QuizNova.Domain.Entities.Users;
 using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 
-public class QuestionAnswer : AuditableEntity
+public class QuestionAnswer : Entity
 {
     public Guid StudentId { get; private set; }
 
@@ -21,11 +20,11 @@ public class QuestionAnswer : AuditableEntity
     public Question? Question { get; private set; }
 
     protected QuestionAnswer(
-    Guid id,
-    Guid studentId,
-    Guid questionId,
-    Guid quizAttemptId)
-    : base(id)
+        Guid id,
+        Guid studentId,
+        Guid questionId,
+        Guid quizAttemptId)
+        : base(id)
     {
         StudentId = studentId;
         QuestionId = questionId;

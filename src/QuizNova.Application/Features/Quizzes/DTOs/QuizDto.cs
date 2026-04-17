@@ -8,4 +8,5 @@ public sealed record QuizDto(
     int Marks,
     DateTimeOffset StartsAtUtc,
     DateTimeOffset EndsAtUtc,
+    DateTimeOffset ServerUtc,
     string State);

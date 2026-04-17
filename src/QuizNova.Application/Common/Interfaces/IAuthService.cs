@@ -8,19 +8,13 @@ namespace QuizNova.Application.Common.Interfaces;
 
 public interface IAuthService
 {
-    Task<Result<TokenDto>> GenerateJwtTokenAsync(UserDto user, CancellationToken ct = default);
+    Task<Result<TokenDto>> GenerateJwtTokenAsync(UserDto user, CancellationToken ct);
 
     ClaimsPrincipal? GetPrincipalFromExpiredToken(string token);
-
-    Task<bool> IsInRoleAsync(string userId, string role);
-
-    Task<bool> AuthorizeAsync(string userId, string? policyName);
 
     Task<Result<UserDto>> AuthenticateAsync(string email, string password);
 
     Task<Result<UserDto>> GetUserByIdAsync(string userId);
 
-    Task<string?> GetUserNameAsync(string userId);
-
-    Task<bool> IsExistedAndValid(string requestRefreshToken);
+    Task<Result<Success>> ValidateAndRevokeRefreshTokenAsync(string userId, string refreshToken, CancellationToken ct);
 }

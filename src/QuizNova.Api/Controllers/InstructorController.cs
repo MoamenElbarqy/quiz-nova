@@ -1,5 +1,6 @@
 using MediatR;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using QuizNova.Application.Features.Instructor.Queries.GetAllInstructors;
@@ -8,7 +9,8 @@ namespace QuizNova.Api.Controllers;
 
 [ApiController]
 [Route("instructors")]
-public class InstructorController(ISender sender) : ApiController
+[Authorize]
+public sealed class InstructorController(ISender sender) : ApiController
 {
     [HttpGet]
     public async Task<IActionResult> GetAllInstructors()

@@ -2,12 +2,11 @@ using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.Quizzes;
-using QuizNova.Domain.Entities.Users;
 using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Domain.Entities.QuizAttempts;
 
-public class QuizAttempt : AuditableEntity
+public class QuizAttempt : Entity
 {
     private readonly List<QuestionAnswer> _studentAnswers;
 

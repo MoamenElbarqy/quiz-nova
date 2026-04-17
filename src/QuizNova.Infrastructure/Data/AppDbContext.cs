@@ -5,10 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Entities.Courses;
-using QuizNova.Domain.Entities.DepartmentCourses;
-using QuizNova.Domain.Entities.Departments;
 using QuizNova.Domain.Entities.Identity;
-using QuizNova.Domain.Entities.Levels;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
@@ -26,13 +23,9 @@ public class AppDbContext(
 {
     public DbSet<Entity> Entities => Set<Entity>();
 
+    public DbSet<User> Users => Set<User>();
+
     public DbSet<Course> Courses => Set<Course>();
-
-    public DbSet<DepartmentCourse> DepartmentCourses => Set<DepartmentCourse>();
-
-    public DbSet<Department> Departments => Set<Department>();
-
-    public DbSet<Level> Levels => Set<Level>();
 
     public DbSet<QuizAttempt> QuizAttempts => Set<QuizAttempt>();
 
