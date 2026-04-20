@@ -1,8 +1,14 @@
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
+using QuizNova.Domain.Entities.QuizAttempts;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.Mcq;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalse;
 using QuizNova.Domain.Entities.Quizzes.Enums;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
+using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
+using QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
 using QuizNova.Domain.Entities.Users;
 
 namespace QuizNova.Domain.Entities.Quizzes;
@@ -168,5 +174,149 @@ public class Quiz : Entity
         _questions.Remove(question);
 
         return Result.Deleted;
+    }
+
+    public Result<QuizAttempt> SubmitAttempt(
+        Guid attemptId,
+        Guid studentId,
+        Guid quizId,
+        DateTimeOffset startedAt,
+        DateTimeOffset submittedAt,
+        IReadOnlyCollection<QuestionAnswer> questionAnswers)
+    {
+        if (attemptId == Guid.Empty)
+        {
+            return QuizAttemptErrors.AttemptIdRequired;
+        }
+
+        if (quizId == Guid.Empty)
+        {
+            return QuizAttemptErrors.QuizIdRequired;
+        }
+
+        if (quizId != Id)
+        {
+            return QuizAttemptErrors.QuizIdMismatch(Id, quizId);
+        }
+
+        if (startedAt == default)
+        {
+            return QuizAttemptErrors.StartedAtRequired;
+        }
+
+        if (submittedAt == default)
+        {
+            return QuizAttemptErrors.SubmittedAtRequired;
+        }
+
+        if (startedAt >= submittedAt)
+        {
+            return QuizAttemptErrors.SubmittedAtInvalid;
+        }
+
+        if (submittedAt > EndsAtUtc)
+        {
+            return QuizAttemptErrors.SubmittedAtAfterQuizEnd(EndsAtUtc);
+        }
+
+        if (startedAt < StartsAtUtc)
+        {
+            return QuizAttemptErrors.StartedAtBeforeQuizStart(StartsAtUtc);
+        }
+
+        if (questionAnswers.Count == 0)
+        {
+            return QuizAttemptErrors.QuestionAnswersRequired;
+        }
+
+        if (questionAnswers.Count > _questions.Count)
+        {
+            return QuizAttemptErrors.TooManyQuestionAnswers(questionAnswers.Count, _questions.Count);
+        }
+
+        if (questionAnswers.GroupBy(answer => answer.QuestionId).Any(group => group.Count() > 1))
+        {
+            return QuizAttemptErrors.DuplicateQuestionAnswers;
+        }
+
+        foreach (var answer in questionAnswers)
+        {
+            var question = _questions.FirstOrDefault(candidateQuestion => candidateQuestion.Id == answer.QuestionId);
+
+            if (question is null)
+            {
+                return QuizAttemptErrors.QuestionNotFoundInQuiz(answer.QuestionId, Id);
+            }
+
+            var answerValidation = ValidateAnswer(
+                attemptId,
+                studentId,
+                question,
+                answer);
+
+            if (answerValidation.IsError)
+            {
+                return answerValidation.TopError;
+            }
+        }
+
+        return QuizAttempt.Create(
+            attemptId,
+            studentId,
+            Id,
+            startedAt.UtcDateTime,
+            submittedAt.UtcDateTime,
+            questionAnswers.ToList());
+    }
+
+    private static Result<Validated> ValidateAnswer(
+        Guid attemptId,
+        Guid studentId,
+        Question question,
+        QuestionAnswer answer)
+    {
+        if (answer.QuizAttemptId != attemptId)
+        {
+            return QuizAttemptErrors.AnswerQuizAttemptMismatch(answer.QuestionId, attemptId, answer.QuizAttemptId);
+        }
+
+        if (answer.StudentId != studentId)
+        {
+            return QuizAttemptErrors.AnswerStudentMismatch(answer.QuestionId, studentId, answer.StudentId);
+        }
+
+        return answer switch
+        {
+            McqAnswer mcqAnswer => ValidateMcqAnswer(question, mcqAnswer),
+            TrueFalseQuestionAnswer trueFalseAnswer => ValidateTrueFalseAnswer(question, trueFalseAnswer),
+            _ => Error.Unexpected(
+                "QuizAttempt.Answer.Unsupported",
+                $"Unsupported answer type '{answer.GetType().Name}'."),
+        };
+    }
+
+    private static Result<Validated> ValidateMcqAnswer(Question question, McqAnswer answer)
+    {
+        if (question is not Mcq mcqQuestion)
+        {
+            return QuizAttemptErrors.QuestionTypeMismatch(answer.QuestionId, "mcq");
+        }
+
+        if (mcqQuestion.Choices.All(choice => choice.Id != answer.SelectedChoiceId))
+        {
+            return McqAnswerErrors.SelectedChoiceDoesNotBelongToQuestion(answer.QuestionId, answer.SelectedChoiceId);
+        }
+
+        return Result.Validated;
+    }
+
+    private static Result<Validated> ValidateTrueFalseAnswer(Question question, TrueFalseQuestionAnswer answer)
+    {
+        if (question is not TrueFalseQuestion)
+        {
+            return QuizAttemptErrors.QuestionTypeMismatch(answer.QuestionId, "true-false");
+        }
+
+        return Result.Validated;
     }
 }

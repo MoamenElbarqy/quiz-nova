@@ -1,7 +1,6 @@
 using QuizNova.Application.Features.QuizAttempts.DTOs;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.Essay;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Mcq;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalse;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
@@ -14,8 +13,6 @@ public static class QuizAttemptMapper
 {
     public static QuizAttemptDto ToQuizAttemptDto(this QuizAttempt quizAttempt)
     {
-        ArgumentNullException.ThrowIfNull(quizAttempt);
-
         var studentAnswers = quizAttempt.StudentAnswers.ToList();
         var answeredQuestions = studentAnswers.Count;
 
@@ -58,7 +55,7 @@ public static class QuizAttemptMapper
 
         return answer switch
         {
-            McqQuestionAnswer mcqAnswer => new StudentAttemptAnswerDto(
+            McqAnswer mcqAnswer => new StudentAttemptAnswerDto(
                 mcqAnswer.Id,
                 mcqAnswer.QuestionId,
                 questionText,
@@ -78,16 +75,6 @@ public static class QuizAttemptMapper
                 trueFalseAnswer.StudentChoice,
                 null),
 
-            EssayQuestionAnswer essayAnswer => new StudentAttemptAnswerDto(
-                essayAnswer.Id,
-                essayAnswer.QuestionId,
-                questionText,
-                "essay",
-                essayAnswer.IsCorrect,
-                null,
-                null,
-                essayAnswer.AnswerText),
-
             _ => new StudentAttemptAnswerDto(
                 answer.Id,
                 answer.QuestionId,
@@ -100,14 +87,14 @@ public static class QuizAttemptMapper
         };
     }
 
-    private static bool? GetMcqIsCorrect(McqQuestionAnswer answer, Question? question)
+    private static bool? GetMcqIsCorrect(McqAnswer answer, Question? question)
     {
-        if (question is not McqQuestion mcqQuestion)
+        if (question is not Mcq mcq)
         {
             return null;
         }
 
-        return answer.SelectedChoiceId == mcqQuestion.CorrectChoiceId;
+        return answer.SelectedChoiceId == mcq.CorrectChoiceId;
     }
 
     private static bool? GetTrueFalseIsCorrect(TrueFalseQuestionAnswer answer, Question? question)
@@ -126,16 +113,14 @@ public static class QuizAttemptMapper
 
         return answer switch
         {
-            McqQuestionAnswer mcqAnswer when question is McqQuestion mcqQuestion &&
-                                            mcqAnswer.SelectedChoiceId == mcqQuestion.CorrectChoiceId
-                => mcqQuestion.Marks,
+            McqAnswer mcqAnswer when question is Mcq mcq &&
+                                     mcqAnswer.SelectedChoiceId == mcq.CorrectChoiceId
+                => mcq.Marks,
 
             TrueFalseQuestionAnswer trueFalseAnswer when question is TrueFalseQuestion trueFalseQuestion &&
-                                                  trueFalseAnswer.StudentChoice == trueFalseQuestion.CorrectChoice
+                                                         trueFalseAnswer.StudentChoice ==
+                                                         trueFalseQuestion.CorrectChoice
                 => trueFalseQuestion.Marks,
-
-            EssayQuestionAnswer { IsCorrect: true } when question is not null
-                => question.Marks,
 
             _ => 0,
         };

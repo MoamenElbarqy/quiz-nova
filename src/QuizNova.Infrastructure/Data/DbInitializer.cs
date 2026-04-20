@@ -118,8 +118,6 @@ public sealed class DbInitializer(AppDbContext dbContext)
                     "Backend Fundamentals",
                     minimumPassingMarks: 50,
                     maximumMarks: 100,
-                    isGraceMarksActivated: false,
-                    maxGraceMarks: null,
                     quizzes: new List<Quiz>()),
                 "course one"),
             EnsureSuccess(
@@ -129,8 +127,6 @@ public sealed class DbInitializer(AppDbContext dbContext)
                     "Frontend Fundamentals",
                     minimumPassingMarks: 50,
                     maximumMarks: 100,
-                    isGraceMarksActivated: false,
-                    maxGraceMarks: null,
                     quizzes: new List<Quiz>()),
                 "course two"),
         ];
