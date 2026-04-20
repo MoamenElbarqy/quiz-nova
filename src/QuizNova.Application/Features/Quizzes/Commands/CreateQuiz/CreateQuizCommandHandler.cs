@@ -8,7 +8,6 @@ using QuizNova.Application.Features.Quizzes.DTOs;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
-using QuizNova.Domain.Entities.Quizzes.Questions.Essay;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
 using QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
@@ -32,7 +31,7 @@ public sealed class CreateQuizCommandHandler
         allIdsInRequest.AddRange(request.Questions.Select(q => q.Id));
 
         var allChoiceIds = request.Questions
-            .OfType<CreateMultipleChoiceQuestionCommand>()
+            .OfType<CreateMcqCommand>()
             .SelectMany(q => q.Choices.Select(c => c.Id))
             .ToList();
 
@@ -120,23 +119,12 @@ public sealed class CreateQuizCommandHandler
 
         return questionCommand switch
         {
-            CreateEssayQuestionCommand essayQuestion => CreateEssayQuestion(essayQuestion, displayOrder),
-            CreateTrueFalseQuestionCommand trueFalseQuestion => CreateTrueFalseQuestion(trueFalseQuestion, displayOrder),
-            CreateMultipleChoiceQuestionCommand multipleChoiceQuestion => CreateMultipleChoiceQuestion(multipleChoiceQuestion, displayOrder),
-            _ => Error.Unexpected("Quiz.Question.Unsupported", $"Unsupported question type '{questionCommand.GetType().Name}'."),
+            CreateTrueFalseQuestionCommand trueFalseQuestion =>
+                CreateTrueFalseQuestion(trueFalseQuestion, displayOrder),
+            CreateMcqCommand mcq => CreateMcq(mcq, displayOrder),
+            _ => Error.Unexpected("Quiz.Question.Unsupported",
+                $"Unsupported question type '{questionCommand.GetType().Name}'."),
         };
-    }
-
-    private Result<Question> CreateEssayQuestion(CreateEssayQuestionCommand command, int displayOrder)
-    {
-        var result = EssayQuestion.Create(
-            command.Id,
-            command.QuizId,
-            command.QuestionText,
-            displayOrder,
-            command.Marks);
-
-        return result.IsError ? result.TopError : result.Value;
     }
 
     private Result<Question> CreateTrueFalseQuestion(CreateTrueFalseQuestionCommand command, int displayOrder)
@@ -152,11 +140,11 @@ public sealed class CreateQuizCommandHandler
         return result.IsError ? result.TopError : result.Value;
     }
 
-    private Result<Question> CreateMultipleChoiceQuestion(
-        CreateMultipleChoiceQuestionCommand command,
+    private Result<Question> CreateMcq(
+        CreateMcqCommand command,
         int displayOrder)
     {
-        if (!command.Choices.Any(choice => choice.Id == command.CorrectChoiceId))
+        if (command.Choices.All(choice => choice.Id != command.CorrectChoiceId))
         {
             return ApplicationErrors.QuizCorrectChoiceNotFound(command.Id, command.CorrectChoiceId);
         }
@@ -189,7 +177,7 @@ public sealed class CreateQuizCommandHandler
             choices.Add(createChoiceResult.Value);
         }
 
-        var createQuestionResult = McqQuestion.Create(
+        var createQuestionResult = Mcq.Create(
             command.Id,
             command.QuizId,
             command.QuestionText,

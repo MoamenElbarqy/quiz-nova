@@ -36,4 +36,9 @@ public class Admin : User
 
         return new Admin(id, personalInformation, refreshTokens);
     }
+
+    public Result<Updated> Update(PersonalInformation personalInformation)
+    {
+        return UpdateCommon(personalInformation, UserRole.Admin);
+    }
 }

@@ -50,4 +50,9 @@ public class Student : User
             refreshTokens,
             quizAttempts);
     }
+
+    public Result<Updated> Update(PersonalInformation personalInformation)
+    {
+        return UpdateCommon(personalInformation, UserRole.Student);
+    }
 }

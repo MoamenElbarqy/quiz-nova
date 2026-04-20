@@ -19,6 +19,9 @@ public sealed class GetAllInstructorsQueryHandler(IAppDbContext dbContext)
             {
                 instructor.Id,
                 instructor.PersonalInformation.Name,
+                instructor.PersonalInformation.Email,
+                instructor.PersonalInformation.Password,
+                instructor.PersonalInformation.PhoneNumber,
                 CourseCount = dbContext.Courses.Count(course => course.InstructorId == instructor.Id),
                 QuizCount = dbContext.Quizzes.Count(quiz => quiz.InstructorId == instructor.Id),
             })
@@ -28,6 +31,9 @@ public sealed class GetAllInstructorsQueryHandler(IAppDbContext dbContext)
             .Select(instructor => new InstructorDto(
                 instructor.Id,
                 instructor.Name,
+                instructor.Email,
+                instructor.Password,
+                instructor.PhoneNumber,
                 instructor.CourseCount,
                 instructor.QuizCount))
             .ToList();

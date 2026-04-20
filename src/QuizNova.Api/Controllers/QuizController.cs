@@ -12,8 +12,8 @@ using QuizNova.Application.Features.Quizzes.Queries.GetQuizById;
 namespace QuizNova.Api.Controllers;
 
 [ApiController]
-[Route("quizzes")]
 [Authorize]
+[Route("quizzes")]
 public sealed class QuizController(ISender sender) : ApiController
 {
     [HttpGet]
@@ -46,19 +46,44 @@ public sealed class QuizController(ISender sender) : ApiController
             Problem);
     }
 
-    [HttpPost]
+    [HttpPost()]
     public async Task<IActionResult> CreateQuiz([FromBody] CreateQuizRequest request)
     {
-        var createQuizResult = await sender.Send(new CreateQuizCommand(request.Id, request.Title, request.CourseId, request.InstructorId, request.StartsAtUtc, request.EndsAtUtc, request.Questions.Select<CreateQuizQuestionRequest, CreateQuestionCommand>(q =>
-        {
-            return q switch
-            {
-                CreateMultipleChoiceQuestionRequest mcq => new CreateMultipleChoiceQuestionCommand(mcq.Id, mcq.QuizId, mcq.QuestionText, mcq.Marks, mcq.NumberOfChoices, mcq.CorrectChoiceId, mcq.Choices.Select(c => new CreateChoiceCommand(c.Id, c.QuestionId, c.Text, c.DisplayOrder)).ToList()),
-                CreateTrueFalseQuestionRequest tfq => new CreateTrueFalseQuestionCommand(tfq.Id, tfq.QuizId, tfq.QuestionText, tfq.Marks, tfq.CorrectChoice),
-                CreateEssayQuestionRequest eq => new CreateEssayQuestionCommand(eq.Id, eq.QuizId, eq.QuestionText, eq.Marks),
-                _ => throw new InvalidOperationException("Unknown question type")
-            };
-        }).ToList()));
+        var createQuizResult = await sender.Send(new CreateQuizCommand(
+            request.Id,
+            request.Title,
+            request.CourseId,
+            request.InstructorId,
+            request.StartsAtUtc,
+            request.EndsAtUtc,
+            request.Questions
+                .Select<CreateQuizQuestionRequest, CreateQuestionCommand>(q =>
+                {
+                    return q switch
+                    {
+                        CreateMcqRequest mcq => new CreateMcqCommand(
+                            mcq.Id,
+                            mcq.QuizId,
+                            mcq.QuestionText,
+                            mcq.Marks,
+                            mcq.NumberOfChoices,
+                            mcq.CorrectChoiceId,
+                            mcq.Choices.Select(c => new CreateChoiceCommand(
+                                    c.Id,
+                                    c.QuestionId,
+                                    c.Text,
+                                    c.DisplayOrder))
+                                .ToList()),
+                        CreateTrueFalseQuestionRequest tfq => new CreateTrueFalseQuestionCommand(
+                            tfq.Id,
+                            tfq.QuizId,
+                            tfq.QuestionText,
+                            tfq.Marks,
+                            tfq.CorrectChoice),
+                        _ => throw new InvalidOperationException("Unknown question type")
+                    };
+                })
+                .ToList()));
 
         return createQuizResult.Match(
             quizDto => Ok(quizDto),

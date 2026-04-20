@@ -55,4 +55,20 @@ public abstract class User : Entity
 
         return Result.Validated;
     }
+
+    protected Result<Updated> UpdateCommon(
+        PersonalInformation personalInformation,
+        UserRole userRole)
+    {
+        var validationError = ValidateCommon(personalInformation, userRole);
+
+        if (validationError.IsError)
+        {
+            return validationError.TopError;
+        }
+
+        PersonalInformation = personalInformation;
+
+        return Result.Updated;
+    }
 }

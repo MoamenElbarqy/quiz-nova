@@ -18,6 +18,9 @@ public sealed class GetAllStudentsQueryHandler(IAppDbContext dbContext)
             .Select(student => new StudentDto(
                 student.Id,
                 student.PersonalInformation.Name,
+                student.PersonalInformation.Email,
+                student.PersonalInformation.Password,
+                student.PersonalInformation.PhoneNumber,
                 dbContext.StudentCourses.Count(studentCourse => studentCourse.StudentId == student.Id)))
             .ToListAsync(ct);
 

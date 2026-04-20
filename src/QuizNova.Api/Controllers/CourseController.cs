@@ -16,20 +16,17 @@ namespace QuizNova.Api.Controllers;
 public sealed class CourseController(ISender sender) : ApiController
 {
     [HttpGet("courses")]
-    public async Task<IActionResult> GetAllCourses()
+    public async Task<IActionResult> GetCourses([FromQuery] Guid? instructorId = null)
     {
+        if (instructorId.HasValue)
+        {
+            var instructorCoursesResult = await sender.Send(new GetInstructorCoursesByIdQuery(instructorId.Value));
+            return instructorCoursesResult.Match(
+                Ok,
+                Problem);
+        }
+
         var result = await sender.Send(new GetAllCoursesQuery());
-
-        return result.Match(
-            Ok,
-            Problem);
-    }
-
-    [HttpGet("instructor-courses/{instructorId:guid}")]
-    public async Task<IActionResult> GetInstructorCourses([FromRoute] Guid instructorId)
-    {
-        var result = await sender.Send(new GetInstructorCoursesByIdQuery(instructorId));
-
         return result.Match(
             Ok,
             Problem);

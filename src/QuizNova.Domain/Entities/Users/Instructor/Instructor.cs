@@ -57,4 +57,9 @@ public class Instructor : User
             courses,
             quizzes);
     }
+
+    public Result<Updated> Update(PersonalInformation personalInformation)
+    {
+        return UpdateCommon(personalInformation, UserRole.Instructor);
+    }
 }

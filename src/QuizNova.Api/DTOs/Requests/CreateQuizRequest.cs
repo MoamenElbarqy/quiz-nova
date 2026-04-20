@@ -12,16 +12,15 @@ public sealed record CreateQuizRequest(
     IReadOnlyCollection<CreateQuizQuestionRequest> Questions);
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
-[JsonDerivedType(typeof(CreateMultipleChoiceQuestionRequest), "multiple-choice")]
+[JsonDerivedType(typeof(CreateMcqRequest), "mcq")]
 [JsonDerivedType(typeof(CreateTrueFalseQuestionRequest), "true-false")]
-[JsonDerivedType(typeof(CreateEssayQuestionRequest), "essay")]
 public abstract record CreateQuizQuestionRequest(
     Guid Id,
     Guid QuizId,
     string QuestionText,
     int Marks);
 
-public sealed record CreateMultipleChoiceQuestionRequest(
+public sealed record CreateMcqRequest(
     Guid Id,
     Guid QuizId,
     string QuestionText,
@@ -37,13 +36,6 @@ public sealed record CreateTrueFalseQuestionRequest(
     string QuestionText,
     int Marks,
     bool CorrectChoice)
-    : CreateQuizQuestionRequest(Id, QuizId, QuestionText, Marks);
-
-public sealed record CreateEssayQuestionRequest(
-    Guid Id,
-    Guid QuizId,
-    string QuestionText,
-    int Marks)
     : CreateQuizQuestionRequest(Id, QuizId, QuestionText, Marks);
 
 public sealed record CreateChoiceRequest(

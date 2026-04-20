@@ -18,7 +18,7 @@ public sealed class GetQuizByIdQueryHandler(IAppDbContext dbContext)
         var quiz = await dbContext.Quizzes
             .AsNoTracking()
             .Include(q => q.Questions)
-            .Include(q => q.Questions.OfType<McqQuestion>())
+            .Include(q => q.Questions.OfType<Mcq>())
             .ThenInclude(q => q.Choices)
             .FirstOrDefaultAsync(q => q.Id == request.QuizId, ct);
 
