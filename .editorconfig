@@ -61,6 +61,18 @@ dotnet_diagnostic.SA1009.severity = none
 # SA1106: Code should not contain empty statements (e.g. for switch cases)
 dotnet_diagnostic.SA1106.severity = none
 
+# IDE0005: Remove unnecessary usings
+dotnet_diagnostic.IDE0005.severity = error
+
+# CS8618: Non-nullable field must contain a non-null value when exiting constructor (Suppressed for EF Core)
+dotnet_diagnostic.CS8618.severity = none
+
+# SA1010: Opening square brackets should not be preceded by a space (Conflicts with C# 12 [])
+dotnet_diagnostic.SA1010.severity = none
+
+# SA1028: Code should not contain trailing whitespace
+dotnet_diagnostic.SA1028.severity = none
+
 dotnet_diagnostic.CS0108.severity = none
 
 dotnet_diagnostic.SA1118.severity = none
@@ -69,27 +81,27 @@ dotnet_diagnostic.SA1000.severity = none
 
 dotnet_diagnostic.SA1001.severity = none
 
+dotnet_diagnostic.SA1003.severity = none
+
+dotnet_diagnostic.SA1008.severity = none
+
+dotnet_diagnostic.SA1500.severity = none
+
+dotnet_diagnostic.SA1502.severity = none
+
+dotnet_diagnostic.SA1508.severity = none
+
+dotnet_diagnostic.SA1516.severity = none
+
 [*.{ts,tsx,js,jsx}]
-indent_size = 2
-quote_type = single
 ij_typescript_use_double_quotes = false
 max_line_length = 100
 end_of_line = lf
-insert_final_newline = true
-
-# Angular specific
-[*.{component.html,component.ts,service.ts,module.ts}]
-indent_size = 2
-quote_type = single
-
-# Angular template files
-[*.component.html]
-indent_size = 2
-max_line_length = 100
-
-[*.{html,css,scss,sass,less,json,yml,yaml}]
-indent_size = 2
+typescript_spaces_within_imports = true
+typescript_spaces_within_object_literal_braces = true
 
 [*.md]
 max_line_length = off
 trim_trailing_whitespace = false
+
+

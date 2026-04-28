@@ -90,3 +90,11 @@ _ReSharper*/
 .codex
 .gemini
 appsettings.Development.json
+
+/shelf/
+/workspace.xml
+/httpRequests/
+/queries/
+/dataSources/
+/dataSources.local.xml
+/containers/
