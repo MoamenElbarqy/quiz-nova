@@ -1,4 +1,5 @@
 using QuizNova.Application.Features.Quizzes.DTOs;
+using QuizNova.Application.Features.Quizzes.Mappers;
 using QuizNova.Domain.Entities.Quizzes;
 
 public static class QuizMapper

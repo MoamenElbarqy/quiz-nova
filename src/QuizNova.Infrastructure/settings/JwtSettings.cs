@@ -1,6 +1,6 @@
-namespace QuizNova.Application.Common.Options;
+namespace QuizNova.Infrastructure.Settings;
 
-public sealed class JwtSettings
+public class JwtSettings
 {
     public const string SectionName = "JwtSettings";
 

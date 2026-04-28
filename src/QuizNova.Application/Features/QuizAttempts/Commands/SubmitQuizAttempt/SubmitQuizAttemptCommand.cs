@@ -14,14 +14,16 @@ public sealed record SubmitQuizAttemptCommand(
     IReadOnlyCollection<SubmitQuestionAnswerCommand> QuestionAnswers)
     : IRequest<Result<QuizAttemptDto>>;
 
-public abstract record SubmitQuestionAnswerCommand(Guid QuestionId);
+public abstract record SubmitQuestionAnswerCommand(Guid AnswerId, Guid QuestionId);
 
 public sealed record SubmitMcqAnswerCommand(
+    Guid AnswerId,
     Guid QuestionId,
     Guid SelectedChoiceId)
-    : SubmitQuestionAnswerCommand(QuestionId);
+    : SubmitQuestionAnswerCommand(AnswerId, QuestionId);
 
-public sealed record SubmitTrueFalseQuestionAnswerCommand(
+public sealed record SubmitTfAnswerCommand(
+    Guid AnswerId,
     Guid QuestionId,
     bool StudentChoice)
-    : SubmitQuestionAnswerCommand(QuestionId);
+    : SubmitQuestionAnswerCommand(AnswerId, QuestionId);

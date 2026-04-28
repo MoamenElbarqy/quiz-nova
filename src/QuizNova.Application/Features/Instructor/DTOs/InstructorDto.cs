@@ -6,5 +6,5 @@ public sealed record InstructorDto(
     string Email,
     string Password,
     string PhoneNumber,
-    int CourseCount,
-    int QuizCount);
+    int CoursesCount,
+    int QuizzesCount);

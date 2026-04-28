@@ -1,92 +1,59 @@
-using System.Text;
+using QuizNova.Api;
+using QuizNova.Infrastructure.Settings;
 
-using Asp.Versioning;
+using Scalar.AspNetCore;
 
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-
-using QuizNova.Api.Infrastructure;
-using QuizNova.Application.Common.Options;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var jwtSection = builder.Configuration.GetSection(JwtSettings.SectionName);
+builder.Host.UseSerilog((context, loggerConfig) =>
+    loggerConfig.ReadFrom.Configuration(context.Configuration));
 
-var jwtSettings = jwtSection.Get<JwtSettings>()
-                  ?? throw new InvalidOperationException("JwtSettings configuration is missing.");
-
-builder.Services.Configure<JwtSettings>(jwtSection);
-builder.Services.AddControllers();
-builder.Services.AddProblemDetails();
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-
-builder.Services
-    .AddApiVersioning(options =>
-    {
-        options.DefaultApiVersion = new ApiVersion(1, 0);
-        options.AssumeDefaultVersionWhenUnspecified = true;
-        options.ReportApiVersions = true;
-    })
-    .AddApiExplorer(options =>
-    {
-        options.GroupNameFormat = "'v'VVV";
-        options.SubstituteApiVersionInUrl = true;
-    });
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AngularClient", policy =>
-    {
-        policy.WithOrigins("http://localhost:4200")
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials();
-    });
-});
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ClockSkew = TimeSpan.Zero,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings.Issuer,
-        ValidAudience = jwtSettings.Audience,
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(jwtSettings.Secret)),
-    };
-});
-
-builder.Services.AddAuthorization();
+var appSettings = builder.Configuration
+                      .GetSection(AppSettings.SectionName)
+                      .Get<AppSettings>()
+                  ?? throw new InvalidOperationException("AppSettings not configured");
 
 builder.Services.AddApplication();
+
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddApi(builder.Configuration, appSettings);
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    await app.Services.InitializeDevelopmentDatabaseAsync();
-}
-
 app.UseExceptionHandler();
 
-app.UseCors("AngularClient");
+app.UseCors(appSettings.Cors.PolicyName);
 
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    await app.Services.InitializeDevelopmentDatabaseAsync();
+
     app.MapOpenApi();
+
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "MechanicShop API V1");
+
+        options.EnableDeepLinking();
+        options.DisplayRequestDuration();
+        options.EnableFilter();
+    });
+
+    app.MapScalarApiReference();
 }
+else
+{
+    app.UseHsts();
+}
+
+app.MapPrometheusScrapingEndpoint();
 
 app.MapControllers();
 

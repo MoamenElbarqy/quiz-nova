@@ -7,7 +7,7 @@ public sealed class GetInstructorCoursesCountQueryValidator : AbstractValidator<
     public GetInstructorCoursesCountQueryValidator()
     {
         RuleFor(query => query.InstructorId)
-            .NotEmpty();
+            .NotEmpty().WithMessage("Instructor ID is required.");
     }
 }
 

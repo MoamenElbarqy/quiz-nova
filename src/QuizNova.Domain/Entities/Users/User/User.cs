@@ -36,11 +36,6 @@ public abstract class User : Entity
         PersonalInformation personalInformation,
         UserRole userRole)
     {
-        if (personalInformation is null)
-        {
-            return PersonalInformationErrors.Required;
-        }
-
         var personalInformationError = PersonalInformation.Validate(personalInformation);
 
         if (personalInformationError.IsError)

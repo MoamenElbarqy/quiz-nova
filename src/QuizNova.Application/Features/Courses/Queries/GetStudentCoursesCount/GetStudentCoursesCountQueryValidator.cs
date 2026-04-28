@@ -7,7 +7,7 @@ public sealed class GetStudentCoursesCountQueryValidator : AbstractValidator<Get
     public GetStudentCoursesCountQueryValidator()
     {
         RuleFor(query => query.StudentId)
-            .NotEmpty();
+            .NotEmpty().WithMessage("Student ID is required.");
     }
 }
 

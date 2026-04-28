@@ -6,4 +6,4 @@ public sealed record StudentDto(
     string Email,
     string Password,
     string PhoneNumber,
-    int EnrolledCourseCount);
+    int EnrolledCoursesCount);

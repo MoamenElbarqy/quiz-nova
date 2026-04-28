@@ -1,6 +1,7 @@
 using MediatR;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
@@ -11,17 +12,22 @@ using QuizNova.Domain.Entities.Quizzes.Enums;
 
 namespace QuizNova.Application.Features.Quizzes.Queries.GetStudentQuizzes;
 
-public sealed class GetStudentQuizzesQueryHandler(IAppDbContext dbContext)
+public sealed class GetStudentQuizzesQueryHandler(
+    IAppDbContext dbContext,
+    ILogger<GetStudentQuizzesQueryHandler> logger)
     : IRequestHandler<GetStudentQuizzesQuery, Result<StudentQuizzesDto>>
 {
     public async Task<Result<StudentQuizzesDto>> Handle(GetStudentQuizzesQuery request, CancellationToken ct)
     {
+        logger.LogInformation("Retrieving available quizzes for student with ID: {StudentId}", request.StudentId);
+
         var studentExists = await dbContext.Students
             .AsNoTracking()
             .AnyAsync(student => student.Id == request.StudentId, ct);
 
         if (!studentExists)
         {
+            logger.LogWarning("Retrieval failed: Student with ID {StudentId} not found", request.StudentId);
             return ApplicationErrors.StudentNotFound(request.StudentId);
         }
 
@@ -35,6 +41,7 @@ public sealed class GetStudentQuizzesQueryHandler(IAppDbContext dbContext)
 
         if (enrolledCourseIds.Count == 0)
         {
+            logger.LogInformation("No enrolled courses found for student {StudentId}", request.StudentId);
             return new StudentQuizzesDto(serverUtc, Array.Empty<StudentQuizDto>());
         }
 
@@ -52,6 +59,8 @@ public sealed class GetStudentQuizzesQueryHandler(IAppDbContext dbContext)
                 quiz.QuizStatus == QuizStatus.AvailableNow ||
                 quiz.QuizStatus == QuizStatus.Scheduled)
             .ToList();
+
+        logger.LogInformation("Successfully retrieved {Count} available/scheduled quizzes for student {StudentId}", mappedQuizzes.Count, request.StudentId);
 
         return new StudentQuizzesDto(serverUtc, mappedQuizzes);
     }

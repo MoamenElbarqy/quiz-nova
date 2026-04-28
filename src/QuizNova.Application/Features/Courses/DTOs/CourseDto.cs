@@ -4,5 +4,5 @@ public sealed record CourseDto(
     Guid CourseId,
     string CourseName,
     string InstructorName,
-    int EnrolledStudentCount,
-    int QuizCount);
+    int EnrolledStudentsCount,
+    int QuizzesCount);

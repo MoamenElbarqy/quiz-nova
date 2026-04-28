@@ -9,12 +9,12 @@ using Microsoft.IdentityModel.Tokens;
 
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
-using QuizNova.Application.Common.Options;
-using QuizNova.Application.Features.Identity.Dtos;
+using QuizNova.Application.Features.Auth.DTOs;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.Users;
 using QuizNova.Infrastructure.Data;
+using QuizNova.Infrastructure.Settings;
 
 using static System.Security.Claims.ClaimTypes;
 
@@ -135,16 +135,6 @@ public sealed class AuthService(AppDbContext dbContext, IOptions<JwtSettings> jw
         }
     }
 
-    public async Task<bool> IsInRoleAsync(string userId, string role)
-    {
-        if (!Guid.TryParse(userId, out var parsedUserId) || string.IsNullOrWhiteSpace(role))
-        {
-            return false;
-        }
-
-        return await dbContext.Users.AnyAsync(u => u.Id == parsedUserId && u.UserRole.ToString().Equals(role, StringComparison.OrdinalIgnoreCase));
-    }
-
     public async Task<Result<UserDto>> AuthenticateAsync(string email, string password)
     {
         var user = await dbContext.Users
@@ -183,7 +173,10 @@ public sealed class AuthService(AppDbContext dbContext, IOptions<JwtSettings> jw
         return MapUserDto(user);
     }
 
-    public async Task<Result<Success>> ValidateAndRevokeRefreshTokenAsync(string userId, string refreshToken, CancellationToken ct)
+    public async Task<Result<Success>> ValidateAndRevokeRefreshTokenAsync(
+        string userId,
+        string refreshToken,
+        CancellationToken ct)
     {
         if (!Guid.TryParse(userId, out var parsedUserId) || string.IsNullOrWhiteSpace(refreshToken))
         {
@@ -211,7 +204,7 @@ public sealed class AuthService(AppDbContext dbContext, IOptions<JwtSettings> jw
     private static IList<Claim> BuildClaims(UserDto user)
     {
         var additionalClaims = user.Claims
-            .Where(c => c.Type is not(NameIdentifier or Name or ClaimTypes.Role))
+            .Where(c => c.Type is not (NameIdentifier or Name or Role))
             .ToList();
 
         var claims = new List<Claim>(additionalClaims.Count + 3)
@@ -235,9 +228,9 @@ public sealed class AuthService(AppDbContext dbContext, IOptions<JwtSettings> jw
     {
         var claims = new List<Claim>
         {
-            new(NameIdentifier, user.Id.ToString()),
-            new(Name, user.PersonalInformation.Name),
-            new(ClaimTypes.Role, user.UserRole.ToString()),
+            new Claim(NameIdentifier, user.Id.ToString()),
+            new Claim(Name, user.PersonalInformation.Name),
+            new Claim(ClaimTypes.Role, user.UserRole.ToString()),
         };
 
         return new UserDto(

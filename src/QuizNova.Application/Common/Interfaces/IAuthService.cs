@@ -1,7 +1,6 @@
 using System.Security.Claims;
 
-using QuizNova.Application.Features.Identity;
-using QuizNova.Application.Features.Identity.Dtos;
+using QuizNova.Application.Features.Auth.DTOs;
 using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Application.Common.Interfaces;

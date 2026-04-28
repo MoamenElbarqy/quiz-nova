@@ -8,6 +8,7 @@ using QuizNova.Application.Features.Instructor.Commands.CreateInstructor;
 using QuizNova.Application.Features.Instructor.Commands.DeleteInstructor;
 using QuizNova.Application.Features.Instructor.Commands.UpdateInstructor;
 using QuizNova.Application.Features.Instructor.Queries.GetAllInstructors;
+using QuizNova.Application.Features.Instructor.Queries.GetInstructorById;
 
 namespace QuizNova.Api.Controllers;
 
@@ -17,9 +18,19 @@ namespace QuizNova.Api.Controllers;
 public sealed class InstructorController(ISender sender) : ApiController
 {
     [HttpGet]
-    public async Task<IActionResult> GetAllInstructors()
+    public async Task<IActionResult> GetAllInstructors([FromQuery] GetAllInstructorsQuery query)
     {
-        var result = await sender.Send(new GetAllInstructorsQuery());
+        var result = await sender.Send(query);
+
+        return result.Match(
+            Ok,
+            Problem);
+    }
+
+    [HttpGet("{instructorId:guid}")]
+    public async Task<IActionResult> GetInstructorById([FromRoute] Guid instructorId)
+    {
+        var result = await sender.Send(new GetInstructorByIdQuery(instructorId));
 
         return result.Match(
             Ok,

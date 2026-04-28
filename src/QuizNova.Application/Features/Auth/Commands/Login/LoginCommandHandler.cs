@@ -5,12 +5,10 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Interfaces;
-using QuizNova.Application.Features.Auth.Commands;
-using QuizNova.Application.Features.Identity;
-using QuizNova.Application.Features.Identity.Dtos;
+using QuizNova.Application.Features.Auth.DTOs;
 using QuizNova.Domain.Common.Results;
 
-namespace QuizNova.Application.Features.Auth.Handlers;
+namespace QuizNova.Application.Features.Auth.Commands.Login;
 
 public sealed class LoginCommandHandler(
     ILogger<LoginCommandHandler> logger,

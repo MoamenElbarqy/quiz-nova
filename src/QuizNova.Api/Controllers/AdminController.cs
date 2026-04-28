@@ -7,6 +7,7 @@ using QuizNova.Api.DTOs.Requests;
 using QuizNova.Application.Features.Admin.Commands.CreateAdmin;
 using QuizNova.Application.Features.Admin.Commands.DeleteAdmin;
 using QuizNova.Application.Features.Admin.Commands.UpdateAdmin;
+using QuizNova.Application.Features.Admin.Queries.GetAdminById;
 using QuizNova.Application.Features.Admin.Queries.GetAllAdmins;
 using QuizNova.Domain.Entities.Identity;
 
@@ -18,9 +19,19 @@ namespace QuizNova.Api.Controllers;
 public sealed class AdminController(ISender sender) : ApiController
 {
     [HttpGet]
-    public async Task<IActionResult> GetAllAdmins()
+    public async Task<IActionResult> GetAllAdmins([FromQuery] GetAllAdminsQuery query)
     {
-        var result = await sender.Send(new GetAllAdminsQuery());
+        var result = await sender.Send(query);
+
+        return result.Match(
+            Ok,
+            Problem);
+    }
+
+    [HttpGet("{adminId:guid}")]
+    public async Task<IActionResult> GetAdminById([FromRoute] Guid adminId)
+    {
+        var result = await sender.Send(new GetAdminByIdQuery(adminId));
 
         return result.Match(
             Ok,

@@ -7,6 +7,6 @@ public sealed class DeleteInstructorCommandValidator : AbstractValidator<DeleteI
     public DeleteInstructorCommandValidator()
     {
         RuleFor(command => command.Id)
-            .NotEmpty();
+            .NotEmpty().WithMessage("Instructor ID is required.");
     }
 }
