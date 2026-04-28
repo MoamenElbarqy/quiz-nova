@@ -12,7 +12,7 @@ public class Choice : Entity
 
     public int DisplayOrder { get; private set; }
 
-    public Question? Question { get; private set; }
+    public Question? Question { get; init; }
 
     private Choice()
     {
