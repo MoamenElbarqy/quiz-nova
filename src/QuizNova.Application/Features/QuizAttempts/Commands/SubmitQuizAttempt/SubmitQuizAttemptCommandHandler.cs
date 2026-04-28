@@ -1,6 +1,7 @@
 using MediatR;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
@@ -9,25 +10,34 @@ using QuizNova.Application.Features.QuizAttempts.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.Mcq;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalse;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.McqAnswer;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalseAnswer;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
 
 namespace QuizNova.Application.Features.QuizAttempts.Commands.SubmitQuizAttempt;
 
-public sealed class SubmitQuizAttemptCommandHandler(IAppDbContext dbContext)
+public sealed class SubmitQuizAttemptCommandHandler(
+    IAppDbContext dbContext,
+    ILogger<SubmitQuizAttemptCommandHandler> logger)
     : IRequestHandler<SubmitQuizAttemptCommand, Result<QuizAttemptDto>>
 {
     public async Task<Result<QuizAttemptDto>> Handle(SubmitQuizAttemptCommand request, CancellationToken ct)
     {
+        logger.LogInformation(
+            "Submitting quiz attempt {QuizAttemptId} for student {StudentId} and quiz {QuizId}",
+            request.QuizAttemptId,
+            request.StudentId,
+            request.QuizId);
+
         var studentExists = await dbContext.Students
             .AsNoTracking()
             .AnyAsync(student => student.Id == request.StudentId, ct);
 
         if (!studentExists)
         {
+            logger.LogWarning("Quiz attempt submission failed: Student {StudentId} not found", request.StudentId);
             return ApplicationErrors.QuizAttemptStudentNotFound(request.StudentId);
         }
 
@@ -37,6 +47,7 @@ public sealed class SubmitQuizAttemptCommandHandler(IAppDbContext dbContext)
 
         if (quiz is null)
         {
+            logger.LogWarning("Quiz attempt submission failed: Quiz {QuizId} not found", request.QuizId);
             return ApplicationErrors.QuizNotFound(request.QuizId);
         }
 
@@ -55,6 +66,11 @@ public sealed class SubmitQuizAttemptCommandHandler(IAppDbContext dbContext)
 
         if (!isStudentEnrolledInCourse)
         {
+            logger.LogWarning(
+                "Quiz attempt submission failed: Student {StudentId} is not enrolled in course {CourseId}",
+                request.StudentId,
+                quiz.CourseId);
+
             return ApplicationErrors.StudentNotEnrolledInCourse(request.StudentId, quiz.CourseId);
         }
 
@@ -67,6 +83,11 @@ public sealed class SubmitQuizAttemptCommandHandler(IAppDbContext dbContext)
 
         if (attemptAlreadyExists)
         {
+            logger.LogWarning(
+                "Quiz attempt submission failed: Attempt already exists for student {StudentId} and quiz {QuizId}",
+                request.StudentId,
+                request.QuizId);
+
             return ApplicationErrors.QuizAttemptAlreadyExists(request.StudentId, request.QuizId);
         }
 
@@ -77,6 +98,11 @@ public sealed class SubmitQuizAttemptCommandHandler(IAppDbContext dbContext)
         {
             if (!questionsById.TryGetValue(answer.QuestionId, out var question))
             {
+                logger.LogWarning(
+                    "Quiz attempt submission failed: Question {QuestionId} not found in quiz {QuizId}",
+                    answer.QuestionId,
+                    request.QuizId);
+
                 return QuizAttemptErrors.QuestionNotFoundInQuiz(answer.QuestionId, request.QuizId);
             }
 
@@ -86,15 +112,20 @@ public sealed class SubmitQuizAttemptCommandHandler(IAppDbContext dbContext)
                     request,
                     question,
                     mcqAnswer),
-                SubmitTrueFalseQuestionAnswerCommand trueFalseAnswer => CreateTrueFalseAnswer(
+                SubmitTfAnswerCommand tfAnswer => CreateTfAnswer(
                     request,
                     question,
-                    trueFalseAnswer),
+                    tfAnswer),
                 _ => Error.Unexpected("QuizAttempt.Answer.Unsupported", "Unknown answer type."),
             };
 
             if (createAnswerResult.IsError)
             {
+                logger.LogWarning(
+                    "Quiz attempt submission failed: Error creating answer for question {QuestionId}. Error: {ErrorDescription}",
+                    answer.QuestionId,
+                    createAnswerResult.TopError.Description);
+
                 return createAnswerResult.TopError;
             }
 
@@ -111,6 +142,10 @@ public sealed class SubmitQuizAttemptCommandHandler(IAppDbContext dbContext)
 
         if (createAttemptResult.IsError)
         {
+            logger.LogWarning(
+                "Quiz attempt submission failed: Domain error during attempt submission. Error: {ErrorDescription}",
+                createAttemptResult.TopError.Description);
+
             return createAttemptResult.TopError;
         }
 
@@ -125,9 +160,22 @@ public sealed class SubmitQuizAttemptCommandHandler(IAppDbContext dbContext)
             .Include(quizAttempt => quizAttempt.StudentAnswers)
             .FirstOrDefaultAsync(ct);
 
-        return createdAttempt is null
-            ? Error.Unexpected("QuizAttempt.Creation.Unexpected", "Quiz attempt was created but could not be loaded.")
-            : createdAttempt.ToQuizAttemptDto();
+        if (createdAttempt is null)
+        {
+            logger.LogError(
+                "Quiz attempt submission failed: Created attempt {QuizAttemptId} could not be re-loaded from database",
+                request.QuizAttemptId);
+
+            return Error.Unexpected("QuizAttempt.Creation.Unexpected", "Quiz attempt was created but could not be loaded.");
+        }
+
+        logger.LogInformation(
+            "Successfully submitted quiz attempt {QuizAttemptId} for student {StudentId}. Score: {Score}",
+            request.QuizAttemptId,
+            request.StudentId,
+            createdAttempt.Score);
+
+        return createdAttempt.ToQuizAttemptDto();
     }
 
     private static Result<QuestionAnswer> CreateMcqAnswer(
@@ -141,7 +189,7 @@ public sealed class SubmitQuizAttemptCommandHandler(IAppDbContext dbContext)
         }
 
         var createAnswerResult = McqAnswer.Create(
-            Guid.NewGuid(),
+            answer.AnswerId,
             request.StudentId,
             answer.QuestionId,
             request.QuizAttemptId,
@@ -151,17 +199,17 @@ public sealed class SubmitQuizAttemptCommandHandler(IAppDbContext dbContext)
         return createAnswerResult.IsError ? createAnswerResult.TopError : createAnswerResult.Value;
     }
 
-    private static Result<QuestionAnswer> CreateTrueFalseAnswer(
+    private static Result<QuestionAnswer> CreateTfAnswer(
         SubmitQuizAttemptCommand request,
         Question question,
-        SubmitTrueFalseQuestionAnswerCommand answer)
+        SubmitTfAnswerCommand answer)
     {
-        if (question is not TrueFalseQuestion)
+        if (question is not Tf)
         {
-            return QuizAttemptErrors.QuestionTypeMismatch(answer.QuestionId, "true-false");
+            return QuizAttemptErrors.QuestionTypeMismatch(answer.QuestionId, "tf");
         }
 
-        var createAnswerResult = TrueFalseQuestionAnswer.Create(
+        var createAnswerResult = TfAnswer.Create(
             Guid.NewGuid(),
             request.StudentId,
             answer.QuestionId,

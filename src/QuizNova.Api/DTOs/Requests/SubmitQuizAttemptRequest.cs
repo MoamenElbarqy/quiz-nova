@@ -11,16 +11,19 @@ public sealed record SubmitQuizAttemptRequest(
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(SubmitMcqAnswerRequest), "mcq")]
-[JsonDerivedType(typeof(SubmitTrueFalseQuestionAnswerRequest), "true-false")]
+[JsonDerivedType(typeof(SubmitTfAnswerRequest), "tf")]
 public abstract record SubmitQuestionAnswerRequest(
+    Guid Id,
     Guid QuestionId);
 
 public sealed record SubmitMcqAnswerRequest(
+    Guid Id,
     Guid QuestionId,
     Guid SelectedChoiceId)
-    : SubmitQuestionAnswerRequest(QuestionId);
+    : SubmitQuestionAnswerRequest(Id, QuestionId);
 
-public sealed record SubmitTrueFalseQuestionAnswerRequest(
+public sealed record SubmitTfAnswerRequest(
+    Guid Id,
     Guid QuestionId,
     bool StudentChoice)
-    : SubmitQuestionAnswerRequest(QuestionId);
+    : SubmitQuestionAnswerRequest(Id, QuestionId);

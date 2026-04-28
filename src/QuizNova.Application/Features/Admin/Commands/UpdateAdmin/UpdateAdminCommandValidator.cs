@@ -7,19 +7,19 @@ public sealed class UpdateAdminCommandValidator : AbstractValidator<UpdateAdminC
     public UpdateAdminCommandValidator()
     {
         RuleFor(command => command.Id)
-            .NotEmpty();
+            .NotEmpty().WithMessage("Admin ID is required.");
 
         RuleFor(command => command.Name)
-            .NotEmpty();
+            .NotEmpty().WithMessage("Name is required.");
 
         RuleFor(command => command.Email)
-            .NotEmpty()
-            .EmailAddress();
+            .NotEmpty().WithMessage("Email is required.")
+            .EmailAddress().WithMessage("A valid email address is required.");
 
         RuleFor(command => command.Password)
-            .NotEmpty();
+            .NotEmpty().WithMessage("Password is required.");
 
         RuleFor(command => command.PhoneNumber)
-            .NotEmpty();
+            .NotEmpty().WithMessage("Phone number is required.");
     }
 }

@@ -9,6 +9,7 @@ using QuizNova.Application.Features.Students.Commands.CreateStudent;
 using QuizNova.Application.Features.Students.Commands.DeleteStudent;
 using QuizNova.Application.Features.Students.Commands.UpdateStudent;
 using QuizNova.Application.Features.Students.Queries.GetAllStudents;
+using QuizNova.Application.Features.Students.Queries.GetStudentById;
 
 namespace QuizNova.Api.Controllers;
 
@@ -18,9 +19,19 @@ namespace QuizNova.Api.Controllers;
 public sealed class StudentController(ISender sender) : ApiController
 {
     [HttpGet]
-    public async Task<IActionResult> GetAllStudents()
+    public async Task<IActionResult> GetAllStudents([FromQuery] GetAllStudentsQuery query)
     {
-        var result = await sender.Send(new GetAllStudentsQuery());
+        var result = await sender.Send(query);
+
+        return result.Match(
+            Ok,
+            Problem);
+    }
+
+    [HttpGet("{studentId:guid}")]
+    public async Task<IActionResult> GetStudentById([FromRoute] Guid studentId)
+    {
+        var result = await sender.Send(new GetStudentByIdQuery(studentId));
 
         return result.Match(
             Ok,

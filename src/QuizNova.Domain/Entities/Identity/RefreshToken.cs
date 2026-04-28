@@ -10,7 +10,7 @@ public sealed class RefreshToken : Entity
 
     public Guid UserId { get; private set; }
 
-    public DateTimeOffset ExpiresOnUtc { get; private set; }
+    public DateTimeOffset ExpiresOnUtc { get; }
 
     public DateTimeOffset? RevokedAtUtc { get; private set; }
 

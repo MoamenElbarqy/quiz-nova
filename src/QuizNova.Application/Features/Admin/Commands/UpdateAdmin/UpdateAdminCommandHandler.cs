@@ -1,43 +1,48 @@
 using MediatR;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Admin.DTOs;
 using QuizNova.Application.Features.Admin.Mappers;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Users;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Application.Features.Admin.Commands.UpdateAdmin;
 
-public sealed class UpdateAdminCommandHandler(IAppDbContext dbContext)
+public sealed class UpdateAdminCommandHandler(
+    IAppDbContext dbContext,
+    ILogger<UpdateAdminCommandHandler> logger)
     : IRequestHandler<UpdateAdminCommand, Result<AdminDto>>
 {
     public async Task<Result<AdminDto>> Handle(UpdateAdminCommand request, CancellationToken ct)
     {
+        logger.LogInformation("Updating admin with ID: {AdminId}", request.Id);
+
         var admin = await dbContext.Admins
             .FirstOrDefaultAsync(entity => entity.Id == request.Id, ct);
 
         if (admin is null)
         {
+            logger.LogWarning("Admin update failed: Admin with ID {AdminId} not found", request.Id);
             return ApplicationErrors.AdminNotFound(request.Id);
         }
 
-        if (await dbContext.Entities
-                .OfType<User>()
+        if (await dbContext.Users
                 .AnyAsync(user => user.Id != request.Id && user.PersonalInformation.Email == request.Email, ct))
         {
+            logger.LogWarning("Admin update failed: Email {Email} already exists for another user", request.Email);
             return ApplicationErrors.UserEmailAlreadyExists(request.Email);
         }
 
-        if (await dbContext.Entities
-                .OfType<User>()
+        if (await dbContext.Users
                 .AnyAsync(
                     user => user.Id != request.Id && user.PersonalInformation.PhoneNumber == request.PhoneNumber,
                     ct))
         {
+            logger.LogWarning("Admin update failed: Phone number {PhoneNumber} already exists for another user", request.PhoneNumber);
             return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PhoneNumber);
         }
 
@@ -49,6 +54,7 @@ public sealed class UpdateAdminCommandHandler(IAppDbContext dbContext)
 
         if (personalInformationResult.IsError)
         {
+            logger.LogWarning("Admin update failed: Error creating personal information. Error: {ErrorDescription}", personalInformationResult.TopError.Description);
             return personalInformationResult.TopError;
         }
 
@@ -56,11 +62,14 @@ public sealed class UpdateAdminCommandHandler(IAppDbContext dbContext)
 
         if (updateAdminResult.IsError)
         {
+            logger.LogWarning("Admin update failed: Error updating admin entity. Error: {ErrorDescription}", updateAdminResult.TopError.Description);
             return updateAdminResult.TopError;
         }
 
         dbContext.Admins.Update(admin);
         await dbContext.SaveChangesAsync(ct);
+
+        logger.LogInformation("Successfully updated admin {AdminId}", request.Id);
 
         return admin.ToAdminDto();
     }

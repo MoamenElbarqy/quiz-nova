@@ -17,9 +17,9 @@ namespace QuizNova.Api.Controllers;
 public sealed class QuizController(ISender sender) : ApiController
 {
     [HttpGet]
-    public async Task<IActionResult> GetAllQuizzes()
+    public async Task<IActionResult> GetAllQuizzes([FromQuery] GetAllQuizzesQuery query)
     {
-        var result = await sender.Send(new GetAllQuizzesQuery());
+        var result = await sender.Send(query);
 
         return result.Match(
             Ok,
@@ -46,7 +46,7 @@ public sealed class QuizController(ISender sender) : ApiController
             Problem);
     }
 
-    [HttpPost()]
+    [HttpPost]
     public async Task<IActionResult> CreateQuiz([FromBody] CreateQuizRequest request)
     {
         var createQuizResult = await sender.Send(new CreateQuizCommand(
@@ -74,7 +74,7 @@ public sealed class QuizController(ISender sender) : ApiController
                                     c.Text,
                                     c.DisplayOrder))
                                 .ToList()),
-                        CreateTrueFalseQuestionRequest tfq => new CreateTrueFalseQuestionCommand(
+                        CreateTfRequest tfq => new CreateTfCommand(
                             tfq.Id,
                             tfq.QuizId,
                             tfq.QuestionText,

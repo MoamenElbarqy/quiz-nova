@@ -13,7 +13,7 @@ public sealed record CreateQuizRequest(
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(CreateMcqRequest), "mcq")]
-[JsonDerivedType(typeof(CreateTrueFalseQuestionRequest), "true-false")]
+[JsonDerivedType(typeof(CreateTfRequest), "tf")]
 public abstract record CreateQuizQuestionRequest(
     Guid Id,
     Guid QuizId,
@@ -30,7 +30,7 @@ public sealed record CreateMcqRequest(
     IReadOnlyCollection<CreateChoiceRequest> Choices)
     : CreateQuizQuestionRequest(Id, QuizId, QuestionText, Marks);
 
-public sealed record CreateTrueFalseQuestionRequest(
+public sealed record CreateTfRequest(
     Guid Id,
     Guid QuizId,
     string QuestionText,

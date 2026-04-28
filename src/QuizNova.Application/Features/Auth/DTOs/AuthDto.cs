@@ -1,4 +1,4 @@
-namespace QuizNova.Application.Features.Identity.Dtos;
+namespace QuizNova.Application.Features.Auth.DTOs;
 
 public sealed record AuthDto(
     TokenDto Token,

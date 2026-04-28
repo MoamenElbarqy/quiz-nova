@@ -7,6 +7,6 @@ public sealed class GetQuizByIdQueryValidator : AbstractValidator<GetQuizByIdQue
     public GetQuizByIdQueryValidator()
     {
         RuleFor(query => query.QuizId)
-            .NotEmpty();
+            .NotEmpty().WithMessage("Quiz ID is required.");
     }
 }

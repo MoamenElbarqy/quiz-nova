@@ -10,13 +10,13 @@ public static class CourseMapper
         ArgumentNullException.ThrowIfNull(course);
 
         var instructorName = course.Instructor?.PersonalInformation.Name ?? string.Empty;
-        var quizCount = course.Quizzes.Count();
+        var quizzesCount = course.Quizzes.Count();
 
         return new CourseDto(
             course.Id,
             course.Name,
             instructorName,
-            EnrolledStudentCount: 0,
-            quizCount);
+            EnrolledStudentsCount: 0,
+            quizzesCount);
     }
 }

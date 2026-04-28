@@ -9,23 +9,23 @@ public sealed class CreateStudentCommandValidator : AbstractValidator<CreateStud
     public CreateStudentCommandValidator()
     {
         RuleFor(command => command.Id)
-            .NotEmpty();
+            .NotEmpty().WithMessage("Student ID is required.");
 
         RuleFor(command => command.Name)
-            .NotEmpty();
+            .NotEmpty().WithMessage("Name is required.");
 
         RuleFor(command => command.Email)
-            .NotEmpty()
-            .EmailAddress();
+            .NotEmpty().WithMessage("Email is required.")
+            .EmailAddress().WithMessage("A valid email address is required.");
 
         RuleFor(command => command.Password)
-            .NotEmpty();
+            .NotEmpty().WithMessage("Password is required.");
 
         RuleFor(command => command.PhoneNumber)
-            .NotEmpty();
+            .NotEmpty().WithMessage("Phone number is required.");
 
         RuleFor(command => command.Role)
-            .NotEmpty()
+            .NotEmpty().WithMessage("Role is required.")
             .Must(role => string.Equals(role, UserRole.Student.ToString(), StringComparison.OrdinalIgnoreCase))
             .WithMessage($"Role must be '{UserRole.Student}'.");
     }

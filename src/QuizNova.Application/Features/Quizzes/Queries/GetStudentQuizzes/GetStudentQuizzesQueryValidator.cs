@@ -7,6 +7,6 @@ public sealed class GetStudentQuizzesQueryValidator : AbstractValidator<GetStude
     public GetStudentQuizzesQueryValidator()
     {
         RuleFor(query => query.StudentId)
-            .NotEmpty();
+            .NotEmpty().WithMessage("Student ID is required.");
     }
 }

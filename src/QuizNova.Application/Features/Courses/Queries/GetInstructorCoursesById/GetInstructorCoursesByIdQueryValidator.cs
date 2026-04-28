@@ -7,7 +7,7 @@ public sealed class GetInstructorCoursesByIdQueryValidator : AbstractValidator<G
     public GetInstructorCoursesByIdQueryValidator()
     {
         RuleFor(query => query.InstructorId)
-            .NotEmpty();
+            .NotEmpty().WithMessage("Instructor ID is required.");
     }
 }
 

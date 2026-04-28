@@ -7,6 +7,6 @@ public sealed class DeleteAdminCommandValidator : AbstractValidator<DeleteAdminC
     public DeleteAdminCommandValidator()
     {
         RuleFor(command => command.Id)
-            .NotEmpty();
+            .NotEmpty().WithMessage("Admin ID is required.");
     }
 }
