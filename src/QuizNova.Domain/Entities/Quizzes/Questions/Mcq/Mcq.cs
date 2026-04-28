@@ -10,7 +10,6 @@ public class Mcq : Question
 
     private Mcq()
     {
-        _choices = new List<Choice>();
     }
 
     private Mcq(
@@ -31,7 +30,7 @@ public class Mcq : Question
 
     public Guid CorrectChoiceId { get; private set; }
 
-    public Choice? CorrectChoice { get; private set; }
+    public Choice? CorrectChoice { get; init; }
 
     public IEnumerable<Choice> Choices => _choices.AsReadOnly();
 

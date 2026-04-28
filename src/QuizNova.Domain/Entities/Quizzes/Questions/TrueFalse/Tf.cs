@@ -3,15 +3,15 @@ using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
 namespace QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
 
-public class TrueFalseQuestion : Question
+public class Tf : Question
 {
     public bool CorrectChoice { get; private set; }
 
-    private TrueFalseQuestion()
+    private Tf()
     {
     }
 
-    private TrueFalseQuestion(
+    private Tf(
         Guid id,
         Guid quizId,
         string questionText,
@@ -23,7 +23,7 @@ public class TrueFalseQuestion : Question
         CorrectChoice = correctChoice;
     }
 
-    public static Result<TrueFalseQuestion> Create(
+    public static Result<Tf> Create(
         Guid id,
         Guid quizId,
         string questionText,
@@ -42,7 +42,7 @@ public class TrueFalseQuestion : Question
             return validationError.TopError;
         }
 
-        return new TrueFalseQuestion(
+        return new Tf(
             id,
             quizId,
             questionText,

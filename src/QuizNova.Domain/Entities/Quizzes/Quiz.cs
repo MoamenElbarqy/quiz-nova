@@ -3,8 +3,8 @@ using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.Mcq;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalse;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.McqAnswer;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalseAnswer;
 using QuizNova.Domain.Entities.Quizzes.Enums;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
@@ -54,9 +54,9 @@ public class Quiz : Entity
 
     public IEnumerable<Question> Questions => _questions.AsReadOnly();
 
-    public Course? Course { get; private set; }
+    public Course? Course { get; init; }
 
-    public Instructor? Instructor { get; private set; }
+    public Instructor? Instructor { get; init; }
 
     public QuizStatus Status => DateTimeOffset.UtcNow < StartsAtUtc
         ? QuizStatus.Scheduled
@@ -288,7 +288,7 @@ public class Quiz : Entity
         return answer switch
         {
             McqAnswer mcqAnswer => ValidateMcqAnswer(question, mcqAnswer),
-            TrueFalseQuestionAnswer trueFalseAnswer => ValidateTrueFalseAnswer(question, trueFalseAnswer),
+            TfAnswer tfAnswer => ValidateTfAnswer(question, tfAnswer),
             _ => Error.Unexpected(
                 "QuizAttempt.Answer.Unsupported",
                 $"Unsupported answer type '{answer.GetType().Name}'."),
@@ -310,11 +310,11 @@ public class Quiz : Entity
         return Result.Validated;
     }
 
-    private static Result<Validated> ValidateTrueFalseAnswer(Question question, TrueFalseQuestionAnswer answer)
+    private static Result<Validated> ValidateTfAnswer(Question question, TfAnswer answer)
     {
-        if (question is not TrueFalseQuestion)
+        if (question is not Tf)
         {
-            return QuizAttemptErrors.QuestionTypeMismatch(answer.QuestionId, "true-false");
+            return QuizAttemptErrors.QuestionTypeMismatch(answer.QuestionId, "tf");
         }
 
         return Result.Validated;
