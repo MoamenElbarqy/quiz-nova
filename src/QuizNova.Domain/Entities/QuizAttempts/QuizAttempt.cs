@@ -9,10 +9,8 @@ namespace QuizNova.Domain.Entities.QuizAttempts;
 public class QuizAttempt : Entity
 {
     private readonly List<QuestionAnswer> _studentAnswers;
-
     private QuizAttempt()
     {
-        _studentAnswers = new List<QuestionAnswer>();
     }
 
     private QuizAttempt(
@@ -20,7 +18,7 @@ public class QuizAttempt : Entity
         Guid studentId,
         Guid quizId,
         DateTime startedAt,
-        DateTime? submittedAt,
+        DateTime submittedAt,
         List<QuestionAnswer> studentAnswers)
         : base(id)
     {
@@ -37,11 +35,13 @@ public class QuizAttempt : Entity
 
     public DateTime StartedAt { get; private set; }
 
-    public DateTime? SubmittedAt { get; private set; }
+    public DateTime SubmittedAt { get; private set; }
 
-    public Student? Student { get; private set; }
+    public Student? Student { get; init; }
 
-    public Quiz? Quiz { get; private set; }
+    public Quiz? Quiz { get; init; }
+
+    public int Score => StudentAnswers.Sum(answer => answer.IsCorrect ? answer.Question!.Marks : 0);
 
     public IEnumerable<QuestionAnswer> StudentAnswers => _studentAnswers.AsReadOnly();
 
@@ -50,7 +50,7 @@ public class QuizAttempt : Entity
         Guid studentId,
         Guid quizId,
         DateTime startedAt,
-        DateTime? submittedAt,
+        DateTime submittedAt,
         List<QuestionAnswer> studentAnswers)
     {
         if (studentId == Guid.Empty)
@@ -68,7 +68,7 @@ public class QuizAttempt : Entity
             return QuizAttemptErrors.StartedAtRequired;
         }
 
-        if (submittedAt.HasValue && submittedAt.Value < startedAt)
+        if (submittedAt < startedAt)
         {
             return QuizAttemptErrors.SubmittedAtInvalid;
         }
