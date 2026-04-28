@@ -5,7 +5,7 @@ using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 
-public class QuestionAnswer : Entity
+public abstract class QuestionAnswer : Entity
 {
     public Guid StudentId { get; private set; }
 
@@ -13,11 +13,13 @@ public class QuestionAnswer : Entity
 
     public Guid QuizAttemptId { get; private set; }
 
-    public QuizAttempt? QuizAttempt { get; private set; }
+    public QuizAttempt? QuizAttempt { get; init; }
 
-    public Student? Student { get; private set; }
+    public Student? Student { get; init; }
 
-    public Question? Question { get; private set; }
+    public Question? Question { get; init; }
+
+    public abstract bool IsCorrect { get; }
 
     protected QuestionAnswer(
         Guid id,
@@ -42,17 +44,17 @@ public class QuestionAnswer : Entity
     {
         if (studentId == Guid.Empty)
         {
-            return StudentAnswerErrors.StudentIdRequired;
+            return QuestionAnswerErrors.StudentIdRequired;
         }
 
         if (questionId == Guid.Empty)
         {
-            return StudentAnswerErrors.QuestionIdRequired;
+            return QuestionAnswerErrors.QuestionIdRequired;
         }
 
         if (quizAttemptId == Guid.Empty)
         {
-            return StudentAnswerErrors.QuizAttemptIdRequired;
+            return QuestionAnswerErrors.QuizAttemptIdRequired;
         }
 
         return Result.Validated;
