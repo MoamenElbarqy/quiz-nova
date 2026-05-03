@@ -1,7 +1,7 @@
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Quizzes;
-using QuizNova.Domain.Entities.Users;
+using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Domain.Entities.Courses;
 
@@ -15,7 +15,7 @@ public sealed class Course : Entity
 
     private Course(
         Guid id,
-        Guid instructorId,
+        Guid? instructorId,
         string name,
         int minimumPassingMarks,
         int maximumMarks,
@@ -29,7 +29,7 @@ public sealed class Course : Entity
         _quizzes = quizzes;
     }
 
-    public Guid InstructorId { get; private set; }
+    public Guid? InstructorId { get; private set; }
 
     public string Name { get; private set; } = string.Empty;
 
@@ -37,19 +37,19 @@ public sealed class Course : Entity
 
     public int MaximumMarks { get; private set; }
 
-    public Instructor? Instructor { get; private set; }
+    public Instructor? Instructor { get; }
 
     public IEnumerable<Quiz> Quizzes => _quizzes.AsReadOnly();
 
     public static Result<Course> Create(
         Guid id,
-        Guid instructorId,
+        Guid? instructorId,
         string name,
         int minimumPassingMarks,
         int maximumMarks,
         List<Quiz> quizzes)
     {
-        if (instructorId == Guid.Empty)
+        if (instructorId.HasValue && instructorId.Value == Guid.Empty)
         {
             return CourseErrors.InstructorIdRequired;
         }

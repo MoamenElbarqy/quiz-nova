@@ -13,4 +13,4 @@ public sealed record CreateQuizCommand(
     DateTimeOffset StartsAtUtc,
     DateTimeOffset EndsAtUtc,
     IReadOnlyCollection<CreateQuestionCommand> Questions)
-    : IRequest<Result<QuizDetailsDto>>;
+    : IRequest<Result<QuizDto>>;

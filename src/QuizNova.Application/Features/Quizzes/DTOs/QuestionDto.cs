@@ -14,8 +14,6 @@ public abstract class QuestionDto
     public string QuestionText { get; init; } = string.Empty;
 
     public int Marks { get; init; }
-
-    public string Type { get; init; } = string.Empty;
 }
 
 public sealed class McqDto : QuestionDto
@@ -24,7 +22,7 @@ public sealed class McqDto : QuestionDto
 
     public Guid CorrectChoiceId { get; init; }
 
-    public IReadOnlyCollection<ChoiceDto> Choices { get; init; } = Array.Empty<ChoiceDto>();
+    public IReadOnlyCollection<ChoiceDto> Choices { get; init; } = [];
 }
 
 public sealed class TfDto : QuestionDto

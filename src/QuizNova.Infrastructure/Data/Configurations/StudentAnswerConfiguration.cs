@@ -9,6 +9,7 @@ public sealed class StudentAnswerConfiguration : IEntityTypeConfiguration<Questi
 {
     public void Configure(EntityTypeBuilder<QuestionAnswer> builder)
     {
-        builder.ToTable("StudentAnswers");
+        builder.ToTable("QuestionAnswers");
+        builder.HasKey(a => a.Id);
     }
 }

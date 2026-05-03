@@ -12,6 +12,8 @@ using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
 using QuizNova.Domain.Entities.StudentCourses;
 using QuizNova.Domain.Entities.Users;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.Instructors;
 using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Infrastructure.Data;
@@ -21,8 +23,6 @@ public class AppDbContext(
     IMediator mediator)
     : DbContext(options), IAppDbContext
 {
-    public DbSet<Entity> Entities => Set<Entity>();
-
     public DbSet<User> Users => Set<User>();
 
     public DbSet<Course> Courses => Set<Course>();

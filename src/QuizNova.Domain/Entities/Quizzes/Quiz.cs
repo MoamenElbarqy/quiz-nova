@@ -9,7 +9,7 @@ using QuizNova.Domain.Entities.Quizzes.Enums;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
-using QuizNova.Domain.Entities.Users;
+using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Domain.Entities.Quizzes;
 

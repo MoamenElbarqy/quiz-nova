@@ -6,7 +6,8 @@ using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.StudentCourses;
-using QuizNova.Domain.Entities.Users;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.Instructors;
 using QuizNova.Domain.Entities.Users.Student;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
@@ -33,7 +34,6 @@ public sealed class DbInitializer(AppDbContext dbContext)
         if (!await dbContext.Courses.AnyAsync(ct))
         {
             var instructors = await dbContext.Instructors
-                .AsNoTracking()
                 .OrderBy(instructor => instructor.PersonalInformation.Email)
                 .ToListAsync(ct);
 
@@ -170,4 +170,3 @@ public sealed class DbInitializer(AppDbContext dbContext)
         return result.Value;
     }
 }
-

@@ -13,6 +13,14 @@ public sealed class GetAllCoursesQueryValidator : AbstractValidator<GetAllCourse
             .GreaterThan(0)
             .LessThanOrEqualTo(100);
 
+        RuleFor(query => query.InstructorId)
+            .NotEqual(Guid.Empty)
+            .When(query => query.InstructorId.HasValue);
+
+        RuleFor(query => query.StudentId)
+            .NotEqual(Guid.Empty)
+            .When(query => query.StudentId.HasValue);
+
         RuleFor(query => query.EnrolledStudentsCount)
             .GreaterThanOrEqualTo(0)
             .When(query => query.EnrolledStudentsCount.HasValue);

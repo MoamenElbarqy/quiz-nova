@@ -6,8 +6,10 @@ using Microsoft.Extensions.Logging;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Quizzes.DTOs;
+using QuizNova.Application.Features.Quizzes.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Quizzes;
+using QuizNova.Domain.Entities.Quizzes.Events;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
@@ -18,9 +20,9 @@ namespace QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 public sealed class CreateQuizCommandHandler(
     IAppDbContext dbContext,
     ILogger<CreateQuizCommandHandler> logger)
-    : IRequestHandler<CreateQuizCommand, Result<QuizDetailsDto>>
+    : IRequestHandler<CreateQuizCommand, Result<QuizDto>>
 {
-    public async Task<Result<QuizDetailsDto>> Handle(CreateQuizCommand request, CancellationToken ct)
+    public async Task<Result<QuizDto>> Handle(CreateQuizCommand request, CancellationToken ct)
     {
         logger.LogInformation("Creating quiz with title: {Title} for course: {CourseId}", request.Title, request.CourseId);
 
@@ -130,11 +132,12 @@ public sealed class CreateQuizCommandHandler(
         }
 
         await dbContext.Quizzes.AddAsync(createQuizResult.Value, ct);
+        createQuizResult.Value.AddDomainEvent(new QuizCreatedEvent(createQuizResult.Value.Id));
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("Successfully created quiz {QuizId} with {QuestionCount} questions", request.Id, questions.Count);
 
-        return createQuizResult.Value.ToQuizDetailsDto();
+        return createQuizResult.Value.ToQuizDto();
     }
 
     private Result<Question> CreateQuestion(

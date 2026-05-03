@@ -1,4 +1,4 @@
-﻿using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Application.Common.Errors;
 
@@ -23,7 +23,6 @@ public static class ApplicationErrors
     public static readonly Error TokenGenerationFailed = Error.Failure(
         code: "Auth.TokenGeneration.Failed",
         description: "Failed to generate new JWT token.");
-
 
     public static Error InstructorNotFound(Guid instructorId) =>
         Error.NotFound(
@@ -150,4 +149,14 @@ public static class ApplicationErrors
         Error.Validation(
             code: "Admin.Role.Invalid",
             description: $"Role '{role}' is invalid for admin creation.");
+
+    public static Error QuizAttemptNotFound(Guid attemptId) =>
+        Error.NotFound(
+            code: "QuizAttempt.NotFound",
+            description: $"Quiz attempt with ID '{attemptId}' was not found.");
+
+    public static Error CourseNotFound(Guid courseId) =>
+        Error.NotFound(
+            code: "Course.NotFound",
+            description: $"Course with ID '{courseId}' was not found.");
 }

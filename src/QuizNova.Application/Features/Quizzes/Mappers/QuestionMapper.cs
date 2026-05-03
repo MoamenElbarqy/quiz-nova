@@ -17,7 +17,6 @@ public static class QuestionMapper
                 QuizId = mcq.QuizId,
                 QuestionText = mcq.QuestionText,
                 Marks = mcq.Marks,
-                Type = "mcq",
                 NumberOfChoices = mcq.NumberOfChoices,
                 CorrectChoiceId = mcq.CorrectChoiceId,
                 Choices = mcq.Choices
@@ -38,7 +37,6 @@ public static class QuestionMapper
                 QuizId = tf.QuizId,
                 QuestionText = tf.QuestionText,
                 Marks = tf.Marks,
-                Type = "tf",
                 CorrectChoice = tf.CorrectChoice,
             },
 

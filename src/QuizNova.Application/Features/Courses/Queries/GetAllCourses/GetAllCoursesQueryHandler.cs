@@ -60,6 +60,17 @@ public sealed class GetAllCoursesQueryHandler(
         GetAllCoursesQuery request,
         IAppDbContext dbContext)
     {
+        if (request.InstructorId.HasValue)
+        {
+            query = query.Where(course => course.InstructorId == request.InstructorId.Value);
+        }
+
+        if (request.StudentId.HasValue)
+        {
+            query = query.Where(course =>
+                dbContext.StudentCourses.Any(sc => sc.StudentId == request.StudentId.Value && sc.CourseId == course.Id));
+        }
+
         if (request.EnrolledStudentsCount.HasValue)
         {
             query = query.Where(course =>

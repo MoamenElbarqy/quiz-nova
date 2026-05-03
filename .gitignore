@@ -89,6 +89,8 @@ _ReSharper*/
 *.pid.lock
 .codex
 .gemini
+AGENTS.md
+GEMENI.md
 appsettings.Development.json
 
 /shelf/
