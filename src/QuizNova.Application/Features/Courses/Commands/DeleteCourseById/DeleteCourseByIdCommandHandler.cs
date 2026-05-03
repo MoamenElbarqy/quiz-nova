@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Courses.Events;
 
 namespace QuizNova.Application.Features.Courses.Commands.DeleteCourseById;
 
@@ -28,6 +29,7 @@ public sealed class DeleteCourseByIdCommandHandler(
         }
 
         dbContext.Courses.Remove(course);
+        course.AddDomainEvent(new CourseDeletedEvent(course.Id));
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("Successfully deleted course {CourseId}", request.CourseId);

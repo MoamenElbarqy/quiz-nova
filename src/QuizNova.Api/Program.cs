@@ -23,7 +23,11 @@ builder.Services.AddApi(builder.Configuration, appSettings);
 
 var app = builder.Build();
 
+app.UseResponseCompression();
+
 app.UseExceptionHandler();
+
+app.UseOutputCache();
 
 app.UseCors(appSettings.Cors.PolicyName);
 

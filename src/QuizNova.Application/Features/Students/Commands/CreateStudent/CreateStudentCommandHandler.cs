@@ -9,6 +9,7 @@ using QuizNova.Application.Features.Students.DTOs;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.Users.Student;
+using QuizNova.Domain.Entities.Users.Student.Events;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Application.Features.Students.Commands.CreateStudent;
@@ -80,6 +81,7 @@ public sealed class CreateStudentCommandHandler(
         }
 
         await dbContext.Students.AddAsync(createStudentResult.Value, ct);
+        createStudentResult.Value.AddDomainEvent(new StudentCreatedEvent(createStudentResult.Value.Id));
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("Successfully created student {StudentId} with email {Email}", request.Id, request.Email);

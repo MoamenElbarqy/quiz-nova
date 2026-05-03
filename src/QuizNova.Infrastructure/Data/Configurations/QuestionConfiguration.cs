@@ -10,5 +10,16 @@ public sealed class QuestionConfiguration : IEntityTypeConfiguration<Question>
     public void Configure(EntityTypeBuilder<Question> builder)
     {
         builder.ToTable("Questions");
+        builder.HasKey(q => q.Id);
+        
+        builder.Property(q => q.QuestionText)
+            .HasMaxLength(2000)
+            .IsRequired();
+
+        builder.Property(q => q.Marks)
+            .IsRequired();
+            
+        builder.Property(q => q.DisplayOrder)
+            .IsRequired();
     }
 }

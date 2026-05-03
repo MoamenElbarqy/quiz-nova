@@ -2,6 +2,7 @@ using MediatR;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
@@ -16,6 +17,10 @@ namespace QuizNova.Api.Controllers;
 [Route("quizzes")]
 public sealed class QuizController(ISender sender) : ApiController
 {
+    [EndpointSummary("Retrieves quizzes.")]
+    [EndpointDescription("Returns a paginated and filterable list of quizzes.")]
+    [EndpointName("GetAllQuizzes")]
+    [OutputCache(Tags = ["quizzes"])]
     [HttpGet]
     public async Task<IActionResult> GetAllQuizzes([FromQuery] GetAllQuizzesQuery query)
     {
@@ -26,6 +31,10 @@ public sealed class QuizController(ISender sender) : ApiController
             Problem);
     }
 
+    [EndpointSummary("Retrieves instructor quiz count.")]
+    [EndpointDescription("Returns the number of quizzes created by the specified instructor.")]
+    [EndpointName("GetInstructorQuizzesCount")]
+    [OutputCache(Tags = ["quizzes"])]
     [HttpGet("count")]
     public async Task<IActionResult> GetInstructorQuizzesCount([FromQuery] Guid instructorId)
     {
@@ -36,6 +45,10 @@ public sealed class QuizController(ISender sender) : ApiController
             Problem);
     }
 
+    [EndpointSummary("Retrieves a quiz by id.")]
+    [EndpointDescription("Fetches a single quiz using the provided quiz identifier.")]
+    [EndpointName("GetQuizById")]
+    [OutputCache(Tags = ["quizzes"])]
     [HttpGet("{quizId:guid}")]
     public async Task<IActionResult> GetQuizById([FromRoute] Guid quizId)
     {
@@ -46,6 +59,9 @@ public sealed class QuizController(ISender sender) : ApiController
             Problem);
     }
 
+    [EndpointSummary("Creates a new quiz.")]
+    [EndpointDescription("Creates a quiz and its question set from the submitted request payload.")]
+    [EndpointName("CreateQuiz")]
     [HttpPost]
     public async Task<IActionResult> CreateQuiz([FromBody] CreateQuizRequest request)
     {

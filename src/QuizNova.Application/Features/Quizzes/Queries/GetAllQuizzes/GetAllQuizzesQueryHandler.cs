@@ -34,21 +34,26 @@ public sealed class GetAllQuizzesQueryHandler(
         var quizzes = await query
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(quiz => new QuizDto(
-                quiz.Id,
-                quiz.Title,
-                dbContext.Courses.Where(course => course.Id == quiz.CourseId)
-                .Select(course => course.Name)
-                .FirstOrDefault() ?? string.Empty,
-                dbContext.Instructors
-                .Where(instructor => instructor.Id == quiz.InstructorId)
-                .Select(instructor => instructor.PersonalInformation.Name)
-                .FirstOrDefault() ?? string.Empty,
-                quiz.Questions.Sum(question => question.Marks),
-                quiz.StartsAtUtc,
-                quiz.EndsAtUtc,
-                now,
-                quiz.StartsAtUtc > now ? "Upcoming" : quiz.EndsAtUtc < now ? "Completed" : "Active"))
+            .Select(quiz => new QuizDto
+            {
+                QuizId = quiz.Id,
+                Title = quiz.Title,
+                CourseName = dbContext.Courses
+                    .Where(course => course.Id == quiz.CourseId)
+                    .Select(course => course.Name)
+                    .FirstOrDefault() ?? string.Empty,
+                InstructorName = dbContext.Instructors
+                    .Where(instructor => instructor.Id == quiz.InstructorId)
+                    .Select(instructor => instructor.PersonalInformation.Name)
+                    .FirstOrDefault() ?? string.Empty,
+                Marks = quiz.Questions.Sum(question => question.Marks),
+                StartsAtUtc = quiz.StartsAtUtc,
+                EndsAtUtc = quiz.EndsAtUtc,
+                ServerUtc = now,
+                State = quiz.StartsAtUtc > now ? "Upcoming" : quiz.EndsAtUtc < now ? "Completed" : "Active",
+                CourseId = quiz.CourseId,
+                InstructorId = quiz.InstructorId,
+            })
             .ToListAsync(ct);
 
         var response = new PaginatedList<QuizDto>(

@@ -7,6 +7,7 @@ using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Students.DTOs;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users.Student.Events;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Application.Features.Students.Commands.UpdateStudent;
@@ -66,6 +67,7 @@ public sealed class UpdateStudentCommandHandler(
         }
 
         dbContext.Students.Update(student);
+        student.AddDomainEvent(new StudentUpdatedEvent(student.Id));
         await dbContext.SaveChangesAsync(ct);
 
         var enrolledCoursesCount = await dbContext.StudentCourses

@@ -13,9 +13,9 @@ public class StudentCourse : Entity
 
     public DateTimeOffset EnrolledOnUtc { get; private set; }
 
-    public Student? Student { get; private set; }
+    public Student? Student { get; init; }
 
-    public Course? Course { get; private set; }
+    public Course? Course { get; init; }
 
     private StudentCourse()
     {

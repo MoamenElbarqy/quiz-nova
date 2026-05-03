@@ -2,12 +2,16 @@ using System.Text.Json.Serialization;
 
 using Asp.Versioning;
 
+using Microsoft.AspNetCore.ResponseCompression;
+
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 using QuizNova.Api.Infrastructure;
 using QuizNova.Api.OpenApi.Transformers;
+using QuizNova.Api.services;
+using QuizNova.Application.Common.Interfaces;
 using QuizNova.Infrastructure.Settings;
 
 namespace QuizNova.Api;
@@ -26,7 +30,28 @@ public static class DependencyInjection
         services.AddExceptionHandling();
         services.AddProblemDetails();
         services.AddAuthorization();
-        services.AddAppOpenTelememrty();
+        services.AddAppOpenTelemetry();
+        services.AddOutputCache();
+        services.AddCustomResponseCompression();
+        services.AddIdentityInfrastructure();
+        return services;
+    }
+
+    private static IServiceCollection AddIdentityInfrastructure(this IServiceCollection services)
+    {
+        services.AddScoped<IUser, CurrentUser>();
+        services.AddHttpContextAccessor();
+        return services;
+    }
+
+    private static IServiceCollection AddCustomResponseCompression(this IServiceCollection services)
+    {
+        services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+        });
         return services;
     }
 
@@ -120,7 +145,7 @@ public static class DependencyInjection
         return services;
     }
 
-    private static IServiceCollection AddAppOpenTelememrty(this IServiceCollection services)
+    private static IServiceCollection AddAppOpenTelemetry(this IServiceCollection services)
     {
         services.AddOpenTelemetry()
             .ConfigureResource(res => res.AddService("api"))

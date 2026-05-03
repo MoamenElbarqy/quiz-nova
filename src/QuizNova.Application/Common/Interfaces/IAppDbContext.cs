@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 
-using QuizNova.Domain.Common;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.QuizAttempts;
@@ -9,13 +8,15 @@ using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
 using QuizNova.Domain.Entities.StudentCourses;
 using QuizNova.Domain.Entities.Users;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.Instructors;
 using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Application.Common.Interfaces;
 
 public interface IAppDbContext
 {
-    public DbSet<Entity> Entities { get; }
+    public DbSet<User> Users { get; }
 
     public DbSet<Course> Courses { get; }
 
@@ -37,5 +38,5 @@ public interface IAppDbContext
 
     public DbSet<StudentCourse> StudentCourses { get; }
 
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken);
+    Task<int> SaveChangesAsync(CancellationToken ct);
 }

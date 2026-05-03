@@ -12,6 +12,7 @@ using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.McqAnswer;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalseAnswer;
+using QuizNova.Domain.Entities.QuizAttempts.Events;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
@@ -20,25 +21,28 @@ namespace QuizNova.Application.Features.QuizAttempts.Commands.SubmitQuizAttempt;
 
 public sealed class SubmitQuizAttemptCommandHandler(
     IAppDbContext dbContext,
+    IUser user,
     ILogger<SubmitQuizAttemptCommandHandler> logger)
     : IRequestHandler<SubmitQuizAttemptCommand, Result<QuizAttemptDto>>
 {
     public async Task<Result<QuizAttemptDto>> Handle(SubmitQuizAttemptCommand request, CancellationToken ct)
     {
+        var studentId = Guid.Parse(user.Id!);
+
         logger.LogInformation(
             "Submitting quiz attempt {QuizAttemptId} for student {StudentId} and quiz {QuizId}",
             request.QuizAttemptId,
-            request.StudentId,
+            studentId,
             request.QuizId);
 
         var studentExists = await dbContext.Students
             .AsNoTracking()
-            .AnyAsync(student => student.Id == request.StudentId, ct);
+            .AnyAsync(student => student.Id == studentId, ct);
 
         if (!studentExists)
         {
-            logger.LogWarning("Quiz attempt submission failed: Student {StudentId} not found", request.StudentId);
-            return ApplicationErrors.QuizAttemptStudentNotFound(request.StudentId);
+            logger.LogWarning("Quiz attempt submission failed: Student {StudentId} not found", studentId);
+            return ApplicationErrors.QuizAttemptStudentNotFound(studentId);
         }
 
         var quiz = await dbContext.Quizzes
@@ -60,7 +64,7 @@ public sealed class SubmitQuizAttemptCommandHandler(
         var isStudentEnrolledInCourse = await dbContext.StudentCourses
             .AsNoTracking()
             .AnyAsync(
-                studentCourse => studentCourse.StudentId == request.StudentId &&
+                studentCourse => studentCourse.StudentId == studentId &&
                                  studentCourse.CourseId == quiz.CourseId,
                 ct);
 
@@ -68,16 +72,16 @@ public sealed class SubmitQuizAttemptCommandHandler(
         {
             logger.LogWarning(
                 "Quiz attempt submission failed: Student {StudentId} is not enrolled in course {CourseId}",
-                request.StudentId,
+                studentId,
                 quiz.CourseId);
 
-            return ApplicationErrors.StudentNotEnrolledInCourse(request.StudentId, quiz.CourseId);
+            return ApplicationErrors.StudentNotEnrolledInCourse(studentId, quiz.CourseId);
         }
 
         var attemptAlreadyExists = await dbContext.QuizAttempts
             .AsNoTracking()
             .AnyAsync(
-                quizAttempt => quizAttempt.StudentId == request.StudentId &&
+                quizAttempt => quizAttempt.StudentId == studentId &&
                                quizAttempt.QuizId == request.QuizId,
                 ct);
 
@@ -85,10 +89,10 @@ public sealed class SubmitQuizAttemptCommandHandler(
         {
             logger.LogWarning(
                 "Quiz attempt submission failed: Attempt already exists for student {StudentId} and quiz {QuizId}",
-                request.StudentId,
+                studentId,
                 request.QuizId);
 
-            return ApplicationErrors.QuizAttemptAlreadyExists(request.StudentId, request.QuizId);
+            return ApplicationErrors.QuizAttemptAlreadyExists(studentId, request.QuizId);
         }
 
         var questionsById = quiz.Questions.ToDictionary(question => question.Id);
@@ -134,7 +138,7 @@ public sealed class SubmitQuizAttemptCommandHandler(
 
         var createAttemptResult = quiz.SubmitAttempt(
             request.QuizAttemptId,
-            request.StudentId,
+            studentId,
             request.QuizId,
             request.StartedAt,
             request.SubmittedAt,
@@ -150,6 +154,7 @@ public sealed class SubmitQuizAttemptCommandHandler(
         }
 
         await dbContext.QuizAttempts.AddAsync(createAttemptResult.Value, ct);
+        createAttemptResult.Value.AddDomainEvent(new QuizAttemptSubmittedEvent(createAttemptResult.Value.Id));
         await dbContext.SaveChangesAsync(ct);
 
         var createdAttempt = await dbContext.QuizAttempts

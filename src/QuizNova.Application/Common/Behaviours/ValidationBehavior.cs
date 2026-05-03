@@ -17,7 +17,7 @@ public class ValidationBehavior<TRequest, TResponse>(IValidator<TRequest>? valid
         RequestHandlerDelegate<TResponse> next,
         CancellationToken ct)
     {
-        // Mabye Some Requests Don't Have Validation Class
+        // Maybe Some Requests Don't Have Validation Class
         if (validator is null)
         {
             return await next(ct);

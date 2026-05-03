@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-using QuizNova.Domain.Entities.Users;
+using QuizNova.Domain.Entities.Users.Admins;
 
 namespace QuizNova.Infrastructure.Data.Configurations;
 
