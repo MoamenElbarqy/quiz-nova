@@ -1,6 +1,7 @@
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
+using QuizNova.Domain.Entities.StudentCourses.Events;
 using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Domain.Entities.StudentCourses;
@@ -46,6 +47,14 @@ public class StudentCourse : Entity
             return StudentCourseErrors.EnrollmentDateRequired;
         }
 
-        return new StudentCourse(id, studentId, courseId, enrolledOnUtc);
+        var studentCourse = new StudentCourse(id, studentId, courseId, enrolledOnUtc);
+        studentCourse.AddDomainEvent(new StudentCourseCreatedEvent(studentId, courseId));
+        return studentCourse;
+    }
+
+    public Result<Deleted> Delete()
+    {
+        AddDomainEvent(new StudentCourseDeletedEvent(StudentId, CourseId));
+        return Result.Deleted;
     }
 }

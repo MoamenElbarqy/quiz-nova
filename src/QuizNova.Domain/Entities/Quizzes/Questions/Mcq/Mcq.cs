@@ -74,4 +74,41 @@ public class Mcq : Question
             marks,
             choices);
     }
+
+    internal Result<Updated> Update(
+        string questionText,
+        int displayOrder,
+        int marks,
+        Guid correctChoiceId,
+        List<Choice> choices)
+    {
+        var baseResult = UpdateBase(questionText, displayOrder, marks);
+
+        if (baseResult.IsError)
+        {
+            return baseResult.TopError;
+        }
+
+        if (choices.Count < 2)
+        {
+            return McqErrors.NumberOfChoicesInvalid;
+        }
+
+        if (correctChoiceId == Guid.Empty)
+        {
+            return McqErrors.CorrectChoiceIdRequired;
+        }
+
+        if (choices.All(c => c.Id != correctChoiceId))
+        {
+            return McqErrors.CorrectChoiceIdRequired;
+        }
+
+        CorrectChoiceId = correctChoiceId;
+        _choices.Clear();
+        _choices.AddRange(choices);
+
+        return Result.Updated;
+    }
 }
+

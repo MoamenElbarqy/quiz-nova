@@ -8,7 +8,7 @@ public class TfAnswer : QuestionAnswer
 {
     public bool StudentChoice { get; }
 
-    public Tf? Tf { get; private set; }
+    public Tf? Tf { get; }
 
     public override bool IsCorrect => Tf is not null && Tf.CorrectChoice == StudentChoice;
 

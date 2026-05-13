@@ -1,5 +1,6 @@
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Courses.Events;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Users.Instructors;
 
@@ -74,12 +75,33 @@ public sealed class Course : Entity
             return CourseErrors.ScoringRangeInvalid;
         }
 
-        return new Course(
+        var course = new Course(
             id,
             instructorId,
             name,
             minimumPassingMarks,
             maximumMarks,
             quizzes);
+        course.AddDomainEvent(new CourseCreatedEvent(id));
+        return course;
+    }
+
+    public Result<Course> UpdateInstructor(Guid? instructorId)
+    {
+        if (instructorId.HasValue && instructorId.Value == Guid.Empty)
+        {
+            return CourseErrors.InstructorIdRequired;
+        }
+
+        InstructorId = instructorId;
+        AddDomainEvent(new CourseUpdatedEvent(Id));
+
+        return this;
+    }
+
+    public Result<Deleted> Delete()
+    {
+        AddDomainEvent(new CourseDeletedEvent(Id));
+        return Result.Deleted;
     }
 }

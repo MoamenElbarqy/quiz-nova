@@ -2,6 +2,7 @@ using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.Quizzes;
+using QuizNova.Domain.Entities.Users.Instructors.Events;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Domain.Entities.Users.Instructors;
@@ -50,16 +51,30 @@ public class Instructor : User
             return validationError.TopError;
         }
 
-        return new Instructor(
+        var instructor = new Instructor(
             id,
             personalInformation,
             refreshTokens,
             courses,
             quizzes);
+        instructor.AddDomainEvent(new InstructorCreatedEvent(id));
+        return instructor;
     }
 
     public Result<Updated> Update(PersonalInformation personalInformation)
     {
-        return UpdateCommon(personalInformation, UserRole.Instructor);
+        var updateResult = UpdateCommon(personalInformation, UserRole.Instructor);
+        if (!updateResult.IsError)
+        {
+            AddDomainEvent(new InstructorUpdatedEvent(Id));
+        }
+
+        return updateResult;
+    }
+
+    public Result<Deleted> Delete()
+    {
+        AddDomainEvent(new InstructorDeletedEvent(Id));
+        return Result.Deleted;
     }
 }

@@ -45,4 +45,23 @@ public class Choice : Entity
 
         return new Choice(id, questionId, text, displayOrder);
     }
+
+    internal Result<Updated> Update(string text, int displayOrder)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return ChoiceErrors.TextRequired;
+        }
+
+        if (displayOrder < 0)
+        {
+            return ChoiceErrors.DisplayOrderInvalid;
+        }
+
+        Text = text;
+        DisplayOrder = displayOrder;
+
+        return Result.Updated;
+    }
 }
+
