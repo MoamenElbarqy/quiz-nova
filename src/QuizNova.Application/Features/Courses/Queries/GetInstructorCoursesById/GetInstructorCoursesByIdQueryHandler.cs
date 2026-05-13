@@ -32,6 +32,7 @@ public sealed class GetInstructorCoursesByIdQueryHandler(
             .Select(course => new CourseDto(
                 course.Id,
                 course.Name,
+                course.InstructorId,
                 dbContext.Instructors
                     .Where(instructor => instructor.Id == course.InstructorId)
                     .Select(instructor => instructor.PersonalInformation.Name)
@@ -40,7 +41,7 @@ public sealed class GetInstructorCoursesByIdQueryHandler(
                 dbContext.Quizzes.Count(quiz => quiz.CourseId == course.Id)))
             .ToListAsync(ct);
 
-        if (!instructorCourses.Any())
+        if (instructorCourses.Count == 0)
         {
             logger.LogInformation("No courses found for instructor {InstructorId}", request.InstructorId);
             return ApplicationErrors.NoCoursesForInstructor(request.InstructorId);
@@ -51,5 +52,4 @@ public sealed class GetInstructorCoursesByIdQueryHandler(
         return instructorCourses;
     }
 }
-
 

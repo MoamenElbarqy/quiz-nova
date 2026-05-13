@@ -15,6 +15,7 @@ public static class CourseMapper
         return new CourseDto(
             course.Id,
             course.Name,
+            course.InstructorId,
             instructorName,
             EnrolledStudentsCount: 0,
             quizzesCount);

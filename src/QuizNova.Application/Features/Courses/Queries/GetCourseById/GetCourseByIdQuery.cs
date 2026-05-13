@@ -6,9 +6,9 @@ namespace QuizNova.Application.Features.Courses.Queries.GetCourseById;
 
 public sealed record GetCourseByIdQuery(Guid CourseId) : ICachedQuery<Result<CourseDto>>
 {
+    public TimeSpan Expiration => TimeSpan.FromMinutes(5);
+
     public string CacheKey => $"courses:{CourseId}";
 
     public string[] Tags => ["courses"];
-
-    public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 }

@@ -12,12 +12,13 @@ public sealed record GetAllCoursesQuery(
     Guid? InstructorId = null,
     Guid? StudentId = null,
     int PageNumber = 1,
-    int PageSize = 10)
+    int PageSize = 10
+)
     : ICachedQuery<Result<PaginatedList<CourseDto>>>
 {
-    public string CacheKey => $"courses:all:{SearchTerm}:{EnrolledStudentsCount}:{QuizzesCount}:{InstructorId}:{StudentId}:{PageNumber}:{PageSize}";
+    public string CacheKey =>
+        $"courses:all:{SearchTerm}:{EnrolledStudentsCount}:{QuizzesCount}:{InstructorId}:{StudentId}:{PageNumber}:{PageSize}";
 
     public string[] Tags => ["courses"];
-
     public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 }
