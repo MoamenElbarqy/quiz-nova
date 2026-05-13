@@ -9,6 +9,7 @@ using QuizNova.Application.Features.Quizzes.Commands.AddQuestion;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.Features.Quizzes.Commands.DeleteQuestion;
 using QuizNova.Application.Features.Quizzes.Commands.UpdateQuestion;
+using QuizNova.Application.Features.Quizzes.Commands.UpdateQuizCourseId;
 using QuizNova.Application.Features.Quizzes.Commands.UpdateQuizMetadata;
 using QuizNova.Application.Features.Quizzes.Queries.GetAllQuizzes;
 using QuizNova.Application.Features.Quizzes.Queries.GetInstructorQuizzesCount;
@@ -203,6 +204,21 @@ public sealed class QuizController(ISender sender) : ApiController
         };
 
         var result = await sender.Send(command);
+
+        return result.Match(
+            _ => NoContent(),
+            Problem);
+    }
+
+    [EndpointSummary("Updates the course of a quiz.")]
+    [EndpointDescription("Changes the course associated with a quiz. This is a destructive operation that clears all existing questions.")]
+    [EndpointName("UpdateQuizCourseId")]
+    [HttpPut("{quizId:guid}/course")]
+    public async Task<IActionResult> UpdateQuizCourseId(
+        [FromRoute] Guid quizId,
+        [FromBody] UpdateQuizCourseIdRequest request)
+    {
+        var result = await sender.Send(new UpdateQuizCourseIdCommand(quizId, request.CourseId));
 
         return result.Match(
             _ => NoContent(),

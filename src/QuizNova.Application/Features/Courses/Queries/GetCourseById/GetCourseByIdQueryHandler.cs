@@ -27,12 +27,17 @@ public sealed class GetCourseByIdQueryHandler(
                 c.Id,
                 c.Name,
                 c.InstructorId,
+                c.MaximumMarks,
                 InstructorName = dbContext.Instructors
                     .Where(i => i.Id == c.InstructorId)
                     .Select(i => i.PersonalInformation.Name)
                     .FirstOrDefault() ?? string.Empty,
                 EnrolledStudentsCount = dbContext.StudentCourses.Count(sc => sc.CourseId == c.Id),
                 QuizzesCount = dbContext.Quizzes.Count(q => q.CourseId == c.Id),
+                ConsumedMarks = dbContext.Quizzes
+                    .Where(q => q.CourseId == c.Id)
+                    .SelectMany(q => q.Questions)
+                    .Sum(q => q.Marks),
             })
             .FirstOrDefaultAsync(ct);
 
@@ -48,7 +53,8 @@ public sealed class GetCourseByIdQueryHandler(
             course.InstructorId,
             course.InstructorName,
             course.EnrolledStudentsCount,
-            course.QuizzesCount);
+            course.QuizzesCount,
+            course.MaximumMarks - course.ConsumedMarks);
 
         logger.LogInformation("Successfully retrieved course with ID: {CourseId}", request.CourseId);
 

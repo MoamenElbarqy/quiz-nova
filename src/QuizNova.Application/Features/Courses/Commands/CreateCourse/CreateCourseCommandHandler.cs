@@ -65,6 +65,7 @@ public sealed class CreateCourseCommandHandler(
             createCourseResult.Value.InstructorId,
             instructorName,
             EnrolledStudentsCount: 0,
-            QuizzesCount: 0);
+            QuizzesCount: 0,
+            RemainingMarks: createCourseResult.Value.MaximumMarks);
     }
 }

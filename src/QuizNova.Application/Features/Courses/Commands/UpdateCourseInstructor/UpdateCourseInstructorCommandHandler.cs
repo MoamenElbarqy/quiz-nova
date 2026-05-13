@@ -59,6 +59,11 @@ public sealed class UpdateCourseInstructorCommandHandler(
         var quizzesCount = await dbContext.Quizzes
             .CountAsync(quiz => quiz.CourseId == course.Id, ct);
 
+        var consumedMarks = await dbContext.Quizzes
+            .Where(quiz => quiz.CourseId == course.Id)
+            .SelectMany(quiz => quiz.Questions)
+            .SumAsync(q => q.Marks, ct);
+
         logger.LogInformation("Successfully updated instructor for course {CourseId}", request.CourseId);
 
         return new CourseDto(
@@ -67,6 +72,7 @@ public sealed class UpdateCourseInstructorCommandHandler(
             course.InstructorId,
             instructorName,
             enrolledStudentsCount,
-            quizzesCount);
+            quizzesCount,
+            course.MaximumMarks - consumedMarks);
     }
 }
