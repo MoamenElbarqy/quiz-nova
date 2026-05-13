@@ -8,7 +8,6 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Admins.DTOs;
 using QuizNova.Application.Features.Admins.Mappers;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Users.Admins.Events;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Application.Features.Admins.Commands.UpdateAdmin;
@@ -43,8 +42,6 @@ public sealed class UpdateAdminCommandHandler(
         }
 
         admin.Update(personalInformationResult.Value);
-
-        admin.AddDomainEvent(new AdminUpdatedEvent(admin.Id));
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("Successfully updated admin {AdminId}", request.Id);

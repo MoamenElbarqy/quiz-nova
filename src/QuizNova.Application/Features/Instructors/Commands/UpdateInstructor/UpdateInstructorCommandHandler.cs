@@ -7,7 +7,6 @@ using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Instructors.DTOs;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Users.Instructors.Events;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Application.Features.Instructors.Commands.UpdateInstructor;
@@ -42,8 +41,6 @@ public sealed class UpdateInstructorCommandHandler(
         }
 
         instructor.Update(personalInformationResult.Value);
-
-        instructor.AddDomainEvent(new InstructorUpdatedEvent(instructor.Id));
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("Successfully updated instructor {InstructorId}", request.Id);

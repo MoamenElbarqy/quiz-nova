@@ -11,7 +11,6 @@ using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Users.Instructors;
-using QuizNova.Domain.Entities.Users.Instructors.Events;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
@@ -83,7 +82,6 @@ public sealed class CreateInstructorCommandHandler(
         }
 
         await dbContext.Instructors.AddAsync(createInstructorResult.Value, ct);
-        createInstructorResult.Value.AddDomainEvent(new InstructorCreatedEvent(createInstructorResult.Value.Id));
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("Successfully created instructor {InstructorId} with email {Email}", request.Id, request.Email);

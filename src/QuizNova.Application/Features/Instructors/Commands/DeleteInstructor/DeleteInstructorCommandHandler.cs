@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Users.Instructors.Events;
 
 namespace QuizNova.Application.Features.Instructors.Commands.DeleteInstructor;
 
@@ -28,8 +27,14 @@ public sealed class DeleteInstructorCommandHandler(
             return ApplicationErrors.InstructorNotFound(request.Id);
         }
 
+        var deleteResult = instructor.Delete();
+        if (deleteResult.IsError)
+        {
+            logger.LogWarning("Instructor deletion failed: {ErrorDescription}", deleteResult.TopError.Description);
+            return deleteResult.TopError;
+        }
+
         dbContext.Instructors.Remove(instructor);
-        instructor.AddDomainEvent(new InstructorDeletedEvent(instructor.Id));
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("Successfully deleted instructor {InstructorId}", request.Id);

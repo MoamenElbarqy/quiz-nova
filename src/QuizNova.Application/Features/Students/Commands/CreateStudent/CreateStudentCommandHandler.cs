@@ -9,7 +9,6 @@ using QuizNova.Application.Features.Students.DTOs;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.Users.Student;
-using QuizNova.Domain.Entities.Users.Student.Events;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Application.Features.Students.Commands.CreateStudent;
@@ -41,17 +40,17 @@ public sealed class CreateStudentCommandHandler(
             return ApplicationErrors.UserIdAlreadyExists(request.Id);
         }
 
-        if (await dbContext.Users
-                .AnyAsync(user => user.PersonalInformation.Email == request.Email, ct))
+        if (await dbContext.Users.AnyAsync(user => user.PersonalInformation.Email == request.Email, ct))
         {
             logger.LogWarning("Student creation failed: Email {Email} already exists", request.Email);
             return ApplicationErrors.UserEmailAlreadyExists(request.Email);
         }
 
-        if (await dbContext.Users
-                .AnyAsync(user => user.PersonalInformation.PhoneNumber == request.PhoneNumber, ct))
+        if (await dbContext.Users.AnyAsync(user => user.PersonalInformation.PhoneNumber == request.PhoneNumber, ct))
         {
-            logger.LogWarning("Student creation failed: Phone number {PhoneNumber} already exists", request.PhoneNumber);
+            logger.LogWarning(
+                "Student creation failed: Phone number {PhoneNumber} already exists",
+                request.PhoneNumber);
             return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PhoneNumber);
         }
 
@@ -63,25 +62,28 @@ public sealed class CreateStudentCommandHandler(
 
         if (personalInformationResult.IsError)
         {
-            logger.LogWarning("Student creation failed: Error creating personal information. Error: {ErrorDescription}", personalInformationResult.TopError.Description);
+            logger.LogWarning(
+                "Student creation failed: Error creating personal information. Error: {ErrorDescription}",
+                personalInformationResult.TopError.Description);
             return personalInformationResult.TopError;
         }
 
         var createStudentResult = Student.Create(
             request.Id,
             personalInformationResult.Value,
-            new List<RefreshToken>(),
-            new List<Domain.Entities.StudentCourses.StudentCourse>(),
-            new List<Domain.Entities.QuizAttempts.QuizAttempt>());
+            [],
+            [],
+            []);
 
         if (createStudentResult.IsError)
         {
-            logger.LogWarning("Student creation failed: Error creating student entity. Error: {ErrorDescription}", createStudentResult.TopError.Description);
+            logger.LogWarning(
+                "Student creation failed: Error creating student entity. Error: {ErrorDescription}",
+                createStudentResult.TopError.Description);
             return createStudentResult.TopError;
         }
 
         await dbContext.Students.AddAsync(createStudentResult.Value, ct);
-        createStudentResult.Value.AddDomainEvent(new StudentCreatedEvent(createStudentResult.Value.Id));
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("Successfully created student {StudentId} with email {Email}", request.Id, request.Email);

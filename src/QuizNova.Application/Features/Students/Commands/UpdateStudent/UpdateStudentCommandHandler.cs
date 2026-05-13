@@ -7,7 +7,6 @@ using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Students.DTOs;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Users.Student.Events;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Application.Features.Students.Commands.UpdateStudent;
@@ -30,19 +29,19 @@ public sealed class UpdateStudentCommandHandler(
             return ApplicationErrors.StudentNotFound(request.Id);
         }
 
-        if (await dbContext.Users
-                .AnyAsync(user => user.Id != request.Id && user.PersonalInformation.Email == request.Email, ct))
+        if (await dbContext.Users.AnyAsync(
+                user => user.Id != request.Id && user.PersonalInformation.Email == request.Email, ct))
         {
             logger.LogWarning("Student update failed: Email {Email} already exists for another user", request.Email);
             return ApplicationErrors.UserEmailAlreadyExists(request.Email);
         }
 
-        if (await dbContext.Users
-                .AnyAsync(
-                    user => user.Id != request.Id && user.PersonalInformation.PhoneNumber == request.PhoneNumber,
-                    ct))
+        if (await dbContext.Users.AnyAsync(
+                user => user.Id != request.Id && user.PersonalInformation.PhoneNumber == request.PhoneNumber, ct))
         {
-            logger.LogWarning("Student update failed: Phone number {PhoneNumber} already exists for another user", request.PhoneNumber);
+            logger.LogWarning(
+                "Student update failed: Phone number {PhoneNumber} already exists for another user",
+                request.PhoneNumber);
             return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PhoneNumber);
         }
 
@@ -54,7 +53,9 @@ public sealed class UpdateStudentCommandHandler(
 
         if (personalInformationResult.IsError)
         {
-            logger.LogWarning("Student update failed: Error creating personal information. Error: {ErrorDescription}", personalInformationResult.TopError.Description);
+            logger.LogWarning(
+                "Student update failed: Error creating personal information. Error: {ErrorDescription}",
+                personalInformationResult.TopError.Description);
             return personalInformationResult.TopError;
         }
 
@@ -62,12 +63,13 @@ public sealed class UpdateStudentCommandHandler(
 
         if (updateStudentResult.IsError)
         {
-            logger.LogWarning("Student update failed: Error updating student entity. Error: {ErrorDescription}", updateStudentResult.TopError.Description);
+            logger.LogWarning(
+                "Student update failed: Error updating student entity. Error: {ErrorDescription}",
+                updateStudentResult.TopError.Description);
             return updateStudentResult.TopError;
         }
 
         dbContext.Students.Update(student);
-        student.AddDomainEvent(new StudentUpdatedEvent(student.Id));
         await dbContext.SaveChangesAsync(ct);
 
         var enrolledCoursesCount = await dbContext.StudentCourses

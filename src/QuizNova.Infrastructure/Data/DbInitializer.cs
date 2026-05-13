@@ -29,6 +29,7 @@ public sealed class DbInitializer(AppDbContext dbContext)
         {
             var instructors = CreateInstructors();
             await dbContext.Instructors.AddRangeAsync(instructors, ct);
+            await dbContext.SaveChangesAsync(ct);  // ← Save instructors first!
         }
 
         if (!await dbContext.Courses.AnyAsync(ct))
@@ -53,7 +54,7 @@ public sealed class DbInitializer(AppDbContext dbContext)
         await dbContext.SaveChangesAsync(ct);
     }
 
-    private Admin CreateAdmin()
+    private static Admin CreateAdmin()
     {
         var personalInfo = EnsureSuccess(
             PersonalInformation.Create(
@@ -68,7 +69,7 @@ public sealed class DbInitializer(AppDbContext dbContext)
             "admin");
     }
 
-    private List<Instructor> CreateInstructors()
+    private static List<Instructor> CreateInstructors()
     {
         var instructorOneInfo = EnsureSuccess(
             PersonalInformation.Create(
@@ -107,7 +108,7 @@ public sealed class DbInitializer(AppDbContext dbContext)
         ];
     }
 
-    private List<Course> CreateCourses(List<Instructor> instructors)
+    private static List<Course> CreateCourses(List<Instructor> instructors)
     {
         return
         [
@@ -132,7 +133,7 @@ public sealed class DbInitializer(AppDbContext dbContext)
         ];
     }
 
-    private List<Student> CreateStudents()
+    private static List<Student> CreateStudents()
     {
         return
         [
@@ -143,7 +144,7 @@ public sealed class DbInitializer(AppDbContext dbContext)
         ];
     }
 
-    private Student CreateStudent(string name, string email, string phoneNumber)
+    private static Student CreateStudent(string name, string email, string phoneNumber)
     {
         var personalInfo = EnsureSuccess(
             PersonalInformation.Create(name, email, "Student123!", phoneNumber),
@@ -159,7 +160,7 @@ public sealed class DbInitializer(AppDbContext dbContext)
             name);
     }
 
-    private T EnsureSuccess<T>(Result<T> result, string entityName)
+    private static T EnsureSuccess<T>(Result<T> result, string entityName)
     {
         if (result.IsError)
         {

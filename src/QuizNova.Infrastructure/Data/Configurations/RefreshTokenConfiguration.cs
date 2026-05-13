@@ -18,7 +18,7 @@ public sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refresh
 
         builder.HasIndex(rt => rt.Token)
             .IsUnique();
-            
+
         builder.Property(rt => rt.ExpiresOnUtc)
             .IsRequired();
     }

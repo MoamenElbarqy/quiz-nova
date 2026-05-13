@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Users.Admins.Events;
 
 namespace QuizNova.Application.Features.Admins.Commands.DeleteAdmin;
 
@@ -28,8 +27,14 @@ public sealed class DeleteAdminCommandHandler(
             return ApplicationErrors.AdminNotFound(request.Id);
         }
 
+        var deleteResult = admin.Delete();
+        if (deleteResult.IsError)
+        {
+            logger.LogWarning("Admin deletion failed: {ErrorDescription}", deleteResult.TopError.Description);
+            return deleteResult.TopError;
+        }
+
         dbContext.Admins.Remove(admin);
-        admin.AddDomainEvent(new AdminDeletedEvent(admin.Id));
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("Successfully deleted admin {AdminId}", request.Id);

@@ -14,13 +14,11 @@ public class CachingBehavior<TRequest, TResponse>(HybridCache hybridCache)
 {
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
     {
-#pragma warning disable EXTEXP0018
         return await hybridCache.GetOrCreateAsync(
             request.CacheKey,
             async token => await next(token),
             new HybridCacheEntryOptions { Expiration = request.Expiration },
             request.Tags,
             ct);
-#pragma warning restore EXTEXP0018
     }
 }

@@ -5,8 +5,7 @@ using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Application.Features.Admins.Queries.GetAllAdmins;
 
-public sealed record GetAllAdminsQuery(
-    string? SearchTerm = null,
+public sealed record GetAllAdminsQuery(string? SearchTerm = null,
     int PageNumber = 1,
     int PageSize = 10)
     : ICachedQuery<Result<PaginatedList<AdminDto>>>
