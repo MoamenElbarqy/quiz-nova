@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Options;
+
 using QuizNova.Api;
 using QuizNova.Infrastructure.Settings;
 
@@ -10,16 +12,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((context, loggerConfig) =>
     loggerConfig.ReadFrom.Configuration(context.Configuration));
 
-var appSettings = builder.Configuration
-                      .GetSection(AppSettings.SectionName)
-                      .Get<AppSettings>()
-                  ?? throw new InvalidOperationException("AppSettings not configured");
-
 builder.Services.AddApplication();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
-builder.Services.AddApi(builder.Configuration, appSettings);
+builder.Services.AddApi(builder.Configuration);
 
 var app = builder.Build();
 
@@ -29,6 +26,7 @@ app.UseExceptionHandler();
 
 app.UseOutputCache();
 
+var appSettings = app.Services.GetRequiredService<IOptions<AppSettings>>().Value;
 app.UseCors(appSettings.Cors.PolicyName);
 
 app.UseAuthentication();
