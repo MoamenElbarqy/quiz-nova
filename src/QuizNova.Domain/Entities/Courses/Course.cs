@@ -38,6 +38,9 @@ public sealed class Course : Entity
 
     public int MaximumMarks { get; private set; }
 
+    // Remaining marks available to create quizzes in this course.
+    public int RemainingMarks => MaximumMarks - Quizzes.Sum(q => q.Marks);
+
     public Instructor? Instructor { get; }
 
     public IEnumerable<Quiz> Quizzes => _quizzes.AsReadOnly();

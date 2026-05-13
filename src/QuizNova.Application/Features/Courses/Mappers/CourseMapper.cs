@@ -18,6 +18,7 @@ public static class CourseMapper
             course.InstructorId,
             instructorName,
             EnrolledStudentsCount: 0,
-            quizzesCount);
+            quizzesCount,
+            course.RemainingMarks);
     }
 }

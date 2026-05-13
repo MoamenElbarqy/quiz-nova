@@ -20,7 +20,6 @@ public class Quiz : Entity
 
     private Quiz()
     {
-        _questions = new List<Question>();
     }
 
     private Quiz(
@@ -150,6 +149,24 @@ public class Quiz : Entity
         return Result.Updated;
     }
 
+    public Result<Updated> UpdateCourseId(Guid newCourseId)
+    {
+        if (newCourseId == Guid.Empty)
+        {
+            return QuizErrors.CourseIdRequired;
+        }
+
+        if (Status != QuizStatus.Scheduled)
+        {
+            return QuizErrors.CannotUpdateStartedOrCompletedQuiz;
+        }
+
+        CourseId = newCourseId;
+        _questions.Clear();
+
+        return Result.Updated;
+    }
+
     public Result<Added> AddQuestion(Question question)
     {
         if (Status != QuizStatus.Scheduled)
@@ -222,9 +239,9 @@ public class Quiz : Entity
 
         return question switch
         {
-            Questions.Mcq.Mcq mcq when correctChoiceId.HasValue && choices is not null =>
+            Mcq mcq when correctChoiceId.HasValue && choices is not null =>
                 mcq.Update(questionText, displayOrder, marks, correctChoiceId.Value, choices),
-            Questions.TrueFalse.Tf tf when tfCorrectChoice.HasValue =>
+            Tf tf when tfCorrectChoice.HasValue =>
                 tf.Update(questionText, displayOrder, marks, tfCorrectChoice.Value),
             _ => Error.Validation(
                 "Quiz.Question.UpdateTypeMismatch",

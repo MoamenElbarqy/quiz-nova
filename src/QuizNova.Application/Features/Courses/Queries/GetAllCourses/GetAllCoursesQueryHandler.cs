@@ -42,7 +42,11 @@ public sealed class GetAllCoursesQueryHandler(
                     .Select(instructor => instructor.PersonalInformation.Name)
                     .FirstOrDefault() ?? string.Empty,
                 dbContext.StudentCourses.Count(studentCourse => studentCourse.CourseId == course.Id),
-                dbContext.Quizzes.Count(quiz => quiz.CourseId == course.Id)))
+                dbContext.Quizzes.Count(quiz => quiz.CourseId == course.Id),
+                course.MaximumMarks - dbContext.Quizzes
+                    .Where(quiz => quiz.CourseId == course.Id)
+                    .SelectMany(quiz => quiz.Questions)
+                    .Sum(q => q.Marks)))
             .ToListAsync(ct);
 
         var response = new PaginatedList<CourseDto>(
