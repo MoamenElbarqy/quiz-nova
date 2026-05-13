@@ -2,6 +2,7 @@ using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.StudentCourses;
+using QuizNova.Domain.Entities.Users.Student.Events;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Domain.Entities.Users.Student;
@@ -44,15 +45,29 @@ public class Student : User
             return validationError.TopError;
         }
 
-        return new Student(
+        var student = new Student(
             id,
             personalInformation,
             refreshTokens,
             quizAttempts);
+        student.AddDomainEvent(new StudentCreatedEvent(id));
+        return student;
     }
 
     public Result<Updated> Update(PersonalInformation personalInformation)
     {
-        return UpdateCommon(personalInformation, UserRole.Student);
+        var updateResult = UpdateCommon(personalInformation, UserRole.Student);
+        if (!updateResult.IsError)
+        {
+            AddDomainEvent(new StudentUpdatedEvent(Id));
+        }
+
+        return updateResult;
+    }
+
+    public Result<Deleted> Delete()
+    {
+        AddDomainEvent(new StudentDeletedEvent(Id));
+        return Result.Deleted;
     }
 }

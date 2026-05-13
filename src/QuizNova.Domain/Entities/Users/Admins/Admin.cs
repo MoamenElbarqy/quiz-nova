@@ -1,5 +1,6 @@
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Identity;
+using QuizNova.Domain.Entities.Users.Admins.Events;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Domain.Entities.Users.Admins;
@@ -34,11 +35,25 @@ public class Admin : User
             return validationError.TopError;
         }
 
-        return new Admin(id, personalInformation, refreshTokens);
+        var admin = new Admin(id, personalInformation, refreshTokens);
+        admin.AddDomainEvent(new AdminCreatedEvent(id));
+        return admin;
     }
 
     public Result<Updated> Update(PersonalInformation personalInformation)
     {
-        return UpdateCommon(personalInformation, UserRole.Admin);
+        var updateResult = UpdateCommon(personalInformation, UserRole.Admin);
+        if (!updateResult.IsError)
+        {
+            AddDomainEvent(new AdminUpdatedEvent(Id));
+        }
+
+        return updateResult;
+    }
+
+    public Result<Deleted> Delete()
+    {
+        AddDomainEvent(new AdminDeletedEvent(Id));
+        return Result.Deleted;
     }
 }

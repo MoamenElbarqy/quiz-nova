@@ -6,6 +6,7 @@ using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.McqAnswer;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalseAnswer;
 using QuizNova.Domain.Entities.Quizzes.Enums;
+using QuizNova.Domain.Entities.Quizzes.Events;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
@@ -99,7 +100,7 @@ public class Quiz : Entity
             return QuizErrors.MarksInvalid;
         }
 
-        if (!questions.Any())
+        if (questions.Count == 0)
         {
             return QuizErrors.QuestionsRequired;
         }
@@ -110,7 +111,7 @@ public class Quiz : Entity
             return QuizErrors.QuestionBelongsToDifferentQuiz(invalidQuestion.Id);
         }
 
-        return new Quiz(
+        var quiz = new Quiz(
             id,
             courseId,
             instructorId,
@@ -118,6 +119,8 @@ public class Quiz : Entity
             startsAtUtc,
             endsAtUtc,
             questions);
+        quiz.AddDomainEvent(new QuizCreatedEvent(id));
+        return quiz;
     }
 
     public Result<Updated> Update(
@@ -125,6 +128,11 @@ public class Quiz : Entity
         DateTimeOffset startsAtUtc,
         DateTimeOffset endsAtUtc)
     {
+        if (Status != QuizStatus.Scheduled)
+        {
+            return QuizErrors.CannotUpdateStartedOrCompletedQuiz;
+        }
+
         if (string.IsNullOrWhiteSpace(title))
         {
             return QuizErrors.TitleRequired;
@@ -133,11 +141,6 @@ public class Quiz : Entity
         if (startsAtUtc >= endsAtUtc)
         {
             return QuizErrors.ScheduleInvalid;
-        }
-
-        if (DateTimeOffset.UtcNow >= StartsAtUtc)
-        {
-            return QuizErrors.CannotUpdateStartedQuiz;
         }
 
         Title = title;
@@ -149,6 +152,11 @@ public class Quiz : Entity
 
     public Result<Added> AddQuestion(Question question)
     {
+        if (Status != QuizStatus.Scheduled)
+        {
+            return QuizErrors.CannotUpdateStartedOrCompletedQuiz;
+        }
+
         if (question.QuizId != Id)
         {
             return QuizErrors.QuestionBelongsToDifferentQuiz(question.Id);
@@ -166,14 +174,62 @@ public class Quiz : Entity
 
     public Result<Deleted> DeleteQuestion(Question question)
     {
+        if (Status != QuizStatus.Scheduled)
+        {
+            return QuizErrors.CannotUpdateStartedOrCompletedQuiz;
+        }
+
         if (question.QuizId != Id)
         {
             return QuizErrors.QuestionBelongsToDifferentQuiz(question.Id);
         }
 
+        if (!_questions.Contains(question))
+        {
+            return QuizErrors.QuestionNotFound;
+        }
+
+        if (_questions.Count <= 5)
+        {
+            return QuizErrors.MinimumQuestionsReached;
+        }
+
         _questions.Remove(question);
 
         return Result.Deleted;
+    }
+
+    public Result<Updated> UpdateQuestion(
+        Guid questionId,
+        string questionText,
+        int displayOrder,
+        int marks,
+        Guid? correctChoiceId,
+        bool? tfCorrectChoice,
+        List<Quizzes.Questions.Mcq.Choices.Choice>? choices)
+    {
+        if (Status != QuizStatus.Scheduled)
+        {
+            return QuizErrors.CannotUpdateStartedOrCompletedQuiz;
+        }
+
+        var question = _questions.FirstOrDefault(q => q.Id == questionId);
+
+        if (question is null)
+        {
+            return QuizErrors.QuestionNotFound;
+        }
+
+        return question switch
+        {
+            Questions.Mcq.Mcq mcq when correctChoiceId.HasValue && choices is not null =>
+                mcq.Update(questionText, displayOrder, marks, correctChoiceId.Value, choices),
+            Questions.TrueFalse.Tf tf when tfCorrectChoice.HasValue =>
+                tf.Update(questionText, displayOrder, marks, tfCorrectChoice.Value),
+            _ => Error.Validation(
+                "Quiz.Question.UpdateTypeMismatch",
+                "The update data does not match the question type."),
+        };
     }
 
     public Result<QuizAttempt> SubmitAttempt(

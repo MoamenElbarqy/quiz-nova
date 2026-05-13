@@ -50,4 +50,23 @@ public class Tf : Question
             displayOrder,
             marks);
     }
+
+    internal Result<Updated> Update(
+        string questionText,
+        int displayOrder,
+        int marks,
+        bool correctChoice)
+    {
+        var baseResult = UpdateBase(questionText, displayOrder, marks);
+
+        if (baseResult.IsError)
+        {
+            return baseResult.TopError;
+        }
+
+        CorrectChoice = correctChoice;
+
+        return Result.Updated;
+    }
 }
+

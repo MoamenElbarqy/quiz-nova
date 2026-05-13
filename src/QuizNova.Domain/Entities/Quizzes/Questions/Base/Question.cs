@@ -23,15 +23,34 @@ public abstract class Question : Entity
         Marks = marks;
     }
 
-    public Guid QuizId { get; protected init; }
+    public Guid QuizId { get; private set; }
 
-    public string QuestionText { get; protected init; } = string.Empty;
+    public string QuestionText { get; private set; } = string.Empty;
 
-    public int DisplayOrder { get; protected init; }
+    public int DisplayOrder { get; private set; }
 
-    public int Marks { get; protected init; }
+    public int Marks { get; private set; }
 
-    public Quiz? Quiz { get; protected init; }
+    public Quiz? Quiz { get; private set; }
+
+    internal Result<Updated> UpdateBase(
+        string questionText,
+        int displayOrder,
+        int marks)
+    {
+        var validation = ValidateCommon(QuizId, questionText, displayOrder, marks);
+
+        if (validation.IsError)
+        {
+            return validation.TopError;
+        }
+
+        QuestionText = questionText;
+        DisplayOrder = displayOrder;
+        Marks = marks;
+
+        return Result.Updated;
+    }
 
     protected static Result<Validated> ValidateCommon(
         Guid quizId,
@@ -62,3 +81,4 @@ public abstract class Question : Entity
         return Result.Validated;
     }
 }
+

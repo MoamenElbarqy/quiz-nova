@@ -1,6 +1,7 @@
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
+using QuizNova.Domain.Entities.QuizAttempts.Events;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Users.Student;
 
@@ -73,6 +74,8 @@ public class QuizAttempt : Entity
             return QuizAttemptErrors.SubmittedAtInvalid;
         }
 
-        return new QuizAttempt(id, studentId, quizId, startedAt, submittedAt, studentAnswers);
+        var quizAttempt = new QuizAttempt(id, studentId, quizId, startedAt, submittedAt, studentAnswers);
+        quizAttempt.AddDomainEvent(new QuizAttemptSubmittedEvent(id));
+        return quizAttempt;
     }
 }

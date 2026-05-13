@@ -34,4 +34,15 @@ public static class QuizErrors
         Error.Validation(
             "Quiz_Question_AlreadyExists",
             $"Question with ID '{questionId}' already exists in the quiz.");
+
+    public static readonly Error MinimumQuestionsReached =
+        Error.Validation("Quiz_MinimumQuestionsReached", "A quiz must have at least 5 questions.");
+
+    public static readonly Error QuestionNotFound =
+        Error.NotFound("Quiz_QuestionNotFound", "Question not found in the quiz.");
+
+    public static readonly Error CannotUpdateStartedOrCompletedQuiz =
+        Error.Validation(
+            "Quiz_CannotUpdateStartedOrCompletedQuiz",
+            "Cannot edit a quiz that has already started or completed.");
 }
