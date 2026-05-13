@@ -9,7 +9,6 @@ using QuizNova.Application.Features.Quizzes.DTOs;
 using QuizNova.Application.Features.Quizzes.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Quizzes;
-using QuizNova.Domain.Entities.Quizzes.Events;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
@@ -24,7 +23,10 @@ public sealed class CreateQuizCommandHandler(
 {
     public async Task<Result<QuizDto>> Handle(CreateQuizCommand request, CancellationToken ct)
     {
-        logger.LogInformation("Creating quiz with title: {Title} for course: {CourseId}", request.Title, request.CourseId);
+        logger.LogInformation(
+            "Creating quiz with title: {Title} for course: {CourseId}",
+            request.Title,
+            request.CourseId);
 
         // Validate that all IDs in the request are unique and do not already exist in the database
         var allIdsInRequest = new List<Guid> { request.Id };
@@ -63,9 +65,11 @@ public sealed class CreateQuizCommandHandler(
             .Concat(existingChoiceIds)
             .ToList();
 
-        if (existingIds.Any())
+        if (existingIds.Count != 0)
         {
-            logger.LogWarning("Quiz creation failed: Some IDs already exist in database. First existing ID: {ExistingId}", existingIds.First());
+            logger.LogWarning(
+                "Quiz creation failed: Some IDs already exist in database. First existing ID: {ExistingId}",
+                existingIds.First());
             return ApplicationErrors.QuizSomeIdAlreadyExists(existingIds.First());
         }
 
@@ -98,9 +102,9 @@ public sealed class CreateQuizCommandHandler(
         foreach (var indexedQuestion in request.Questions.Select((question, index) => new { question, index }))
         {
             var createQuestionResult = CreateQuestion(
-                indexedQuestion.question,
-                indexedQuestion.index,
-                request.Id);
+            indexedQuestion.question,
+            indexedQuestion.index,
+            request.Id);
 
             if (createQuestionResult.IsError)
             {
@@ -127,12 +131,13 @@ public sealed class CreateQuizCommandHandler(
 
         if (createQuizResult.IsError)
         {
-            logger.LogWarning("Quiz creation failed: Error creating quiz entity. Error: {ErrorDescription}", createQuizResult.TopError.Description);
+            logger.LogWarning(
+                "Quiz creation failed: Error creating quiz entity. Error: {ErrorDescription}",
+                createQuizResult.TopError.Description);
             return createQuizResult.TopError;
         }
 
         await dbContext.Quizzes.AddAsync(createQuizResult.Value, ct);
-        createQuizResult.Value.AddDomainEvent(new QuizCreatedEvent(createQuizResult.Value.Id));
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("Successfully created quiz {QuizId} with {QuestionCount} questions", request.Id, questions.Count);
