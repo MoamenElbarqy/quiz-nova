@@ -13,4 +13,3 @@ public sealed record GetStudentCoursesCountQuery(Guid StudentId)
 
     public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 }
-

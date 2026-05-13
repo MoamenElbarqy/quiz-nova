@@ -13,5 +13,3 @@ public sealed record GetInstructorCoursesByIdQuery(Guid InstructorId)
 
     public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 }
-
-

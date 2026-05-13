@@ -36,6 +36,7 @@ public sealed class GetAllCoursesQueryHandler(
             .Select(course => new CourseDto(
                 course.Id,
                 course.Name,
+                course.InstructorId,
                 dbContext.Instructors
                     .Where(instructor => instructor.Id == course.InstructorId)
                     .Select(instructor => instructor.PersonalInformation.Name)

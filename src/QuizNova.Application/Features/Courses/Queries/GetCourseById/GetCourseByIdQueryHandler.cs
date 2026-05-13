@@ -26,6 +26,7 @@ public sealed class GetCourseByIdQueryHandler(
             {
                 c.Id,
                 c.Name,
+                c.InstructorId,
                 InstructorName = dbContext.Instructors
                     .Where(i => i.Id == c.InstructorId)
                     .Select(i => i.PersonalInformation.Name)
@@ -44,6 +45,7 @@ public sealed class GetCourseByIdQueryHandler(
         var response = new CourseDto(
             course.Id,
             course.Name,
+            course.InstructorId,
             course.InstructorName,
             course.EnrolledStudentsCount,
             course.QuizzesCount);
