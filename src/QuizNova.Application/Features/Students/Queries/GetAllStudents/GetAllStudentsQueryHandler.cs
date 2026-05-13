@@ -65,6 +65,19 @@ public sealed class GetAllStudentsQueryHandler(
                 request.EnrolledCoursesCount.Value);
         }
 
+        if (request.CourseId.HasValue && request.IsEnrolledInCourse.HasValue)
+        {
+            query = request.IsEnrolledInCourse.Value
+                ? query.Where(student =>
+                    dbContext.StudentCourses.Any(studentCourse =>
+                        studentCourse.StudentId == student.Id &&
+                        studentCourse.CourseId == request.CourseId.Value))
+                : query.Where(student =>
+                    !dbContext.StudentCourses.Any(studentCourse =>
+                        studentCourse.StudentId == student.Id &&
+                        studentCourse.CourseId == request.CourseId.Value));
+        }
+
         return query;
     }
 

@@ -10,7 +10,6 @@ using QuizNova.Application.Features.Admins.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.Users.Admins;
-using QuizNova.Domain.Entities.Users.Admins.Events;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Application.Features.Admins.Commands.CreateAdmin;
@@ -80,7 +79,6 @@ public sealed class CreateAdminCommandHandler(
         }
 
         await dbContext.Admins.AddAsync(createAdminResult.Value, ct);
-        createAdminResult.Value.AddDomainEvent(new AdminCreatedEvent(createAdminResult.Value.Id));
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("Successfully created admin {AdminId} with email {Email}", request.Id, request.Email);

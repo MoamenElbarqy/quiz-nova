@@ -6,9 +6,9 @@ namespace QuizNova.Application.Features.Users.Queries.GetUserById;
 
 public sealed record GetUserByIdQuery(string? UserId) : ICachedQuery<Result<UserDto>>
 {
+    public TimeSpan Expiration => TimeSpan.FromMinutes(5);
+
     public string CacheKey => $"users:{UserId}";
 
     public string[] Tags => ["users"];
-
-    public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 }

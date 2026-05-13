@@ -79,6 +79,11 @@ public static class ApplicationErrors
             code: "StudentCourse.Enrollment.NotFound",
             description: $"Student with ID '{studentId}' is not enrolled in course '{courseId}'.");
 
+    public static Error StudentAlreadyEnrolledInCourse(Guid studentId, Guid courseId) =>
+        Error.Conflict(
+            code: "StudentCourse.Enrollment.AlreadyExists",
+            description: $"Student with ID '{studentId}' is already enrolled in course '{courseId}'.");
+
     public static Error QuizAttemptAlreadyExists(Guid studentId, Guid quizId) =>
         Error.Conflict(
             code: "QuizAttempt.AlreadyExists",
@@ -114,6 +119,11 @@ public static class ApplicationErrors
         Error.Conflict(
             code: "Quiz.Request.Id.AlreadyExists",
             description: $"An entity with ID '{id}' already exists.");
+
+    public static Error CourseIdAlreadyExists(Guid courseId) =>
+        Error.Conflict(
+            code: "Course.Id.AlreadyExists",
+            description: $"Course with ID '{courseId}' already exists.");
 
     public static Error UserIdAlreadyExists(Guid userId) =>
         Error.Conflict(

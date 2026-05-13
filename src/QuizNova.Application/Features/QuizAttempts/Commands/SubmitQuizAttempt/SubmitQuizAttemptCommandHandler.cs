@@ -12,7 +12,6 @@ using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.McqAnswer;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalseAnswer;
-using QuizNova.Domain.Entities.QuizAttempts.Events;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
@@ -112,14 +111,8 @@ public sealed class SubmitQuizAttemptCommandHandler(
 
             Result<QuestionAnswer> createAnswerResult = answer switch
             {
-                SubmitMcqAnswerCommand mcqAnswer => CreateMcqAnswer(
-                    request,
-                    question,
-                    mcqAnswer),
-                SubmitTfAnswerCommand tfAnswer => CreateTfAnswer(
-                    request,
-                    question,
-                    tfAnswer),
+                SubmitMcqAnswerCommand mcqAnswer => CreateMcqAnswer(request, question, mcqAnswer),
+                SubmitTfAnswerCommand tfAnswer => CreateTfAnswer(request, question, tfAnswer),
                 _ => Error.Unexpected("QuizAttempt.Answer.Unsupported", "Unknown answer type."),
             };
 
@@ -154,7 +147,6 @@ public sealed class SubmitQuizAttemptCommandHandler(
         }
 
         await dbContext.QuizAttempts.AddAsync(createAttemptResult.Value, ct);
-        createAttemptResult.Value.AddDomainEvent(new QuizAttemptSubmittedEvent(createAttemptResult.Value.Id));
         await dbContext.SaveChangesAsync(ct);
 
         var createdAttempt = await dbContext.QuizAttempts
@@ -171,7 +163,9 @@ public sealed class SubmitQuizAttemptCommandHandler(
                 "Quiz attempt submission failed: Created attempt {QuizAttemptId} could not be re-loaded from database",
                 request.QuizAttemptId);
 
-            return Error.Unexpected("QuizAttempt.Creation.Unexpected", "Quiz attempt was created but could not be loaded.");
+            return Error.Unexpected(
+                "QuizAttempt.Creation.Unexpected",
+                "Quiz attempt was created but could not be loaded.");
         }
 
         logger.LogInformation(

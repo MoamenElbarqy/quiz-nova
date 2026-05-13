@@ -13,4 +13,3 @@ public sealed record GetStudentQuizAttemptsCountQuery(Guid StudentId)
 
     public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 }
-

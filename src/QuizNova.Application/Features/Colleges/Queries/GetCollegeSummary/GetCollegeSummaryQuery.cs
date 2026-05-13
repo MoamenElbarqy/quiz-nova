@@ -6,9 +6,9 @@ namespace QuizNova.Application.Features.Colleges.Queries.GetCollegeSummary;
 
 public sealed record GetCollegeSummaryQuery() : ICachedQuery<Result<CollegeSummaryDto>>
 {
+    public TimeSpan Expiration => TimeSpan.FromMinutes(5);
+
     public string CacheKey => "colleges:summary";
 
     public string[] Tags => ["colleges"];
-
-    public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 }
