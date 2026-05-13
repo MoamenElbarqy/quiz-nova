@@ -1,0 +1,118 @@
+using MediatR;
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+using QuizNova.Application.Common.Errors;
+using QuizNova.Application.Common.Interfaces;
+using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
+
+namespace QuizNova.Application.Features.Quizzes.Commands.UpdateQuestion;
+
+public sealed class UpdateQuestionCommandHandler(
+    IAppDbContext dbContext,
+    ILogger<UpdateQuestionCommandHandler> logger)
+    : IRequestHandler<UpdateMcqCommand, Result<Updated>>,
+      IRequestHandler<UpdateTfCommand, Result<Updated>>
+{
+    public async Task<Result<Updated>> Handle(UpdateMcqCommand request, CancellationToken ct)
+    {
+        return await HandleCore(request, ct);
+    }
+
+    public async Task<Result<Updated>> Handle(UpdateTfCommand request, CancellationToken ct)
+    {
+        return await HandleCore(request, ct);
+    }
+
+    private async Task<Result<Updated>> HandleCore(UpdateQuestionCommand request, CancellationToken ct)
+    {
+        logger.LogInformation(
+            "Updating question {QuestionId} in quiz {QuizId}",
+            request.QuestionId,
+            request.QuizId);
+
+        var quiz = await dbContext.Quizzes
+            .Include(q => q.Questions)
+            .FirstOrDefaultAsync(q => q.Id == request.QuizId, ct);
+
+        if (quiz is null)
+        {
+            logger.LogWarning("Quiz {QuizId} not found", request.QuizId);
+            return ApplicationErrors.QuizNotFound(request.QuizId);
+        }
+
+        Guid? correctChoiceId = null;
+        bool? tfCorrectChoice = null;
+        List<Choice>? choices = null;
+
+        switch (request)
+        {
+            case UpdateMcqCommand mcqCmd:
+                correctChoiceId = mcqCmd.CorrectChoiceId;
+
+                if (mcqCmd.Choices.All(c => c.Id != mcqCmd.CorrectChoiceId))
+                {
+                    return ApplicationErrors.QuizCorrectChoiceNotFound(mcqCmd.QuestionId, mcqCmd.CorrectChoiceId);
+                }
+
+                choices = new List<Choice>(mcqCmd.Choices.Count);
+
+                foreach (var choiceCmd in mcqCmd.Choices)
+                {
+                    if (choiceCmd.QuestionId != mcqCmd.QuestionId)
+                    {
+                        return ApplicationErrors.QuizChoiceBelongsToDifferentQuestion(
+                            choiceCmd.Id, mcqCmd.QuestionId);
+                    }
+
+                    var choiceResult = Choice.Create(
+                        choiceCmd.Id,
+                        choiceCmd.QuestionId,
+                        choiceCmd.Text,
+                        choiceCmd.DisplayOrder);
+
+                    if (choiceResult.IsError)
+                    {
+                        return choiceResult.TopError;
+                    }
+
+                    choices.Add(choiceResult.Value);
+                }
+
+                break;
+
+            case UpdateTfCommand tfCmd:
+                tfCorrectChoice = tfCmd.CorrectChoice;
+                break;
+        }
+
+        var updateResult = quiz.UpdateQuestion(
+            request.QuestionId,
+            request.QuestionText,
+            request.DisplayOrder,
+            request.Marks,
+            correctChoiceId,
+            tfCorrectChoice,
+            choices);
+
+        if (updateResult.IsError)
+        {
+            logger.LogWarning(
+                "Failed to update question {QuestionId}: {Error}",
+                request.QuestionId,
+                updateResult.TopError.Description);
+            return updateResult.TopError;
+        }
+
+        await dbContext.SaveChangesAsync(ct);
+
+        logger.LogInformation(
+            "Successfully updated question {QuestionId} in quiz {QuizId}",
+            request.QuestionId,
+            request.QuizId);
+
+        return Result.Updated;
+    }
+}

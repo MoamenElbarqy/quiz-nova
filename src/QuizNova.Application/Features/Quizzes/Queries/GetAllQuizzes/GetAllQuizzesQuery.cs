@@ -5,8 +5,7 @@ using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Application.Features.Quizzes.Queries.GetAllQuizzes;
 
-public sealed record GetAllQuizzesQuery(
-    string? SearchTerm = null,
+public sealed record GetAllQuizzesQuery(string? SearchTerm = null,
     int? Marks = null,
     int PageNumber = 1,
     int PageSize = 10)
