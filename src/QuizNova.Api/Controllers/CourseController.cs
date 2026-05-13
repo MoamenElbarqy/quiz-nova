@@ -4,8 +4,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 
+using QuizNova.Api.DTOs.Requests;
 using QuizNova.Application.Common.Models;
+using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Courses.Commands.DeleteCourseById;
+using QuizNova.Application.Features.Courses.Commands.EnrollStudentInCourse;
+using QuizNova.Application.Features.Courses.Commands.RemoveStudentFromCourse;
+using QuizNova.Application.Features.Courses.Commands.UpdateCourseInstructor;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Application.Features.Courses.Queries.GetAllCourses;
 using QuizNova.Application.Features.Courses.Queries.GetCourseById;
@@ -64,6 +69,63 @@ public sealed class CourseController(ISender sender) : ApiController
     {
         var result = await sender.Send(new GetCourseByIdQuery(id));
         return result.Match(Ok, Problem);
+    }
+
+    [HttpPost("courses")]
+    [ProducesResponseType(typeof(CourseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [EndpointSummary("Creates a course.")]
+    [EndpointDescription("Creates a course with an optional instructor assignment.")]
+    [EndpointName("CreateCourse")]
+    public async Task<ActionResult<CourseDto>> CreateCourse([FromBody] CreateCourseRequest request)
+    {
+        var command = new CreateCourseCommand(
+            request.Id,
+            request.Name,
+            request.InstructorId,
+            request.MinimumPassingMarks,
+            request.MaximumMarks);
+
+        var result = await sender.Send(command);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpPatch("courses/{courseId:guid}/instructor")]
+    [ProducesResponseType(typeof(CourseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Updates a course instructor.")]
+    [EndpointDescription("Assigns or clears the instructor for a course.")]
+    [EndpointName("UpdateCourseInstructor")]
+    public async Task<ActionResult<CourseDto>> UpdateCourseInstructor(
+        Guid courseId,
+        [FromBody] UpdateCourseInstructorRequest request)
+    {
+        var result = await sender.Send(new UpdateCourseInstructorCommand(courseId, request.InstructorId));
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpPost("courses/{courseId:guid}/students/{studentId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Enrolls a student in a course.")]
+    [EndpointDescription("Creates a course enrollment for the specified student.")]
+    [EndpointName("EnrollStudentInCourse")]
+    public async Task<ActionResult> EnrollStudentInCourse(Guid courseId, Guid studentId)
+    {
+        var result = await sender.Send(new EnrollStudentInCourseCommand(courseId, studentId));
+        return result.Match(_ => NoContent(), Problem);
+    }
+
+    [HttpDelete("courses/{courseId:guid}/students/{studentId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Removes a student from a course.")]
+    [EndpointDescription("Deletes a course enrollment for the specified student.")]
+    [EndpointName("RemoveStudentFromCourse")]
+    public async Task<ActionResult> RemoveStudentFromCourse(Guid courseId, Guid studentId)
+    {
+        var result = await sender.Send(new RemoveStudentFromCourseCommand(courseId, studentId));
+        return result.Match(_ => NoContent(), Problem);
     }
 
     [HttpDelete("courses/{id:guid}")]
