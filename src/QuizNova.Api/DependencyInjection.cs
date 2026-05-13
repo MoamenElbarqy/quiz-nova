@@ -1,8 +1,11 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using Asp.Versioning;
 
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.Extensions.Options;
 
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -20,18 +23,24 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApi(
         this IServiceCollection services,
-        IConfiguration configuration,
-        AppSettings appSettings)
+        IConfiguration configuration)
     {
         services.AddControllerWithJsonConfiguration();
         services.AddCustomVersioning();
         services.AddApiDocumentation();
-        services.AddConfiguredCors(appSettings);
+        services.AddAppOpenTelemetry();
+
+        services.AddOutputCache(options =>
+        {
+            options.AddBasePolicy(builder =>
+                builder.Expire(TimeSpan.FromSeconds(30)));
+        });
+
+        services.AddConfiguredCors();
         services.AddExceptionHandling();
         services.AddProblemDetails();
         services.AddAuthorization();
-        services.AddAppOpenTelemetry();
-        services.AddOutputCache();
+
         services.AddCustomResponseCompression();
         services.AddIdentityInfrastructure();
         return services;
@@ -100,27 +109,31 @@ public static class DependencyInjection
 
     private static IServiceCollection AddControllerWithJsonConfiguration(this IServiceCollection services)
     {
-        services.AddControllers().AddJsonOptions(options => options
-            .JsonSerializerOptions
-            .DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull);
+        services.AddControllers().AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+            options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        });
 
         return services;
     }
 
-    private static IServiceCollection AddConfiguredCors(this IServiceCollection services, AppSettings appSettings)
+    private static IServiceCollection AddConfiguredCors(this IServiceCollection services)
     {
-        services.AddCors(options =>
-        {
-            options.AddPolicy(
-                appSettings.Cors.PolicyName,
-                policy =>
-                {
-                    policy.WithOrigins(appSettings.Cors.AllowedOrigins)
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
-                        .AllowCredentials();
-                });
-        });
+        services.AddCors();
+        services.AddOptions<CorsOptions>()
+            .Configure<IOptions<AppSettings>>((options, appSettings) =>
+            {
+                options.AddPolicy(
+                    appSettings.Value.Cors.PolicyName,
+                    policy =>
+                    {
+                        policy.WithOrigins(appSettings.Value.Cors.AllowedOrigins)
+                            .AllowAnyMethod()
+                            .AllowAnyHeader()
+                            .AllowCredentials();
+                    });
+            });
 
         return services;
     }
