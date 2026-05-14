@@ -110,9 +110,12 @@ public sealed class CourseController(ISender sender) : ApiController
     [EndpointSummary("Enrolls a student in a course.")]
     [EndpointDescription("Creates a course enrollment for the specified student.")]
     [EndpointName("EnrollStudentInCourse")]
-    public async Task<ActionResult> EnrollStudentInCourse(Guid courseId, Guid studentId)
+    public async Task<ActionResult> EnrollStudentInCourse(
+        Guid courseId,
+        Guid studentId,
+        [FromBody] EnrollStudentInCourseRequest request)
     {
-        var result = await sender.Send(new EnrollStudentInCourseCommand(courseId, studentId));
+        var result = await sender.Send(new EnrollStudentInCourseCommand(request.Id, courseId, studentId));
         return result.Match(_ => NoContent(), Problem);
     }
 

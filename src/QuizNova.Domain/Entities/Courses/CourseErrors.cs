@@ -21,4 +21,7 @@ public static class CourseErrors
 
     public static readonly Error ScoringRangeInvalid =
         Error.Validation("Course_ScoringRange_Invalid", "Scoring configuration is inconsistent.");
+
+    public static Error StudentAlreadyEnrolled(Guid studentId) =>
+        Error.Conflict("Course_Student_Already_Enrolled", $"Student {studentId} is already enrolled in this course.");
 }

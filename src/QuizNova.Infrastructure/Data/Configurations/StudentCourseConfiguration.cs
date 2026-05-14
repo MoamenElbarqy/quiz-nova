@@ -21,7 +21,7 @@ public sealed class StudentCourseConfiguration : IEntityTypeConfiguration<Studen
             .HasForeignKey(sc => sc.StudentId);
 
         builder.HasOne(sc => sc.Course)
-            .WithMany()
+            .WithMany(c => c.StudentCourses)
             .HasForeignKey(sc => sc.CourseId);
     }
 }

@@ -13,5 +13,9 @@ public sealed class EnrollStudentInCourseCommandValidator : AbstractValidator<En
         RuleFor(command => command.StudentId)
             .NotEmpty()
             .WithMessage("Student ID is required.");
+
+        RuleFor(command => command.Id)
+            .NotEmpty()
+            .WithMessage("Enrollment ID is required.");
     }
 }

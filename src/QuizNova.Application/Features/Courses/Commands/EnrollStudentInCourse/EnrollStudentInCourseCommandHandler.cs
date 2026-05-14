@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.StudentCourses;
 
 namespace QuizNova.Application.Features.Courses.Commands.EnrollStudentInCourse;
 
@@ -17,49 +16,46 @@ public sealed class EnrollStudentInCourseCommandHandler(
 {
     public async Task<Result<Created>> Handle(EnrollStudentInCourseCommand request, CancellationToken ct)
     {
-        logger.LogInformation("Enrolling student {StudentId} in course {CourseId}", request.StudentId, request.CourseId);
+        logger.LogInformation("Enrolling student {StudentId} in course {CourseId}", request.StudentId,
+            request.CourseId);
 
-        if (!await dbContext.Courses.AnyAsync(course => course.Id == request.CourseId, ct))
+        if (await dbContext.StudentCourses.AnyAsync(sc => sc.Id == request.Id, ct))
+        {
+            logger.LogWarning("Enrollment failed: Enrollment ID {EnrollmentId} already exists", request.Id);
+            return ApplicationErrors.StudentCourseEnrollmentIdAlreadyExists(request.Id);
+        }
+
+        var course = await dbContext.Courses
+            .Include(c => c.StudentCourses)
+            .FirstOrDefaultAsync(c => c.Id == request.CourseId, ct);
+
+        if (course is null)
         {
             logger.LogWarning("Enrollment failed: Course {CourseId} not found", request.CourseId);
             return ApplicationErrors.CourseNotFound(request.CourseId);
         }
 
-        if (!await dbContext.Students.AnyAsync(student => student.Id == request.StudentId, ct))
+        var student = await dbContext.Students
+            .FirstOrDefaultAsync(s => s.Id == request.StudentId, ct);
+
+        if (student is null)
         {
             logger.LogWarning("Enrollment failed: Student {StudentId} not found", request.StudentId);
             return ApplicationErrors.StudentNotFound(request.StudentId);
         }
 
-        if (await dbContext.StudentCourses.AnyAsync(
-                studentCourse =>
-                    studentCourse.CourseId == request.CourseId &&
-                    studentCourse.StudentId == request.StudentId,
-                ct))
+        var enrollmentResult = course.Enroll(student, request.Id);
+
+        if (enrollmentResult.IsError)
         {
-            logger.LogWarning(
-                "Enrollment failed: Student {StudentId} already enrolled in course {CourseId}",
-                request.StudentId,
-                request.CourseId);
-            return ApplicationErrors.StudentAlreadyEnrolledInCourse(request.StudentId, request.CourseId);
+            logger.LogWarning("Enrollment failed: {ErrorDescription}", enrollmentResult.TopError.Description);
+            return enrollmentResult.TopError;
         }
 
-        var createStudentCourseResult = StudentCourse.Create(
-            Guid.NewGuid(),
-            request.StudentId,
-            request.CourseId,
-            DateTimeOffset.UtcNow);
-
-        if (createStudentCourseResult.IsError)
-        {
-            logger.LogWarning("Enrollment failed: {ErrorDescription}", createStudentCourseResult.TopError.Description);
-            return createStudentCourseResult.TopError;
-        }
-
-        await dbContext.StudentCourses.AddAsync(createStudentCourseResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
 
-        logger.LogInformation("Successfully enrolled student {StudentId} in course {CourseId}", request.StudentId, request.CourseId);
+        logger.LogInformation("Successfully enrolled student {StudentId} in course {CourseId}", request.StudentId,
+            request.CourseId);
 
         return Result.Created;
     }
