@@ -30,6 +30,22 @@ public sealed class UpdateAdminCommandHandler(
             return ApplicationErrors.AdminNotFound(request.Id);
         }
 
+        if (await dbContext.Users.AnyAsync(
+                user => user.Id != request.Id && user.PersonalInformation.Email == request.Email, ct))
+        {
+            logger.LogWarning("Admin update failed: Email {Email} already exists for another user", request.Email);
+            return ApplicationErrors.UserEmailAlreadyExists(request.Email);
+        }
+
+        if (await dbContext.Users.AnyAsync(
+                user => user.Id != request.Id && user.PersonalInformation.PhoneNumber == request.PhoneNumber, ct))
+        {
+            logger.LogWarning(
+                "Admin update failed: Phone number {PhoneNumber} already exists for another user",
+                request.PhoneNumber);
+            return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PhoneNumber);
+        }
+
         var personalInformationResult = PersonalInformation.Create(
             request.Name,
             request.Email,
@@ -41,7 +57,16 @@ public sealed class UpdateAdminCommandHandler(
             return personalInformationResult.TopError;
         }
 
-        admin.Update(personalInformationResult.Value);
+        var updateAdminResult = admin.Update(personalInformationResult.Value);
+
+        if (updateAdminResult.IsError)
+        {
+            logger.LogWarning(
+                "Admin update failed: Error updating admin entity. Error: {ErrorDescription}",
+                updateAdminResult.TopError.Description);
+            return updateAdminResult.TopError;
+        }
+
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("Successfully updated admin {AdminId}", request.Id);

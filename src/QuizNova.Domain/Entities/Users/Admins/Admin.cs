@@ -28,13 +28,6 @@ public class Admin : User
         PersonalInformation personalInformation,
         List<RefreshToken> refreshTokens)
     {
-        var validationError = ValidateCommon(personalInformation, UserRole.Admin);
-
-        if (validationError.IsError)
-        {
-            return validationError.TopError;
-        }
-
         var admin = new Admin(id, personalInformation, refreshTokens);
         admin.AddDomainEvent(new AdminCreatedEvent(id));
         return admin;
@@ -42,13 +35,10 @@ public class Admin : User
 
     public Result<Updated> Update(PersonalInformation personalInformation)
     {
-        var updateResult = UpdateCommon(personalInformation, UserRole.Admin);
-        if (!updateResult.IsError)
-        {
-            AddDomainEvent(new AdminUpdatedEvent(Id));
-        }
+        PersonalInformation = personalInformation;
+        AddDomainEvent(new AdminUpdatedEvent(Id));
 
-        return updateResult;
+        return Result.Updated;
     }
 
     public Result<Deleted> Delete()
