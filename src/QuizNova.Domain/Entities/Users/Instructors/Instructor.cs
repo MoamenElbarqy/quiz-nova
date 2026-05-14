@@ -44,13 +44,6 @@ public class Instructor : User
         List<Course> courses,
         List<Quiz> quizzes)
     {
-        var validationError = ValidateCommon(personalInformation, UserRole.Instructor);
-
-        if (validationError.IsError)
-        {
-            return validationError.TopError;
-        }
-
         var instructor = new Instructor(
             id,
             personalInformation,
@@ -63,13 +56,10 @@ public class Instructor : User
 
     public Result<Updated> Update(PersonalInformation personalInformation)
     {
-        var updateResult = UpdateCommon(personalInformation, UserRole.Instructor);
-        if (!updateResult.IsError)
-        {
-            AddDomainEvent(new InstructorUpdatedEvent(Id));
-        }
+        PersonalInformation = personalInformation;
+        AddDomainEvent(new InstructorUpdatedEvent(Id));
 
-        return updateResult;
+        return Result.Updated;
     }
 
     public Result<Deleted> Delete()

@@ -1,4 +1,5 @@
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Common.Utilities;
 
 namespace QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
@@ -34,31 +35,6 @@ public sealed class PersonalInformation
         string password,
         string phoneNumber)
     {
-        var validationError = Validate(name, email, password, phoneNumber);
-
-        if (validationError.IsError)
-        {
-            return validationError.TopError;
-        }
-
-        return new PersonalInformation(name, email, password, phoneNumber);
-    }
-
-    public static Result<Validated> Validate(PersonalInformation personalInformation)
-    {
-        return Validate(
-            personalInformation.Name,
-            personalInformation.Email,
-            personalInformation.Password,
-            personalInformation.PhoneNumber);
-    }
-
-    private static Result<Validated> Validate(
-        string name,
-        string email,
-        string password,
-        string phoneNumber)
-    {
         if (string.IsNullOrWhiteSpace(name))
         {
             return PersonalInformationErrors.NameRequired;
@@ -69,7 +45,7 @@ public sealed class PersonalInformation
             return PersonalInformationErrors.EmailRequired;
         }
 
-        if (!email.Contains('@'))
+        if (!ValidationUtils.IsValidEmailFormat(email))
         {
             return PersonalInformationErrors.EmailInvalid;
         }
@@ -84,6 +60,6 @@ public sealed class PersonalInformation
             return PersonalInformationErrors.PhoneNumberRequired;
         }
 
-        return Result.Validated;
+        return new PersonalInformation(name, email, password, phoneNumber);
     }
 }

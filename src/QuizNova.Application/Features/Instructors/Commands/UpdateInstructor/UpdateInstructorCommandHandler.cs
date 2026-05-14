@@ -29,6 +29,22 @@ public sealed class UpdateInstructorCommandHandler(
             return ApplicationErrors.InstructorNotFound(request.Id);
         }
 
+        if (await dbContext.Users.AnyAsync(
+                user => user.Id != request.Id && user.PersonalInformation.Email == request.Email, ct))
+        {
+            logger.LogWarning("Instructor update failed: Email {Email} already exists for another user", request.Email);
+            return ApplicationErrors.UserEmailAlreadyExists(request.Email);
+        }
+
+        if (await dbContext.Users.AnyAsync(
+                user => user.Id != request.Id && user.PersonalInformation.PhoneNumber == request.PhoneNumber, ct))
+        {
+            logger.LogWarning(
+                "Instructor update failed: Phone number {PhoneNumber} already exists for another user",
+                request.PhoneNumber);
+            return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PhoneNumber);
+        }
+
         var personalInformationResult = PersonalInformation.Create(
             request.Name,
             request.Email,
@@ -40,8 +56,23 @@ public sealed class UpdateInstructorCommandHandler(
             return personalInformationResult.TopError;
         }
 
-        instructor.Update(personalInformationResult.Value);
+        var updateInstructorResult = instructor.Update(personalInformationResult.Value);
+
+        if (updateInstructorResult.IsError)
+        {
+            logger.LogWarning(
+                "Instructor update failed: Error updating instructor entity. Error: {ErrorDescription}",
+                updateInstructorResult.TopError.Description);
+            return updateInstructorResult.TopError;
+        }
+
         await dbContext.SaveChangesAsync(ct);
+
+        var coursesCount = await dbContext.Courses
+            .CountAsync(course => course.InstructorId == instructor.Id, ct);
+
+        var quizzesCount = await dbContext.Quizzes
+            .CountAsync(quiz => quiz.InstructorId == instructor.Id, ct);
 
         logger.LogInformation("Successfully updated instructor {InstructorId}", request.Id);
 
@@ -51,7 +82,7 @@ public sealed class UpdateInstructorCommandHandler(
             instructor.PersonalInformation.Email,
             instructor.PersonalInformation.Password,
             instructor.PersonalInformation.PhoneNumber,
-            0,
-            0);
+            coursesCount,
+            quizzesCount);
     }
 }
