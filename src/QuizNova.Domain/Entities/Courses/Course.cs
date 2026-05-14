@@ -53,6 +53,11 @@ public sealed class Course : Entity
         int maximumMarks,
         List<Quiz> quizzes)
     {
+        if (id == Guid.Empty)
+        {
+            return CourseErrors.IdRequired;
+        }
+
         if (instructorId.HasValue && instructorId.Value == Guid.Empty)
         {
             return CourseErrors.InstructorIdRequired;
