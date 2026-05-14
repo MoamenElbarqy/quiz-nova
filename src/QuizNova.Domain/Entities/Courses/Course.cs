@@ -2,13 +2,16 @@ using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses.Events;
 using QuizNova.Domain.Entities.Quizzes;
+using QuizNova.Domain.Entities.StudentCourses;
 using QuizNova.Domain.Entities.Users.Instructors;
+using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Domain.Entities.Courses;
 
 public sealed class Course : Entity
 {
     private readonly List<Quiz> _quizzes;
+    private readonly List<StudentCourse> _studentCourses;
 
     private Course()
     {
@@ -20,7 +23,8 @@ public sealed class Course : Entity
         string name,
         int minimumPassingMarks,
         int maximumMarks,
-        List<Quiz> quizzes)
+        List<Quiz> quizzes,
+        List<StudentCourse> studentCourses)
         : base(id)
     {
         InstructorId = instructorId;
@@ -28,6 +32,7 @@ public sealed class Course : Entity
         MinimumPassingMarks = minimumPassingMarks;
         MaximumMarks = maximumMarks;
         _quizzes = quizzes;
+        _studentCourses = studentCourses;
     }
 
     public Guid? InstructorId { get; private set; }
@@ -45,13 +50,16 @@ public sealed class Course : Entity
 
     public IEnumerable<Quiz> Quizzes => _quizzes.AsReadOnly();
 
+    public IEnumerable<StudentCourse> StudentCourses => _studentCourses.AsReadOnly();
+
     public static Result<Course> Create(
         Guid id,
         Guid? instructorId,
         string name,
         int minimumPassingMarks,
         int maximumMarks,
-        List<Quiz> quizzes)
+        List<Quiz> quizzes,
+        List<StudentCourse> studentCourses)
     {
         if (id == Guid.Empty)
         {
@@ -89,9 +97,34 @@ public sealed class Course : Entity
             name,
             minimumPassingMarks,
             maximumMarks,
-            quizzes);
+            quizzes,
+            studentCourses);
         course.AddDomainEvent(new CourseCreatedEvent(id));
         return course;
+    }
+
+    public Result<StudentCourse> Enroll(Student student, Guid enrollmentId)
+    {
+        if (_studentCourses.Any(sc => sc.StudentId == student.Id))
+        {
+            return CourseErrors.StudentAlreadyEnrolled(student.Id);
+        }
+
+        var studentCourseResult = StudentCourse.Create(
+            enrollmentId,
+            student.Id,
+            Id,
+            DateTimeOffset.UtcNow);
+
+        if (studentCourseResult.IsError)
+        {
+            return studentCourseResult.TopError;
+        }
+
+        _studentCourses.Add(studentCourseResult.Value);
+        AddDomainEvent(new StudentEnrolledEvent(Id, student.Id));
+
+        return studentCourseResult.Value;
     }
 
     public Result<Course> UpdateInstructor(Guid? instructorId)

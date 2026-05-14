@@ -169,4 +169,9 @@ public static class ApplicationErrors
         Error.NotFound(
             code: "Course.NotFound",
             description: $"Course with ID '{courseId}' was not found.");
+
+    public static Error StudentCourseEnrollmentIdAlreadyExists(Guid enrollmentId) =>
+        Error.Conflict(
+            code: "StudentCourse.Enrollment.Id.AlreadyExists",
+            description: $"Enrollment with ID '{enrollmentId}' already exists.");
 }

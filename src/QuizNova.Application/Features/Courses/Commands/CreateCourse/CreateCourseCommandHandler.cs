@@ -39,6 +39,7 @@ public sealed class CreateCourseCommandHandler(
             request.Name,
             request.MinimumPassingMarks,
             request.MaximumMarks,
+            [],
             []);
 
         if (createCourseResult.IsError)
