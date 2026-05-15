@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Instructors.DTOs;
+using QuizNova.Application.Features.Instructors.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
@@ -21,6 +22,8 @@ public sealed class UpdateInstructorCommandHandler(
         logger.LogInformation("Updating instructor with ID: {InstructorId}", request.Id);
 
         var instructor = await dbContext.Instructors
+            .Include(i => i.Courses)
+            .Include(i => i.Quizzes)
             .FirstOrDefaultAsync(entity => entity.Id == request.Id, ct);
 
         if (instructor is null)
@@ -68,21 +71,8 @@ public sealed class UpdateInstructorCommandHandler(
 
         await dbContext.SaveChangesAsync(ct);
 
-        var coursesCount = await dbContext.Courses
-            .CountAsync(course => course.InstructorId == instructor.Id, ct);
-
-        var quizzesCount = await dbContext.Quizzes
-            .CountAsync(quiz => quiz.InstructorId == instructor.Id, ct);
-
         logger.LogInformation("Successfully updated instructor {InstructorId}", request.Id);
 
-        return new InstructorDto(
-            instructor.Id,
-            instructor.PersonalInformation.Name,
-            instructor.PersonalInformation.Email,
-            instructor.PersonalInformation.Password,
-            instructor.PersonalInformation.PhoneNumber,
-            coursesCount,
-            quizzesCount);
+        return instructor.ToInstructorDto(instructor.Courses.Count(), instructor.Quizzes.Count());
     }
 }

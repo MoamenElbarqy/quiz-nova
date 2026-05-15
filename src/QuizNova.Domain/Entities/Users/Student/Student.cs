@@ -10,6 +10,7 @@ namespace QuizNova.Domain.Entities.Users.Student;
 public class Student : User
 {
     private readonly List<QuizAttempt> _quizAttempts;
+    private readonly List<StudentCourse> _studentCourses;
 
     private Student()
     {
@@ -19,6 +20,7 @@ public class Student : User
         Guid id,
         PersonalInformation personalInformation,
         List<RefreshToken> refreshTokens,
+        List<StudentCourse> studentCourses,
         List<QuizAttempt> quizAttempts)
         : base(
             id,
@@ -26,9 +28,11 @@ public class Student : User
             UserRole.Student,
             refreshTokens)
     {
+        _studentCourses = studentCourses;
         _quizAttempts = quizAttempts;
     }
 
+    public IEnumerable<StudentCourse> StudentCourses => _studentCourses.AsReadOnly();
     public IEnumerable<QuizAttempt> QuizAttempts => _quizAttempts.AsReadOnly();
 
     public static Result<Student> Create(
@@ -42,6 +46,7 @@ public class Student : User
             id,
             personalInformation,
             refreshTokens,
+            courseEnrollments,
             quizAttempts);
         student.AddDomainEvent(new StudentCreatedEvent(id));
         return student;

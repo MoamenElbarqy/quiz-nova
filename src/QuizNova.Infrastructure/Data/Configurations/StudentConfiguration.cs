@@ -11,6 +11,10 @@ public sealed class StudentConfiguration : IEntityTypeConfiguration<Student>
     {
         builder.ToTable("Students");
 
+        builder.Navigation(s => s.StudentCourses)
+            .HasField("_studentCourses")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.Navigation(s => s.QuizAttempts)
             .HasField("_quizAttempts")
             .UsePropertyAccessMode(PropertyAccessMode.Field);

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Students.DTOs;
+using QuizNova.Application.Features.Students.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Users.Student;
 
@@ -22,6 +23,7 @@ public sealed class GetAllStudentsQueryHandler(
 
         IQueryable<Student> query = dbContext.Students
             .AsNoTracking()
+            .Include(s => s.StudentCourses)
             .AsQueryable();
 
         query = ApplySearchTerm(query, request);
@@ -33,13 +35,7 @@ public sealed class GetAllStudentsQueryHandler(
         var students = await query
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(student => new StudentDto(
-                student.Id,
-                student.PersonalInformation.Name,
-                student.PersonalInformation.Email,
-                student.PersonalInformation.Password,
-                student.PersonalInformation.PhoneNumber,
-                dbContext.StudentCourses.Count(studentCourse => studentCourse.StudentId == student.Id)))
+            .Select(student => student.ToStudentDto(student.StudentCourses.Count()))
             .ToListAsync(ct);
 
         var response = new PaginatedList<StudentDto>(

@@ -17,7 +17,7 @@ public sealed class StudentCourseConfiguration : IEntityTypeConfiguration<Studen
             .IsUnique();
 
         builder.HasOne(sc => sc.Student)
-            .WithMany()
+            .WithMany(s => s.StudentCourses)
             .HasForeignKey(sc => sc.StudentId);
 
         builder.HasOne(sc => sc.Course)
