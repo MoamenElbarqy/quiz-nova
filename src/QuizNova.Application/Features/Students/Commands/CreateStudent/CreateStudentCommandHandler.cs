@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Students.DTOs;
+using QuizNova.Application.Features.Students.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.Users.Student;
@@ -88,12 +89,6 @@ public sealed class CreateStudentCommandHandler(
 
         logger.LogInformation("Successfully created student {StudentId} with email {Email}", request.Id, request.Email);
 
-        return new StudentDto(
-            createStudentResult.Value.Id,
-            createStudentResult.Value.PersonalInformation.Name,
-            createStudentResult.Value.PersonalInformation.Email,
-            createStudentResult.Value.PersonalInformation.Password,
-            createStudentResult.Value.PersonalInformation.PhoneNumber,
-            0);
+        return createStudentResult.Value.ToStudentDto(0);
     }
 }

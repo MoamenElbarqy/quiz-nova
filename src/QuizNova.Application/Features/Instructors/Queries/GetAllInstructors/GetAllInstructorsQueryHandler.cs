@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Instructors.DTOs;
+using QuizNova.Application.Features.Instructors.Mappers;
 using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Application.Features.Instructors.Queries.GetAllInstructors;
@@ -21,6 +22,8 @@ public sealed class GetAllInstructorsQueryHandler(
 
         var query = dbContext.Instructors
             .AsNoTracking()
+            .Include(i => i.Courses)
+            .Include(i => i.Quizzes)
             .AsQueryable();
 
         query = ApplySearchTerm(query, request);
@@ -32,14 +35,7 @@ public sealed class GetAllInstructorsQueryHandler(
         var instructors = await query
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(instructor => new InstructorDto(
-                instructor.Id,
-                instructor.PersonalInformation.Name,
-                instructor.PersonalInformation.Email,
-                instructor.PersonalInformation.Password,
-                instructor.PersonalInformation.PhoneNumber,
-                dbContext.Courses.Count(course => course.InstructorId == instructor.Id),
-                dbContext.Quizzes.Count(quiz => quiz.InstructorId == instructor.Id)))
+            .Select(instructor => instructor.ToInstructorDto(instructor.Courses.Count(), instructor.Quizzes.Count()))
             .ToListAsync(ct);
 
         var response = new PaginatedList<InstructorDto>(

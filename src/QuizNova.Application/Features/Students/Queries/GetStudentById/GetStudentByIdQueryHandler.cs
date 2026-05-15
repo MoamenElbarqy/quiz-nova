@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Students.DTOs;
+using QuizNova.Application.Features.Students.Mappers;
 using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Application.Features.Students.Queries.GetStudentById;
@@ -21,14 +22,8 @@ public sealed class GetStudentByIdQueryHandler(
 
         var student = await dbContext.Students
             .AsNoTracking()
-            .Select(student => new StudentDto(
-                student.Id,
-                student.PersonalInformation.Name,
-                student.PersonalInformation.Email,
-                student.PersonalInformation.Password,
-                student.PersonalInformation.PhoneNumber,
-                dbContext.StudentCourses.Count(studentCourse => studentCourse.StudentId == student.Id)))
-            .FirstOrDefaultAsync(s => s.StudentId == request.Id, ct);
+            .Include(s => s.StudentCourses)
+            .FirstOrDefaultAsync(s => s.Id == request.Id, ct);
 
         if (student is null)
         {
@@ -38,6 +33,6 @@ public sealed class GetStudentByIdQueryHandler(
 
         logger.LogInformation("Successfully retrieved student {StudentId}", request.Id);
 
-        return student;
+        return student.ToStudentDto(student.StudentCourses.Count());
     }
 }

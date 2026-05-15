@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Instructors.DTOs;
+using QuizNova.Application.Features.Instructors.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Identity;
@@ -86,13 +87,6 @@ public sealed class CreateInstructorCommandHandler(
 
         logger.LogInformation("Successfully created instructor {InstructorId} with email {Email}", request.Id, request.Email);
 
-        return new InstructorDto(
-            createInstructorResult.Value.Id,
-            createInstructorResult.Value.PersonalInformation.Name,
-            createInstructorResult.Value.PersonalInformation.Email,
-            createInstructorResult.Value.PersonalInformation.Password,
-            createInstructorResult.Value.PersonalInformation.PhoneNumber,
-            0,
-            0);
+        return createInstructorResult.Value.ToInstructorDto(0, 0);
     }
 }

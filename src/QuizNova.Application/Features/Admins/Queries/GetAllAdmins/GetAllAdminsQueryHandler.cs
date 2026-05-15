@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Admins.DTOs;
+using QuizNova.Application.Features.Admins.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Users.Admins;
 
@@ -33,12 +34,7 @@ public sealed class GetAllAdminsQueryHandler(
         var admins = await query
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(admin => new AdminDto(
-                admin.Id,
-                admin.PersonalInformation.Name,
-                admin.PersonalInformation.Email,
-                admin.PersonalInformation.Password,
-                admin.PersonalInformation.PhoneNumber))
+            .Select(admin => admin.ToAdminDto())
             .ToListAsync(ct);
 
         var response = new PaginatedList<AdminDto>(
