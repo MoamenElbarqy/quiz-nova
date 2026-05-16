@@ -23,7 +23,7 @@ public abstract class Question : Entity
         Marks = marks;
     }
 
-    public Guid QuizId { get; private set; }
+    public Guid QuizId { get; }
 
     public string QuestionText { get; private set; } = string.Empty;
 
@@ -31,7 +31,7 @@ public abstract class Question : Entity
 
     public int Marks { get; private set; }
 
-    public Quiz? Quiz { get; private set; }
+    public Quiz? Quiz { get; init; }
 
     internal Result<Updated> UpdateBase(
         string questionText,
@@ -81,4 +81,3 @@ public abstract class Question : Entity
         return Result.Validated;
     }
 }
-

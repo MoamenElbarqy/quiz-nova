@@ -19,8 +19,6 @@ public abstract class QuestionAnswer : Entity
 
     public Question? Question { get; init; }
 
-    public abstract bool IsCorrect { get; }
-
     protected QuestionAnswer(
         Guid id,
         Guid studentId,
@@ -33,7 +31,7 @@ public abstract class QuestionAnswer : Entity
         QuizAttemptId = quizAttemptId;
     }
 
-    private QuestionAnswer()
+    protected QuestionAnswer()
     {
     }
 

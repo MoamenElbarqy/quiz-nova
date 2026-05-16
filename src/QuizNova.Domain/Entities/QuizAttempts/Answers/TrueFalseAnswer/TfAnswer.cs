@@ -1,16 +1,14 @@
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
 using QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
 
 namespace QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalseAnswer;
 
-public class TfAnswer : QuestionAnswer
+public class TfAnswer : AutoGradedAnswer
 {
     public bool StudentChoice { get; }
 
-    public Tf? Tf { get; }
-
-    public override bool IsCorrect => Tf is not null && Tf.CorrectChoice == StudentChoice;
+    public Tf? Tf { get; init; }
 
     // Required by EF Core
     private TfAnswer()
@@ -18,7 +16,8 @@ public class TfAnswer : QuestionAnswer
             Guid.Empty,
             Guid.Empty,
             Guid.Empty,
-            Guid.Empty)
+            Guid.Empty,
+            false)
     {
     }
 
@@ -27,8 +26,9 @@ public class TfAnswer : QuestionAnswer
         Guid studentId,
         Guid questionId,
         Guid quizAttemptId,
-        bool studentChoice)
-        : base(id, studentId, questionId, quizAttemptId)
+        bool studentChoice,
+        bool isCorrect)
+        : base(id, studentId, questionId, quizAttemptId, isCorrect)
     {
         StudentChoice = studentChoice;
     }
@@ -38,7 +38,8 @@ public class TfAnswer : QuestionAnswer
         Guid studentId,
         Guid questionId,
         Guid quizAttemptId,
-        bool studentChoice)
+        bool studentChoice,
+        bool isCorrect)
     {
         var commonValidationError = ValidateCommon(studentId, questionId, quizAttemptId);
 
@@ -52,6 +53,7 @@ public class TfAnswer : QuestionAnswer
             studentId: studentId,
             questionId,
             quizAttemptId,
-            studentChoice);
+            studentChoice,
+            isCorrect);
     }
 }

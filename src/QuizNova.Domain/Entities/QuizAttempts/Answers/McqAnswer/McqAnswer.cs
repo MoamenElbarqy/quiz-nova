@@ -1,16 +1,14 @@
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
 
 namespace QuizNova.Domain.Entities.QuizAttempts.Answers.McqAnswer;
 
-public class McqAnswer : QuestionAnswer
+public class McqAnswer : AutoGradedAnswer
 {
     public Guid SelectedChoiceId { get; }
 
     public Mcq? Mcq { get; init; }
-
-    public override bool IsCorrect => Mcq is not null && SelectedChoiceId == Mcq.CorrectChoiceId;
 
     // Required by EF Core
     private McqAnswer()
@@ -18,7 +16,8 @@ public class McqAnswer : QuestionAnswer
             Guid.Empty,
             Guid.Empty,
             Guid.Empty,
-            Guid.Empty)
+            Guid.Empty,
+            false)
     {
     }
 
@@ -28,8 +27,9 @@ public class McqAnswer : QuestionAnswer
         Guid questionId,
         Guid quizAttemptId,
         Guid selectedChoiceId,
-        Mcq mcq)
-        : base(id, studentId, questionId, quizAttemptId)
+        Mcq mcq,
+        bool isCorrect)
+        : base(id, studentId, questionId, quizAttemptId, isCorrect)
     {
         SelectedChoiceId = selectedChoiceId;
         Mcq = mcq;
@@ -41,7 +41,8 @@ public class McqAnswer : QuestionAnswer
         Guid questionId,
         Guid quizAttemptId,
         Guid selectedChoiceId,
-        Mcq question)
+        Mcq question,
+        bool isCorrect)
     {
         var commonValidationError = ValidateCommon(studentId, questionId, quizAttemptId);
 
@@ -65,6 +66,6 @@ public class McqAnswer : QuestionAnswer
             return McqAnswerErrors.SelectedChoiceDoesNotBelongToQuestion(questionId, selectedChoiceId);
         }
 
-        return new McqAnswer(id, studentId, questionId, quizAttemptId, selectedChoiceId, question);
+        return new McqAnswer(id, studentId, questionId, quizAttemptId, selectedChoiceId, question, isCorrect);
     }
 }

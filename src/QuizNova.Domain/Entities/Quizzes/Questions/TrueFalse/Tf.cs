@@ -1,12 +1,15 @@
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Quizzes.Questions.Base;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalseAnswer;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions;
 
 namespace QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
 
-public class Tf : Question
+public class Tf : AutoGradedQuestion<bool>
 {
     public bool CorrectChoice { get; private set; }
 
+    // Required by Entity Framework Core
     private Tf()
     {
     }
@@ -68,5 +71,18 @@ public class Tf : Question
 
         return Result.Updated;
     }
-}
 
+    public override Func<bool, bool> CorrectionCondition => studentChoice => studentChoice == CorrectChoice;
+
+    public override Result<QuestionAnswer> Solve(bool answer, Guid studentId, Guid quizAttemptId)
+    {
+        var isCorrect = CorrectionCondition(answer);
+        return TfAnswer.Create(
+            Guid.NewGuid(),
+            studentId,
+            Id,
+            quizAttemptId,
+            answer,
+            isCorrect).Value;
+    }
+}
