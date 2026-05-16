@@ -10,9 +10,6 @@ using QuizNova.Application.Features.QuizAttempts.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.McqAnswer;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalseAnswer;
-using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
 
@@ -109,11 +106,21 @@ public sealed class SubmitQuizAttemptCommandHandler(
                 return QuizAttemptErrors.QuestionNotFoundInQuiz(answer.QuestionId, request.QuizId);
             }
 
-            Result<QuestionAnswer> createAnswerResult = answer switch
+            Result<QuestionAnswer> createAnswerResult = (question, answer) switch
             {
-                SubmitMcqAnswerCommand mcqAnswer => CreateMcqAnswer(request, question, mcqAnswer),
-                SubmitTfAnswerCommand tfAnswer => CreateTfAnswer(request, question, tfAnswer),
-                _ => Error.Unexpected("QuizAttempt.Answer.Unsupported", "Unknown answer type."),
+                (Mcq mcqQuestion, SubmitMcqAnswerCommand mcqAnswer) =>
+                    mcqQuestion.Solve(mcqAnswer.SelectedChoiceId, studentId, request.QuizAttemptId),
+                (Tf tfQuestion, SubmitTfAnswerCommand tfAnswer) =>
+                    tfQuestion.Solve(tfAnswer.StudentChoice, studentId, request.QuizAttemptId),
+                (Mcq, _) => Error.Unexpected(
+                    "QuizAttempt.Answer.AnswerTypeMismatch",
+                    $"Question {answer.QuestionId} is an MCQ question but the submitted answer is not an MCQ answer."),
+                (Tf, _) => Error.Unexpected(
+                    "QuizAttempt.Answer.AnswerTypeMismatch",
+                    $"Question {answer.QuestionId} is a True/False question but the submitted answer is not a True/False answer."),
+                _ => Error.Unexpected(
+                    "QuizAttempt.Answer.Unsupported",
+                    $"Question {answer.QuestionId} has an unsupported question type."),
             };
 
             if (createAnswerResult.IsError)
@@ -149,72 +156,12 @@ public sealed class SubmitQuizAttemptCommandHandler(
         await dbContext.QuizAttempts.AddAsync(createAttemptResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
 
-        var createdAttempt = await dbContext.QuizAttempts
-            .AsNoTracking()
-            .Where(quizAttempt => quizAttempt.Id == request.QuizAttemptId)
-            .Include(quizAttempt => quizAttempt.Quiz)
-            .ThenInclude(quizEntity => quizEntity!.Questions)
-            .Include(quizAttempt => quizAttempt.StudentAnswers)
-            .FirstOrDefaultAsync(ct);
-
-        if (createdAttempt is null)
-        {
-            logger.LogError(
-                "Quiz attempt submission failed: Created attempt {QuizAttemptId} could not be re-loaded from database",
-                request.QuizAttemptId);
-
-            return Error.Unexpected(
-                "QuizAttempt.Creation.Unexpected",
-                "Quiz attempt was created but could not be loaded.");
-        }
-
         logger.LogInformation(
             "Successfully submitted quiz attempt {QuizAttemptId} for student {StudentId}. Score: {Score}",
             request.QuizAttemptId,
             request.StudentId,
-            createdAttempt.Score);
+            createAttemptResult.Value.Score);
 
-        return createdAttempt.ToQuizAttemptDto();
-    }
-
-    private static Result<QuestionAnswer> CreateMcqAnswer(
-        SubmitQuizAttemptCommand request,
-        Question question,
-        SubmitMcqAnswerCommand answer)
-    {
-        if (question is not Mcq mcqQuestion)
-        {
-            return QuizAttemptErrors.QuestionTypeMismatch(answer.QuestionId, "mcq");
-        }
-
-        var createAnswerResult = McqAnswer.Create(
-            answer.AnswerId,
-            request.StudentId,
-            answer.QuestionId,
-            request.QuizAttemptId,
-            answer.SelectedChoiceId,
-            mcqQuestion);
-
-        return createAnswerResult.IsError ? createAnswerResult.TopError : createAnswerResult.Value;
-    }
-
-    private static Result<QuestionAnswer> CreateTfAnswer(
-        SubmitQuizAttemptCommand request,
-        Question question,
-        SubmitTfAnswerCommand answer)
-    {
-        if (question is not Tf)
-        {
-            return QuizAttemptErrors.QuestionTypeMismatch(answer.QuestionId, "tf");
-        }
-
-        var createAnswerResult = TfAnswer.Create(
-            Guid.NewGuid(),
-            request.StudentId,
-            answer.QuestionId,
-            request.QuizAttemptId,
-            answer.StudentChoice);
-
-        return createAnswerResult.IsError ? createAnswerResult.TopError : createAnswerResult.Value;
+        return createAttemptResult.Value.ToQuizAttemptDto();
     }
 }

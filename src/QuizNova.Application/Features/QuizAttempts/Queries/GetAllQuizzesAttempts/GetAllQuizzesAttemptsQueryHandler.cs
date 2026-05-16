@@ -9,6 +9,7 @@ using QuizNova.Application.Features.QuizAttempts.DTOs;
 using QuizNova.Application.Features.QuizAttempts.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
 
 namespace QuizNova.Application.Features.QuizAttempts.Queries.GetAllQuizzesAttempts;
 
@@ -61,7 +62,7 @@ public sealed class GetAllQuizzesAttemptsQueryHandler(
         if (request.CorrectAnswers.HasValue)
         {
             query = query.Where(quizAttempt =>
-                quizAttempt.StudentAnswers.Count(answer => answer.IsCorrect) ==
+                quizAttempt.StudentAnswers.OfType<AutoGradedAnswer>().Count(answer => answer.IsCorrect) ==
                 request.CorrectAnswers.Value);
         }
 

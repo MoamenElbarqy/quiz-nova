@@ -5,7 +5,6 @@ public sealed record CreateMcqCommand(
     Guid QuizId,
     string QuestionText,
     int Marks,
-    int NumberOfChoices,
     Guid CorrectChoiceId,
     IReadOnlyCollection<CreateChoiceCommand> Choices)
     : CreateQuestionCommand(Id, QuizId, QuestionText, Marks);

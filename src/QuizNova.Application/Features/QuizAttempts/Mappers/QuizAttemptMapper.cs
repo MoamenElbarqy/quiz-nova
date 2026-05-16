@@ -1,7 +1,9 @@
 using QuizNova.Application.Features.QuizAttempts.DTOs;
 using QuizNova.Application.Features.Quizzes.Mappers;
 using QuizNova.Domain.Entities.QuizAttempts;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.McqAnswer;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalseAnswer;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
@@ -55,21 +57,34 @@ public static class QuizAttemptMapper
 
         return answer switch
         {
-            McqAnswer mcqAnswer => new McqAnswerDto(
-                mcqAnswer.Id,
-                mcqAnswer.QuestionId,
-                questionText,
-                "mcq",
-                answer.IsCorrect,
-                mcqAnswer.SelectedChoiceId),
+            AutoGradedAnswer autoGradedAnswer => autoGradedAnswer switch
+            {
+                McqAnswer mcqAnswer => new McqAnswerDto(
+                    mcqAnswer.Id,
+                    mcqAnswer.QuestionId,
+                    questionText,
+                    "mcq",
+                    autoGradedAnswer.IsCorrect,
+                    mcqAnswer.SelectedChoiceId),
 
-            TfAnswer tfAnswer => new TfAnswerDto(
-                tfAnswer.Id,
-                tfAnswer.QuestionId,
+                TfAnswer tfAnswer => new TfAnswerDto(
+                    tfAnswer.Id,
+                    tfAnswer.QuestionId,
+                    questionText,
+                    "tf",
+                    autoGradedAnswer.IsCorrect,
+                    tfAnswer.StudentChoice),
+
+                _ => throw new InvalidOperationException($"Unknown auto-graded answer type: {answer.GetType().Name}")
+            },
+
+            ManuallyGradedAnswers manuallyGradedAnswer => new ManuallyGradedAnswerDto(
+                manuallyGradedAnswer.Id,
+                manuallyGradedAnswer.QuestionId,
                 questionText,
-                "tf",
-                answer.IsCorrect,
-                tfAnswer.StudentChoice),
+                "manual",
+                question is not null && manuallyGradedAnswer.Score.HasValue && manuallyGradedAnswer.Score.Value == question.Marks,
+                manuallyGradedAnswer.Score),
 
             _ => throw new InvalidOperationException($"Unknown answer type: {answer.GetType().Name}")
         };
