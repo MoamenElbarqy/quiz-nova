@@ -102,9 +102,9 @@ public sealed class CreateQuizCommandHandler(
         foreach (var indexedQuestion in request.Questions.Select((question, index) => new { question, index }))
         {
             var createQuestionResult = CreateQuestion(
-            indexedQuestion.question,
-            indexedQuestion.index,
-            request.Id);
+                indexedQuestion.question,
+                indexedQuestion.index,
+                request.Id);
 
             if (createQuestionResult.IsError)
             {
@@ -140,7 +140,8 @@ public sealed class CreateQuizCommandHandler(
         await dbContext.Quizzes.AddAsync(createQuizResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
 
-        logger.LogInformation("Successfully created quiz {QuizId} with {QuestionCount} questions", request.Id, questions.Count);
+        logger.LogInformation("Successfully created quiz {QuizId} with {QuestionCount} questions", request.Id,
+            questions.Count);
 
         return createQuizResult.Value.ToQuizDto();
     }
@@ -220,7 +221,6 @@ public sealed class CreateQuizCommandHandler(
             command.Id,
             command.QuizId,
             command.QuestionText,
-            command.NumberOfChoices,
             command.CorrectChoiceId,
             displayOrder,
             command.Marks,

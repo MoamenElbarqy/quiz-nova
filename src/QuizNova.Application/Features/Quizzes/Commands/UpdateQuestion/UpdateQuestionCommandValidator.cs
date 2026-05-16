@@ -19,20 +19,33 @@ public sealed class UpdateQuestionCommandValidator : AbstractValidator<UpdateQue
 
         RuleFor(x => x.Marks)
             .GreaterThan(0).WithMessage("Marks must be greater than 0.");
+    }
+}
 
-        When(x => x is UpdateMcqCommand, () =>
-        {
-            RuleFor(x => ((UpdateMcqCommand)x).Choices)
-                .NotEmpty().WithMessage("Choices are required for MCQ.")
-                .Must(x => x.Count >= 2).WithMessage("MCQ must have at least 2 choices.");
+public sealed class UpdateMcqCommandValidator : AbstractValidator<UpdateMcqCommand>
+{
+    public UpdateMcqCommandValidator()
+    {
+        Include(new UpdateQuestionCommandValidator());
 
-            RuleForEach(x => ((UpdateMcqCommand)x).Choices)
-                .SetValidator(new CreateChoiceCommandValidator());
+        RuleFor(x => x.Choices)
+            .NotEmpty().WithMessage("Choices are required for MCQ.")
+            .Must(x => x.Count >= 2).WithMessage("MCQ must have at least 2 choices.");
 
-            RuleFor(x => ((UpdateMcqCommand)x).CorrectChoiceId)
-                .NotEmpty().WithMessage("Correct choice ID is required for MCQ.")
-                .Must((cmd, id) => ((UpdateMcqCommand)cmd).Choices.Any(c => c.Id == id))
-                .WithMessage("Correct choice ID must match one of the choices.");
-        });
+        RuleForEach(x => x.Choices)
+            .SetValidator(new CreateChoiceCommandValidator());
+
+        RuleFor(x => x.CorrectChoiceId)
+            .NotEmpty().WithMessage("Correct choice ID is required for MCQ.")
+            .Must((cmd, id) => cmd.Choices.Any(c => c.Id == id))
+            .WithMessage("Correct choice ID must match one of the choices.");
+    }
+}
+
+public sealed class UpdateTfCommandValidator : AbstractValidator<UpdateTfCommand>
+{
+    public UpdateTfCommandValidator()
+    {
+        Include(new UpdateQuestionCommandValidator());
     }
 }
