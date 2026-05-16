@@ -87,7 +87,6 @@ public sealed class QuizController(ISender sender) : ApiController
                             mcq.QuizId,
                             mcq.QuestionText,
                             mcq.Marks,
-                            mcq.NumberOfChoices,
                             mcq.CorrectChoiceId,
                             mcq.Choices.Select(c => new CreateChoiceCommand(
                                     c.Id,
@@ -145,7 +144,6 @@ public sealed class QuizController(ISender sender) : ApiController
                 quizId,
                 mcq.QuestionText,
                 mcq.Marks,
-                mcq.NumberOfChoices,
                 mcq.CorrectChoiceId,
                 mcq.Choices.Select(c => new CreateChoiceCommand(
                         c.Id,
@@ -180,7 +178,7 @@ public sealed class QuizController(ISender sender) : ApiController
     {
         UpdateQuestionCommand command = request switch
         {
-            UpdateMcqRequest mcq => new Application.Features.Quizzes.Commands.UpdateQuestion.UpdateMcqCommand(
+            UpdateMcqRequest mcq => new UpdateMcqCommand(
                 quizId,
                 questionId,
                 mcq.QuestionText,
@@ -193,7 +191,7 @@ public sealed class QuizController(ISender sender) : ApiController
                         c.Text,
                         c.DisplayOrder))
                     .ToList()),
-            UpdateTfRequest tf => new Application.Features.Quizzes.Commands.UpdateQuestion.UpdateTfCommand(
+            UpdateTfRequest tf => new UpdateTfCommand(
                 quizId,
                 questionId,
                 tf.QuestionText,
@@ -211,7 +209,8 @@ public sealed class QuizController(ISender sender) : ApiController
     }
 
     [EndpointSummary("Updates the course of a quiz.")]
-    [EndpointDescription("Changes the course associated with a quiz. This is a destructive operation that clears all existing questions.")]
+    [EndpointDescription(
+        "Changes the course associated with a quiz. This is a destructive operation that clears all existing questions.")]
     [EndpointName("UpdateQuizCourseId")]
     [HttpPut("{quizId:guid}/course")]
     public async Task<IActionResult> UpdateQuizCourseId(
@@ -240,4 +239,3 @@ public sealed class QuizController(ISender sender) : ApiController
             Problem);
     }
 }
-
