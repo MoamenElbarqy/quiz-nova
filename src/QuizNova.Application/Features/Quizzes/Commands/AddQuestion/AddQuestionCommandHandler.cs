@@ -51,7 +51,7 @@ public sealed class AddQuestionCommandHandler(
         {
             CreateTfCommand tf => CreateTf(tf, displayOrder),
             CreateMcqCommand mcq => CreateMcq(mcq, displayOrder),
-            _ => (Result<Question>)Error.Unexpected(
+            _ => Error.Unexpected(
                 "Quiz.Question.Unsupported",
                 $"Unsupported question type '{questionCommand.GetType().Name}'."),
         };
@@ -137,7 +137,6 @@ public sealed class AddQuestionCommandHandler(
             command.Id,
             command.QuizId,
             command.QuestionText,
-            command.NumberOfChoices,
             command.CorrectChoiceId,
             displayOrder,
             command.Marks,
