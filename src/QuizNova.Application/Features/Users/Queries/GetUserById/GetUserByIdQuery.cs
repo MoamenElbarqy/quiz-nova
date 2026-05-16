@@ -4,7 +4,7 @@ using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Application.Features.Users.Queries.GetUserById;
 
-public sealed record GetUserByIdQuery(string? UserId) : ICachedQuery<Result<UserDto>>
+public sealed record GetUserByIdQuery(string UserId) : ICachedQuery<Result<UserDto>>
 {
     public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 

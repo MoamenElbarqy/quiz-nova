@@ -15,7 +15,7 @@ public class GetUserByIdQueryHandler(
 {
     public async Task<Result<UserDto>> Handle(GetUserByIdQuery request, CancellationToken ct)
     {
-        var getUserByIdResult = await authService.GetUserByIdAsync(request.UserId!);
+        var getUserByIdResult = await authService.GetUserByIdAsync(request.UserId);
 
         if (getUserByIdResult.IsError)
         {
