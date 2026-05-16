@@ -1,6 +1,8 @@
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
 using QuizNova.Domain.Entities.QuizAttempts.Events;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Users.Student;
@@ -10,6 +12,7 @@ namespace QuizNova.Domain.Entities.QuizAttempts;
 public class QuizAttempt : Entity
 {
     private readonly List<QuestionAnswer> _studentAnswers;
+
     private QuizAttempt()
     {
     }
@@ -42,7 +45,13 @@ public class QuizAttempt : Entity
 
     public Quiz? Quiz { get; init; }
 
-    public int Score => StudentAnswers.Sum(answer => answer.IsCorrect ? answer.Question!.Marks : 0);
+    public int Score => StudentAnswers.Sum(answer => answer switch
+    {
+        AutoGradedAnswer autoGradedAnswer when autoGradedAnswer.Question is not null && autoGradedAnswer.IsCorrect =>
+            autoGradedAnswer.Question.Marks,
+        ManuallyGradedAnswers manuallyGradedAnswer => manuallyGradedAnswer.Score ?? 0,
+        _ => 0
+    });
 
     public IEnumerable<QuestionAnswer> StudentAnswers => _studentAnswers.AsReadOnly();
 

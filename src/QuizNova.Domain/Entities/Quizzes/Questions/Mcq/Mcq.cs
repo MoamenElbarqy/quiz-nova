@@ -1,10 +1,12 @@
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Quizzes.Questions.Base;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.McqAnswer;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions;
 using QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
 
 namespace QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
 
-public class Mcq : Question
+public class Mcq : AutoGradedQuestion<Guid>
 {
     private readonly List<Choice> _choices;
 
@@ -38,7 +40,6 @@ public class Mcq : Question
         Guid id,
         Guid quizId,
         string questionText,
-        int numberOfChoices,
         Guid correctChoiceId,
         int displayOrder,
         int marks,
@@ -55,7 +56,7 @@ public class Mcq : Question
             return validationError.TopError;
         }
 
-        if (numberOfChoices < 2)
+        if (choices.Count < 2)
         {
             return McqErrors.NumberOfChoicesInvalid;
         }
@@ -110,5 +111,19 @@ public class Mcq : Question
 
         return Result.Updated;
     }
-}
 
+    public override Func<Guid, bool> CorrectionCondition => studentChoiceId => studentChoiceId == CorrectChoiceId;
+
+    public override Result<QuestionAnswer> Solve(Guid answer, Guid studentId, Guid quizAttemptId)
+    {
+        var isCorrect = CorrectionCondition(answer);
+        return McqAnswer.Create(
+            Guid.NewGuid(),
+            studentId,
+            Id,
+            quizAttemptId,
+            answer,
+            this,
+            isCorrect).Value;
+    }
+}
