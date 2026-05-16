@@ -2,9 +2,9 @@ using FluentValidation;
 
 namespace QuizNova.Application.Features.Courses.Queries.GetCourseById;
 
-public sealed class GetCourseByIdValidator : AbstractValidator<GetCourseByIdQuery>
+public sealed class GetCourseByIdQueryValidator : AbstractValidator<GetCourseByIdQuery>
 {
-    public GetCourseByIdValidator()
+    public GetCourseByIdQueryValidator()
     {
         RuleFor(x => x.CourseId)
             .NotEmpty()

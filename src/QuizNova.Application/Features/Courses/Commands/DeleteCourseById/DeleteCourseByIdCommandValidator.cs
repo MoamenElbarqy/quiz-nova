@@ -2,9 +2,9 @@ using FluentValidation;
 
 namespace QuizNova.Application.Features.Courses.Commands.DeleteCourseById;
 
-public sealed class DeleteCourseByIdValidator : AbstractValidator<DeleteCourseByIdCommand>
+public sealed class DeleteCourseByIdCommandValidator : AbstractValidator<DeleteCourseByIdCommand>
 {
-    public DeleteCourseByIdValidator()
+    public DeleteCourseByIdCommandValidator()
     {
         RuleFor(x => x.CourseId)
             .NotEmpty()
