@@ -53,7 +53,6 @@ public sealed class InstructorController(ISender sender) : ApiController
     public async Task<IActionResult> CreateInstructor([FromBody] CreateInstructorRequest request)
     {
         var command = new CreateInstructorCommand(
-            request.Id,
             request.Name,
             request.Email,
             request.Password,

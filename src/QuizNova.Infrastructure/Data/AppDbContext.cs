@@ -7,9 +7,11 @@ using QuizNova.Domain.Common;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.QuizAttempts;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
 using QuizNova.Domain.Entities.Quizzes;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
-using QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
 using QuizNova.Domain.Entities.StudentCourses;
 using QuizNova.Domain.Entities.Users;
 using QuizNova.Domain.Entities.Users.Admins;
@@ -32,6 +34,10 @@ public class AppDbContext(
     public DbSet<Quiz> Quizzes => Set<Quiz>();
 
     public DbSet<Question> Questions => Set<Question>();
+
+    public DbSet<QuestionAnswer> QuestionAnswers => Set<QuestionAnswer>();
+
+    public DbSet<ManuallyGradedAnswers> ManuallyGradedAnswers => Set<ManuallyGradedAnswers>();
 
     public DbSet<Choice> Choices => Set<Choice>();
 

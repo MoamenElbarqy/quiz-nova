@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 
@@ -5,10 +6,12 @@ namespace QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
 public abstract class Question : Entity
 {
+    [SetsRequiredMembers]
     protected Question()
     {
     }
 
+    [SetsRequiredMembers]
     protected Question(
         Guid id,
         Guid quizId,
@@ -25,7 +28,7 @@ public abstract class Question : Entity
 
     public Guid QuizId { get; }
 
-    public string QuestionText { get; private set; } = string.Empty;
+    public required string QuestionText { get; set; }
 
     public int DisplayOrder { get; private set; }
 

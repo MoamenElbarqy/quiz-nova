@@ -1,6 +1,6 @@
 using QuizNova.Domain.Common.Results;
 
-namespace QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
+namespace QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 
 public static class McqErrors
 {

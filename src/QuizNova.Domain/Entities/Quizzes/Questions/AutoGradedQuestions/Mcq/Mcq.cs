@@ -1,19 +1,22 @@
+using System.Diagnostics.CodeAnalysis;
+
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.McqAnswer;
-using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions;
-using QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 
-namespace QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
+namespace QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 
 public class Mcq : AutoGradedQuestion<Guid>
 {
     private readonly List<Choice> _choices;
 
+    [SetsRequiredMembers]
     private Mcq()
     {
     }
 
+    [SetsRequiredMembers]
     private Mcq(
         Guid id,
         Guid quizId,

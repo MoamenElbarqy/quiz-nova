@@ -4,11 +4,11 @@ public class JwtSettings
 {
     public const string SectionName = "JwtSettings";
 
-    public string Issuer { get; init; } = string.Empty;
+    public required string Issuer { get; init; }
 
-    public string Audience { get; init; } = string.Empty;
+    public required string Audience { get; init; }
 
-    public string Secret { get; init; } = string.Empty;
+    public required string Secret { get; init; }
 
     public int ExpiryMinutes { get; init; }
 }

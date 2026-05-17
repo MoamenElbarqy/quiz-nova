@@ -8,9 +8,7 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Instructors.DTOs;
 using QuizNova.Application.Features.Instructors.Mappers;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Identity;
-using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Users.Instructors;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
@@ -37,12 +35,6 @@ public sealed class CreateInstructorCommandHandler(
             return ApplicationErrors.CreateInstructorRoleInvalid(request.Role);
         }
 
-        if (await dbContext.Users.AnyAsync(user => user.Id == request.Id, ct))
-        {
-            logger.LogWarning("Instructor creation failed: User ID {UserId} already exists", request.Id);
-            return ApplicationErrors.UserIdAlreadyExists(request.Id);
-        }
-
         if (await dbContext.Users
                 .AnyAsync(user => user.PersonalInformation.Email == request.Email, ct))
         {
@@ -53,7 +45,8 @@ public sealed class CreateInstructorCommandHandler(
         if (await dbContext.Users
                 .AnyAsync(user => user.PersonalInformation.PhoneNumber == request.PhoneNumber, ct))
         {
-            logger.LogWarning("Instructor creation failed: Phone number {PhoneNumber} already exists", request.PhoneNumber);
+            logger.LogWarning("Instructor creation failed: Phone number {PhoneNumber} already exists",
+                request.PhoneNumber);
             return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PhoneNumber);
         }
 
@@ -65,27 +58,32 @@ public sealed class CreateInstructorCommandHandler(
 
         if (personalInformationResult.IsError)
         {
-            logger.LogWarning("Instructor creation failed: Error creating personal information. Error: {ErrorDescription}", personalInformationResult.TopError.Description);
+            logger.LogWarning(
+                "Instructor creation failed: Error creating personal information. Error: {ErrorDescription}",
+                personalInformationResult.TopError.Description);
             return personalInformationResult.TopError;
         }
 
         var createInstructorResult = Instructor.Create(
-            request.Id,
+            Guid.NewGuid(),
             personalInformationResult.Value,
-            new List<RefreshToken>(),
-            new List<Course>(),
-            new List<Quiz>());
+            [],
+            [],
+            []);
 
         if (createInstructorResult.IsError)
         {
-            logger.LogWarning("Instructor creation failed: Error creating instructor entity. Error: {ErrorDescription}", createInstructorResult.TopError.Description);
+            logger.LogWarning("Instructor creation failed: Error creating instructor entity. Error: {ErrorDescription}",
+                createInstructorResult.TopError.Description);
             return createInstructorResult.TopError;
         }
 
         await dbContext.Instructors.AddAsync(createInstructorResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
 
-        logger.LogInformation("Successfully created instructor {InstructorId} with email {Email}", request.Id, request.Email);
+        logger.LogInformation("Successfully created instructor {InstructorId} with email {Email}",
+            createInstructorResult.Value.Id,
+            request.Email);
 
         return createInstructorResult.Value.ToInstructorDto(0, 0);
     }

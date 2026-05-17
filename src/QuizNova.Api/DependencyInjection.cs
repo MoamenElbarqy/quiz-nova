@@ -22,8 +22,7 @@ namespace QuizNova.Api;
 public static class DependencyInjection
 {
     public static IServiceCollection AddApi(
-        this IServiceCollection services,
-        IConfiguration configuration)
+        this IServiceCollection services)
     {
         services.AddControllerWithJsonConfiguration();
         services.AddCustomVersioning();

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses.Events;
@@ -13,10 +14,12 @@ public sealed class Course : Entity
     private readonly List<Quiz> _quizzes;
     private readonly List<StudentCourse> _studentCourses;
 
+    [SetsRequiredMembers]
     private Course()
     {
     }
 
+    [SetsRequiredMembers]
     private Course(
         Guid id,
         Guid? instructorId,
@@ -37,7 +40,7 @@ public sealed class Course : Entity
 
     public Guid? InstructorId { get; private set; }
 
-    public string Name { get; private set; } = string.Empty;
+    public required string Name { get; init; }
 
     public int MinimumPassingMarks { get; private set; }
 

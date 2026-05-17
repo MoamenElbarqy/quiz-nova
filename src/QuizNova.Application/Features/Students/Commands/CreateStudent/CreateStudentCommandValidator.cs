@@ -8,9 +8,6 @@ public sealed class CreateStudentCommandValidator : AbstractValidator<CreateStud
 {
     public CreateStudentCommandValidator()
     {
-        RuleFor(command => command.Id)
-            .NotEmpty().WithMessage("Student ID is required.");
-
         RuleFor(command => command.Name)
             .NotEmpty().WithMessage("Name is required.");
 
@@ -26,7 +23,9 @@ public sealed class CreateStudentCommandValidator : AbstractValidator<CreateStud
 
         RuleFor(command => command.Role)
             .NotEmpty().WithMessage("Role is required.")
-            .Must(role => string.Equals(role, UserRole.Student.ToString(), StringComparison.OrdinalIgnoreCase))
+            .Must(role => string.Equals(role,
+                nameof(UserRole.Student),
+                StringComparison.OrdinalIgnoreCase))
             .WithMessage($"Role must be '{UserRole.Student}'.");
     }
 }

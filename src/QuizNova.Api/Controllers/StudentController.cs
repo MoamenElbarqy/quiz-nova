@@ -68,7 +68,6 @@ public sealed class StudentController(ISender sender) : ApiController
     public async Task<IActionResult> CreateStudent([FromBody] CreateStudentRequest request)
     {
         var command = new CreateStudentCommand(
-            request.Id,
             request.Name,
             request.Email,
             request.Password,

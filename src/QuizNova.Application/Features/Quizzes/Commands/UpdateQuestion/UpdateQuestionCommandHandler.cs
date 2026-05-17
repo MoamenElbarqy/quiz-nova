@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 
 namespace QuizNova.Application.Features.Quizzes.Commands.UpdateQuestion;
 
@@ -61,15 +61,9 @@ public sealed class UpdateQuestionCommandHandler(
 
                 foreach (var choiceCmd in mcqCmd.Choices)
                 {
-                    if (choiceCmd.QuestionId != mcqCmd.QuestionId)
-                    {
-                        return ApplicationErrors.QuizChoiceBelongsToDifferentQuestion(
-                            choiceCmd.Id, mcqCmd.QuestionId);
-                    }
-
                     var choiceResult = Choice.Create(
                         choiceCmd.Id,
-                        choiceCmd.QuestionId,
+                        mcqCmd.QuestionId,
                         choiceCmd.Text,
                         choiceCmd.DisplayOrder);
 

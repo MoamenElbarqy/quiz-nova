@@ -19,12 +19,6 @@ public sealed class EnrollStudentInCourseCommandHandler(
         logger.LogInformation("Enrolling student {StudentId} in course {CourseId}", request.StudentId,
             request.CourseId);
 
-        if (await dbContext.StudentCourses.AnyAsync(sc => sc.Id == request.Id, ct))
-        {
-            logger.LogWarning("Enrollment failed: Enrollment ID {EnrollmentId} already exists", request.Id);
-            return ApplicationErrors.StudentCourseEnrollmentIdAlreadyExists(request.Id);
-        }
-
         var course = await dbContext.Courses
             .Include(c => c.StudentCourses)
             .FirstOrDefaultAsync(c => c.Id == request.CourseId, ct);
@@ -44,7 +38,7 @@ public sealed class EnrollStudentInCourseCommandHandler(
             return ApplicationErrors.StudentNotFound(request.StudentId);
         }
 
-        var enrollmentResult = course.Enroll(student, request.Id);
+        var enrollmentResult = course.Enroll(student, Guid.NewGuid());
 
         if (enrollmentResult.IsError)
         {

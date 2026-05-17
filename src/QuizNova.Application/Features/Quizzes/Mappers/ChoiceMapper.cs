@@ -1,5 +1,7 @@
 using QuizNova.Application.Features.Quizzes.DTOs;
-using QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
+
+namespace QuizNova.Application.Features.Quizzes.Mappers;
 
 public static class ChoiceMapper
 {

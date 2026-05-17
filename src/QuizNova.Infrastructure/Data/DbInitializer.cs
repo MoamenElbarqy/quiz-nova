@@ -119,7 +119,8 @@ public sealed class DbInitializer(AppDbContext dbContext)
                     "Backend Fundamentals",
                     minimumPassingMarks: 50,
                     maximumMarks: 100,
-                    quizzes: new List<Quiz>()),
+                    quizzes: new List<Quiz>(),
+                    studentCourses: new List<StudentCourse>()),
                 "course one"),
             EnsureSuccess(
                 Course.Create(
@@ -128,7 +129,8 @@ public sealed class DbInitializer(AppDbContext dbContext)
                     "Frontend Fundamentals",
                     minimumPassingMarks: 50,
                     maximumMarks: 100,
-                    quizzes: new List<Quiz>()),
+                    quizzes: new List<Quiz>(),
+                    studentCourses: new List<StudentCourse>()),
                 "course two"),
         ];
     }

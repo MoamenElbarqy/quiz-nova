@@ -9,11 +9,10 @@ using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.Features.Quizzes.DTOs;
 using QuizNova.Application.Features.Quizzes.Mappers;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Quizzes;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
-using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
-using QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
-using QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
 
 namespace QuizNova.Application.Features.Quizzes.Commands.AddQuestion;
 
@@ -38,19 +37,14 @@ public sealed class AddQuestionCommandHandler(
 
         var questionCommand = request.Question;
 
-        if (questionCommand.QuizId != request.QuizId)
-        {
-            return QuizErrors.QuestionBelongsToDifferentQuiz(questionCommand.Id);
-        }
-
         var displayOrder = quiz.Questions.Any()
             ? quiz.Questions.Max(q => q.DisplayOrder) + 1
             : 0;
 
         var createQuestionResult = questionCommand switch
         {
-            CreateTfCommand tf => CreateTf(tf, displayOrder),
-            CreateMcqCommand mcq => CreateMcq(mcq, displayOrder),
+            CreateTfCommand tf => CreateTf(tf, displayOrder, request.QuizId),
+            CreateMcqCommand mcq => CreateMcq(mcq, displayOrder, request.QuizId),
             _ => Error.Unexpected(
                 "Quiz.Question.Unsupported",
                 $"Unsupported question type '{questionCommand.GetType().Name}'."),
@@ -85,11 +79,12 @@ public sealed class AddQuestionCommandHandler(
         return createQuestionResult.Value.ToQuestionDto();
     }
 
-    private static Result<Question> CreateTf(CreateTfCommand command, int displayOrder)
+    private static Result<Question> CreateTf(CreateTfCommand command, int displayOrder, Guid quizId)
     {
+        var questionId = Guid.NewGuid();
         var result = Tf.Create(
-            command.Id,
-            command.QuizId,
+            questionId,
+            quizId,
             command.QuestionText,
             command.CorrectChoice,
             displayOrder,
@@ -98,30 +93,34 @@ public sealed class AddQuestionCommandHandler(
         return result.IsError ? result.TopError : result.Value;
     }
 
-    private static Result<Question> CreateMcq(CreateMcqCommand command, int displayOrder)
+    private static Result<Question> CreateMcq(CreateMcqCommand command, int displayOrder, Guid quizId)
     {
+        var questionId = Guid.NewGuid();
+
         if (command.Choices.All(choice => choice.Id != command.CorrectChoiceId))
         {
-            return ApplicationErrors.QuizCorrectChoiceNotFound(command.Id, command.CorrectChoiceId);
+            return ApplicationErrors.QuizCorrectChoiceNotFound(questionId, command.CorrectChoiceId);
         }
 
         if (command.Choices.GroupBy(choice => choice.Id).Any(group => group.Count() > 1))
         {
-            return ApplicationErrors.QuizChoiceIdsMustBeUnique(command.Id);
+            return ApplicationErrors.QuizChoiceIdsMustBeUnique(questionId);
         }
 
         var choices = new List<Choice>(command.Choices.Count);
+        var actualCorrectChoiceId = Guid.Empty;
 
         foreach (var choiceCommand in command.Choices)
         {
-            if (choiceCommand.QuestionId != command.Id)
+            var choiceId = Guid.NewGuid();
+            if (choiceCommand.Id == command.CorrectChoiceId)
             {
-                return ApplicationErrors.QuizChoiceBelongsToDifferentQuestion(choiceCommand.Id, command.Id);
+                actualCorrectChoiceId = choiceId;
             }
 
             var createChoiceResult = Choice.Create(
-                choiceCommand.Id,
-                choiceCommand.QuestionId,
+                choiceId,
+                questionId,
                 choiceCommand.Text,
                 choiceCommand.DisplayOrder);
 
@@ -134,10 +133,10 @@ public sealed class AddQuestionCommandHandler(
         }
 
         var createQuestionResult = Mcq.Create(
-            command.Id,
-            command.QuizId,
+            questionId,
+            quizId,
             command.QuestionText,
-            command.CorrectChoiceId,
+            actualCorrectChoiceId,
             displayOrder,
             command.Marks,
             choices);

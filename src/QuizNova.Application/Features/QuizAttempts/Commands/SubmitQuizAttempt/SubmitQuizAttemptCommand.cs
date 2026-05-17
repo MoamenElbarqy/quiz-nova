@@ -6,7 +6,6 @@ using QuizNova.Domain.Common.Results;
 namespace QuizNova.Application.Features.QuizAttempts.Commands.SubmitQuizAttempt;
 
 public sealed record SubmitQuizAttemptCommand(
-    Guid QuizAttemptId,
     Guid StudentId,
     Guid QuizId,
     DateTimeOffset StartedAt,
@@ -14,16 +13,14 @@ public sealed record SubmitQuizAttemptCommand(
     IReadOnlyCollection<SubmitQuestionAnswerCommand> QuestionAnswers)
     : IRequest<Result<QuizAttemptDto>>;
 
-public abstract record SubmitQuestionAnswerCommand(Guid AnswerId, Guid QuestionId);
+public abstract record SubmitQuestionAnswerCommand(Guid QuestionId);
 
 public sealed record SubmitMcqAnswerCommand(
-    Guid AnswerId,
     Guid QuestionId,
     Guid SelectedChoiceId)
-    : SubmitQuestionAnswerCommand(AnswerId, QuestionId);
+    : SubmitQuestionAnswerCommand(QuestionId);
 
 public sealed record SubmitTfAnswerCommand(
-    Guid AnswerId,
     Guid QuestionId,
     bool StudentChoice)
-    : SubmitQuestionAnswerCommand(AnswerId, QuestionId);
+    : SubmitQuestionAnswerCommand(QuestionId);

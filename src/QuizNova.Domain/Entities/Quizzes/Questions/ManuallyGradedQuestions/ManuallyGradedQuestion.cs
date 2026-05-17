@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
@@ -24,11 +25,13 @@ public abstract class ManuallyGradedQuestion : Question
         return Result.Updated;
     }
 
-    // Requried By Ef core
+    // Required By Ef core
+    [SetsRequiredMembers]
     protected ManuallyGradedQuestion()
     {
     }
 
+    [SetsRequiredMembers]
     protected ManuallyGradedQuestion(
         Guid id,
         Guid quizId,

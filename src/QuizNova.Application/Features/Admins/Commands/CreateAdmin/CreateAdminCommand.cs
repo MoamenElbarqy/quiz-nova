@@ -6,7 +6,6 @@ using QuizNova.Domain.Common.Results;
 namespace QuizNova.Application.Features.Admins.Commands.CreateAdmin;
 
 public sealed record CreateAdminCommand(
-    Guid Id,
     string Name,
     string Email,
     string Password,

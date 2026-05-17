@@ -6,10 +6,6 @@ public sealed class CreateCourseCommandValidator : AbstractValidator<CreateCours
 {
     public CreateCourseCommandValidator()
     {
-        RuleFor(command => command.Id)
-            .NotEmpty()
-            .WithMessage("Course ID is required.");
-
         RuleFor(command => command.Name)
             .NotEmpty()
             .WithMessage("Course name is required.");

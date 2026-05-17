@@ -80,7 +80,6 @@ public sealed class CourseController(ISender sender) : ApiController
     public async Task<ActionResult<CourseDto>> CreateCourse([FromBody] CreateCourseRequest request)
     {
         var command = new CreateCourseCommand(
-            request.Id,
             request.Name,
             request.InstructorId,
             request.MinimumPassingMarks,
@@ -115,7 +114,7 @@ public sealed class CourseController(ISender sender) : ApiController
         Guid studentId,
         [FromBody] EnrollStudentInCourseRequest request)
     {
-        var result = await sender.Send(new EnrollStudentInCourseCommand(request.Id, courseId, studentId));
+        var result = await sender.Send(new EnrollStudentInCourseCommand(courseId, studentId));
         return result.Match(_ => NoContent(), Problem);
     }
 
