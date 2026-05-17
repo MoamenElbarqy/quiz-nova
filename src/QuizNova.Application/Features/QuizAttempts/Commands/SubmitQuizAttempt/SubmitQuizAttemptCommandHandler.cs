@@ -10,8 +10,8 @@ using QuizNova.Application.Features.QuizAttempts.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
-using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
-using QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
 
 namespace QuizNova.Application.Features.QuizAttempts.Commands.SubmitQuizAttempt;
 
@@ -25,9 +25,11 @@ public sealed class SubmitQuizAttemptCommandHandler(
     {
         var studentId = Guid.Parse(user.Id!);
 
+        var quizAttemptId = Guid.NewGuid();
+
         logger.LogInformation(
             "Submitting quiz attempt {QuizAttemptId} for student {StudentId} and quiz {QuizId}",
-            request.QuizAttemptId,
+            quizAttemptId,
             studentId,
             request.QuizId);
 
@@ -109,9 +111,9 @@ public sealed class SubmitQuizAttemptCommandHandler(
             Result<QuestionAnswer> createAnswerResult = (question, answer) switch
             {
                 (Mcq mcqQuestion, SubmitMcqAnswerCommand mcqAnswer) =>
-                    mcqQuestion.Solve(mcqAnswer.SelectedChoiceId, studentId, request.QuizAttemptId),
+                    mcqQuestion.Solve(mcqAnswer.SelectedChoiceId, studentId, quizAttemptId),
                 (Tf tfQuestion, SubmitTfAnswerCommand tfAnswer) =>
-                    tfQuestion.Solve(tfAnswer.StudentChoice, studentId, request.QuizAttemptId),
+                    tfQuestion.Solve(tfAnswer.StudentChoice, studentId, quizAttemptId),
                 (Mcq, _) => Error.Unexpected(
                     "QuizAttempt.Answer.AnswerTypeMismatch",
                     $"Question {answer.QuestionId} is an MCQ question but the submitted answer is not an MCQ answer."),
@@ -137,7 +139,7 @@ public sealed class SubmitQuizAttemptCommandHandler(
         }
 
         var createAttemptResult = quiz.SubmitAttempt(
-            request.QuizAttemptId,
+            quizAttemptId,
             studentId,
             request.QuizId,
             request.StartedAt,
@@ -158,8 +160,8 @@ public sealed class SubmitQuizAttemptCommandHandler(
 
         logger.LogInformation(
             "Successfully submitted quiz attempt {QuizAttemptId} for student {StudentId}. Score: {Score}",
-            request.QuizAttemptId,
-            request.StudentId,
+            quizAttemptId,
+            studentId,
             createAttemptResult.Value.Score);
 
         return createAttemptResult.Value.ToQuizAttemptDto();

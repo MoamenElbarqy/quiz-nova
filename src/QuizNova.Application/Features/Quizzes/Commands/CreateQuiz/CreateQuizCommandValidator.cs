@@ -6,9 +6,6 @@ public sealed class CreateQuizCommandValidator : AbstractValidator<CreateQuizCom
 {
     public CreateQuizCommandValidator()
     {
-        RuleFor(x => x.Id)
-            .NotEmpty().WithMessage("Quiz ID is required.");
-
         RuleFor(x => x.Title)
             .NotEmpty().WithMessage("Title is required.")
             .MaximumLength(100).WithMessage("Title must not exceed 100 characters.");
@@ -55,9 +52,6 @@ public sealed class CreateQuestionCommandValidator : AbstractValidator<CreateQue
 {
     public CreateQuestionCommandValidator()
     {
-        RuleFor(x => x.Id)
-            .NotEmpty().WithMessage("Question ID is required.");
-
         RuleFor(x => x.QuestionText)
             .NotEmpty().WithMessage("Question text is required.")
             .MaximumLength(500).WithMessage("Question text must not exceed 500 characters.");

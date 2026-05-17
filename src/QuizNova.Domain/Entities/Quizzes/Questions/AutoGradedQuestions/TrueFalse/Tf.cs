@@ -1,19 +1,22 @@
+using System.Diagnostics.CodeAnalysis;
+
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalseAnswer;
-using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions;
 
-namespace QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
+namespace QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
 
 public class Tf : AutoGradedQuestion<bool>
 {
     public bool CorrectChoice { get; private set; }
 
     // Required by Entity Framework Core
+    [SetsRequiredMembers]
     private Tf()
     {
     }
 
+    [SetsRequiredMembers]
     private Tf(
         Guid id,
         Guid quizId,

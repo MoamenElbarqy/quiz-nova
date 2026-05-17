@@ -8,7 +8,7 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Quizzes.DTOs;
 using QuizNova.Application.Features.Quizzes.Mappers;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 
 namespace QuizNova.Application.Features.Quizzes.Queries.GetQuizById;
 

@@ -35,12 +35,6 @@ public sealed class CreateAdminCommandHandler(
             return ApplicationErrors.CreateAdminRoleInvalid(request.Role);
         }
 
-        if (await dbContext.Users.AnyAsync(user => user.Id == request.Id, ct))
-        {
-            logger.LogWarning("Admin creation failed: User ID {UserId} already exists", request.Id);
-            return ApplicationErrors.UserIdAlreadyExists(request.Id);
-        }
-
         if (await dbContext.Users
                 .AnyAsync(user => user.PersonalInformation.Email == request.Email, ct))
         {
@@ -63,25 +57,28 @@ public sealed class CreateAdminCommandHandler(
 
         if (personalInformationResult.IsError)
         {
-            logger.LogWarning("Admin creation failed: Error creating personal information. Error: {ErrorDescription}", personalInformationResult.TopError.Description);
+            logger.LogWarning("Admin creation failed: Error creating personal information. Error: {ErrorDescription}",
+                personalInformationResult.TopError.Description);
             return personalInformationResult.TopError;
         }
 
         var createAdminResult = Admin.Create(
-            request.Id,
+            Guid.NewGuid(),
             personalInformationResult.Value,
-            new List<RefreshToken>());
+            []);
 
         if (createAdminResult.IsError)
         {
-            logger.LogWarning("Admin creation failed: Error creating admin entity. Error: {ErrorDescription}", createAdminResult.TopError.Description);
+            logger.LogWarning("Admin creation failed: Error creating admin entity. Error: {ErrorDescription}",
+                createAdminResult.TopError.Description);
             return createAdminResult.TopError;
         }
 
         await dbContext.Admins.AddAsync(createAdminResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
 
-        logger.LogInformation("Successfully created admin {AdminId} with email {Email}", request.Id, request.Email);
+        logger.LogInformation("Successfully created admin {AdminId} with email {Email}", createAdminResult.Value.Id,
+            request.Email);
 
         return createAdminResult.Value.ToAdminDto();
     }

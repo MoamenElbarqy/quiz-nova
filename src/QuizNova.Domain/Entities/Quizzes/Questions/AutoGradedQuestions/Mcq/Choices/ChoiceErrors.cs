@@ -1,6 +1,6 @@
 using QuizNova.Domain.Common.Results;
 
-namespace QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
+namespace QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 
 public static class ChoiceErrors
 {

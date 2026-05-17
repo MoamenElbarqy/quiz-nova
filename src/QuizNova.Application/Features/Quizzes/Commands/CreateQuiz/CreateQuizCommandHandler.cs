@@ -9,10 +9,10 @@ using QuizNova.Application.Features.Quizzes.DTOs;
 using QuizNova.Application.Features.Quizzes.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Quizzes;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
-using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
-using QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
-using QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
 
 namespace QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 
@@ -28,50 +28,7 @@ public sealed class CreateQuizCommandHandler(
             request.Title,
             request.CourseId);
 
-        // Validate that all IDs in the request are unique and do not already exist in the database
-        var allIdsInRequest = new List<Guid> { request.Id };
-        allIdsInRequest.AddRange(request.Questions.Select(q => q.Id));
-
-        var allChoiceIds = request.Questions
-            .OfType<CreateMcqCommand>()
-            .SelectMany(q => q.Choices.Select(c => c.Id))
-            .ToList();
-
-        allIdsInRequest.AddRange(allChoiceIds);
-
-        if (allIdsInRequest.Distinct().Count() != allIdsInRequest.Count)
-        {
-            logger.LogWarning("Quiz creation failed: Duplicate IDs in request for quiz: {QuizId}", request.Id);
-            return ApplicationErrors.QuizDuplicateQuestionIdsInRequest();
-        }
-
-        var existingQuizIds = await dbContext.Quizzes
-            .Where(e => allIdsInRequest.Contains(e.Id))
-            .Select(e => e.Id)
-            .ToListAsync(ct);
-
-        var existingQuestionIds = await dbContext.Questions
-            .Where(e => allIdsInRequest.Contains(e.Id))
-            .Select(e => e.Id)
-            .ToListAsync(ct);
-
-        var existingChoiceIds = await dbContext.Choices
-            .Where(e => allIdsInRequest.Contains(e.Id))
-            .Select(e => e.Id)
-            .ToListAsync(ct);
-
-        var existingIds = existingQuizIds
-            .Concat(existingQuestionIds)
-            .Concat(existingChoiceIds)
-            .ToList();
-
-        if (existingIds.Count != 0)
-        {
-            logger.LogWarning(
-                "Quiz creation failed: Some IDs already exist in database. First existing ID: {ExistingId}",
-                existingIds.First());
-            return ApplicationErrors.QuizSomeIdAlreadyExists(existingIds.First());
-        }
+        var quizId = Guid.NewGuid();
 
         if (!await dbContext.Courses.AnyAsync(course => course.Id == request.CourseId, ct))
         {
@@ -104,7 +61,7 @@ public sealed class CreateQuizCommandHandler(
             var createQuestionResult = CreateQuestion(
                 indexedQuestion.question,
                 indexedQuestion.index,
-                request.Id);
+                quizId);
 
             if (createQuestionResult.IsError)
             {
@@ -120,7 +77,7 @@ public sealed class CreateQuizCommandHandler(
         }
 
         var createQuizResult = Quiz.Create(
-            request.Id,
+            quizId,
             request.CourseId,
             request.InstructorId,
             request.Title,
@@ -140,7 +97,7 @@ public sealed class CreateQuizCommandHandler(
         await dbContext.Quizzes.AddAsync(createQuizResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
 
-        logger.LogInformation("Successfully created quiz {QuizId} with {QuestionCount} questions", request.Id,
+        logger.LogInformation("Successfully created quiz {QuizId} with {QuestionCount} questions", quizId,
             questions.Count);
 
         return createQuizResult.Value.ToQuizDto();
@@ -151,27 +108,23 @@ public sealed class CreateQuizCommandHandler(
         int displayOrder,
         Guid quizId)
     {
-        if (questionCommand.QuizId != quizId)
-        {
-            return QuizErrors.QuestionBelongsToDifferentQuiz(questionCommand.Id);
-        }
-
         return questionCommand switch
         {
             CreateTfCommand tfQuestion =>
-                CreateTf(tfQuestion, displayOrder),
-            CreateMcqCommand mcq => CreateMcq(mcq, displayOrder),
+                CreateTf(tfQuestion, displayOrder, quizId),
+            CreateMcqCommand mcq => CreateMcq(mcq, displayOrder, quizId),
             _ => Error.Unexpected(
                 "Quiz.Question.Unsupported",
                 $"Unsupported question type '{questionCommand.GetType().Name}'."),
         };
     }
 
-    private Result<Question> CreateTf(CreateTfCommand command, int displayOrder)
+    private Result<Question> CreateTf(CreateTfCommand command, int displayOrder, Guid quizId)
     {
+        var questionId = Guid.NewGuid();
         var result = Tf.Create(
-            command.Id,
-            command.QuizId,
+            questionId,
+            quizId,
             command.QuestionText,
             command.CorrectChoice,
             displayOrder,
@@ -182,30 +135,30 @@ public sealed class CreateQuizCommandHandler(
 
     private Result<Question> CreateMcq(
         CreateMcqCommand command,
-        int displayOrder)
+        int displayOrder,
+        Guid quizId)
     {
+        var questionId = Guid.NewGuid();
+
         if (command.Choices.All(choice => choice.Id != command.CorrectChoiceId))
         {
-            return ApplicationErrors.QuizCorrectChoiceNotFound(command.Id, command.CorrectChoiceId);
-        }
-
-        if (command.Choices.GroupBy(choice => choice.Id).Any(group => group.Count() > 1))
-        {
-            return ApplicationErrors.QuizChoiceIdsMustBeUnique(command.Id);
+            return ApplicationErrors.QuizCorrectChoiceNotFound(questionId, command.CorrectChoiceId);
         }
 
         var choices = new List<Choice>(command.Choices.Count);
+        var actualCorrectChoiceId = Guid.Empty;
 
         foreach (var choiceCommand in command.Choices)
         {
-            if (choiceCommand.QuestionId != command.Id)
+            var choiceId = Guid.NewGuid();
+            if (choiceCommand.Id == command.CorrectChoiceId)
             {
-                return ApplicationErrors.QuizChoiceBelongsToDifferentQuestion(choiceCommand.Id, command.Id);
+                actualCorrectChoiceId = choiceId;
             }
 
             var createChoiceResult = Choice.Create(
-                choiceCommand.Id,
-                choiceCommand.QuestionId,
+                choiceId,
+                questionId,
                 choiceCommand.Text,
                 choiceCommand.DisplayOrder);
 
@@ -218,10 +171,10 @@ public sealed class CreateQuizCommandHandler(
         }
 
         var createQuestionResult = Mcq.Create(
-            command.Id,
-            command.QuizId,
+            questionId,
+            quizId,
             command.QuestionText,
-            command.CorrectChoiceId,
+            actualCorrectChoiceId,
             displayOrder,
             command.Marks,
             choices);

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Users;
@@ -6,7 +7,7 @@ namespace QuizNova.Domain.Entities.Identity;
 
 public sealed class RefreshToken : Entity
 {
-    public string Token { get; private set; } = string.Empty;
+    public required string Token { get; init; }
 
     public Guid UserId { get; private set; }
 
@@ -20,10 +21,12 @@ public sealed class RefreshToken : Entity
 
     public User? User { get; set; }
 
+    [SetsRequiredMembers]
     private RefreshToken()
     {
     }
 
+    [SetsRequiredMembers]
     private RefreshToken(
         Guid id,
         string token,

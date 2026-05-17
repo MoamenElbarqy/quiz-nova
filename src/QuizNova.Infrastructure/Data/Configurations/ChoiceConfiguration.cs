@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-using QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 
 namespace QuizNova.Infrastructure.Data.Configurations;
 

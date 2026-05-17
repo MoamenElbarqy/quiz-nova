@@ -41,7 +41,6 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
         [FromBody] SubmitQuizAttemptRequest request)
     {
         var result = await sender.Send(new SubmitQuizAttemptCommand(
-            request.Id,
             studentId,
             request.QuizId,
             request.StartedAt,
@@ -52,11 +51,9 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
                     return answer switch
                     {
                         SubmitMcqAnswerRequest mcqAnswer => new SubmitMcqAnswerCommand(
-                            mcqAnswer.Id,
                             mcqAnswer.QuestionId,
                             mcqAnswer.SelectedChoiceId),
                         SubmitTfAnswerRequest tfAnswer => new SubmitTfAnswerCommand(
-                            tfAnswer.Id,
                             tfAnswer.QuestionId,
                             tfAnswer.StudentChoice),
                         _ => throw new InvalidOperationException("Unknown answer type"),

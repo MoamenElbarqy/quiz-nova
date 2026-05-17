@@ -71,7 +71,6 @@ public sealed class QuizController(ISender sender) : ApiController
     public async Task<IActionResult> CreateQuiz([FromBody] CreateQuizRequest request)
     {
         var createQuizResult = await sender.Send(new CreateQuizCommand(
-            request.Id,
             request.Title,
             request.CourseId,
             request.InstructorId,
@@ -83,20 +82,15 @@ public sealed class QuizController(ISender sender) : ApiController
                     return q switch
                     {
                         CreateMcqRequest mcq => new CreateMcqCommand(
-                            mcq.Id,
-                            mcq.QuizId,
                             mcq.QuestionText,
                             mcq.Marks,
                             mcq.CorrectChoiceId,
                             mcq.Choices.Select(c => new CreateChoiceCommand(
                                     c.Id,
-                                    c.QuestionId,
                                     c.Text,
                                     c.DisplayOrder))
                                 .ToList()),
                         CreateTfRequest tfq => new CreateTfCommand(
-                            tfq.Id,
-                            tfq.QuizId,
                             tfq.QuestionText,
                             tfq.Marks,
                             tfq.CorrectChoice),
@@ -140,20 +134,15 @@ public sealed class QuizController(ISender sender) : ApiController
         CreateQuestionCommand questionCommand = request switch
         {
             CreateMcqRequest mcq => new CreateMcqCommand(
-                mcq.Id,
-                quizId,
                 mcq.QuestionText,
                 mcq.Marks,
                 mcq.CorrectChoiceId,
                 mcq.Choices.Select(c => new CreateChoiceCommand(
                         c.Id,
-                        c.QuestionId,
                         c.Text,
                         c.DisplayOrder))
                     .ToList()),
             CreateTfRequest tfq => new CreateTfCommand(
-                tfq.Id,
-                quizId,
                 tfq.QuestionText,
                 tfq.Marks,
                 tfq.CorrectChoice),
@@ -187,7 +176,6 @@ public sealed class QuizController(ISender sender) : ApiController
                 mcq.CorrectChoiceId,
                 mcq.Choices.Select(c => new CreateChoiceCommand(
                         c.Id,
-                        c.QuestionId,
                         c.Text,
                         c.DisplayOrder))
                     .ToList()),

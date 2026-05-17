@@ -35,12 +35,6 @@ public sealed class CreateStudentCommandHandler(
             return ApplicationErrors.CreateStudentRoleInvalid(request.Role);
         }
 
-        if (await dbContext.Users.AnyAsync(user => user.Id == request.Id, ct))
-        {
-            logger.LogWarning("Student creation failed: User ID {UserId} already exists", request.Id);
-            return ApplicationErrors.UserIdAlreadyExists(request.Id);
-        }
-
         if (await dbContext.Users.AnyAsync(user => user.PersonalInformation.Email == request.Email, ct))
         {
             logger.LogWarning("Student creation failed: Email {Email} already exists", request.Email);
@@ -70,7 +64,7 @@ public sealed class CreateStudentCommandHandler(
         }
 
         var createStudentResult = Student.Create(
-            request.Id,
+            Guid.NewGuid(),
             personalInformationResult.Value,
             [],
             [],
@@ -87,7 +81,8 @@ public sealed class CreateStudentCommandHandler(
         await dbContext.Students.AddAsync(createStudentResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
 
-        logger.LogInformation("Successfully created student {StudentId} with email {Email}", request.Id, request.Email);
+        logger.LogInformation("Successfully created student {StudentId} with email {Email}",
+            createStudentResult.Value.Id, request.Email);
 
         return createStudentResult.Value.ToStudentDto(0);
     }

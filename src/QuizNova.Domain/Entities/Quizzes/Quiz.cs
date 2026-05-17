@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
@@ -7,9 +8,10 @@ using QuizNova.Domain.Entities.QuizAttempts.Answers.McqAnswer;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalseAnswer;
 using QuizNova.Domain.Entities.Quizzes.Enums;
 using QuizNova.Domain.Entities.Quizzes.Events;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
-using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
-using QuizNova.Domain.Entities.Quizzes.Questions.TrueFalse;
 using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Domain.Entities.Quizzes;
@@ -18,10 +20,12 @@ public class Quiz : Entity
 {
     private readonly List<Question> _questions;
 
+    [SetsRequiredMembers]
     private Quiz()
     {
     }
 
+    [SetsRequiredMembers]
     private Quiz(
         Guid id,
         Guid courseId,
@@ -44,7 +48,7 @@ public class Quiz : Entity
 
     public Guid InstructorId { get; private set; }
 
-    public string Title { get; private set; } = string.Empty;
+    public required string Title { get; set; }
 
     public DateTimeOffset StartsAtUtc { get; private set; }
 
@@ -223,7 +227,7 @@ public class Quiz : Entity
         int marks,
         Guid? correctChoiceId,
         bool? tfCorrectChoice,
-        List<Quizzes.Questions.Mcq.Choices.Choice>? choices)
+        List<Choice>? choices)
     {
         if (Status != QuizStatus.Scheduled)
         {

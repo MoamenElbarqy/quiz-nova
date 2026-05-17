@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.DTOs;
+using QuizNova.Application.Features.Courses.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
 
@@ -18,14 +19,6 @@ public sealed class CreateCourseCommandHandler(
 {
     public async Task<Result<CourseDto>> Handle(CreateCourseCommand request, CancellationToken ct)
     {
-        logger.LogInformation("Creating course {CourseId}", request.Id);
-
-        if (await dbContext.Courses.AnyAsync(course => course.Id == request.Id, ct))
-        {
-            logger.LogWarning("Course creation failed: Course ID {CourseId} already exists", request.Id);
-            return ApplicationErrors.CourseIdAlreadyExists(request.Id);
-        }
-
         if (request.InstructorId.HasValue &&
             !await dbContext.Instructors.AnyAsync(instructor => instructor.Id == request.InstructorId.Value, ct))
         {
@@ -34,7 +27,7 @@ public sealed class CreateCourseCommandHandler(
         }
 
         var createCourseResult = Course.Create(
-            request.Id,
+            Guid.NewGuid(),
             request.InstructorId,
             request.Name,
             request.MinimumPassingMarks,
@@ -51,22 +44,8 @@ public sealed class CreateCourseCommandHandler(
         await dbContext.Courses.AddAsync(createCourseResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
 
-        var instructorName = request.InstructorId.HasValue
-            ? await dbContext.Instructors
-                .Where(instructor => instructor.Id == request.InstructorId.Value)
-                .Select(instructor => instructor.PersonalInformation.Name)
-                .FirstOrDefaultAsync(ct) ?? string.Empty
-            : string.Empty;
+        logger.LogInformation("Successfully created course {CourseId}", createCourseResult.Value.Id);
 
-        logger.LogInformation("Successfully created course {CourseId}", request.Id);
-
-        return new CourseDto(
-            createCourseResult.Value.Id,
-            createCourseResult.Value.Name,
-            createCourseResult.Value.InstructorId,
-            instructorName,
-            EnrolledStudentsCount: 0,
-            QuizzesCount: 0,
-            RemainingMarks: createCourseResult.Value.MaximumMarks);
+        return createCourseResult.Value.ToCourseDto();
     }
 }

@@ -6,7 +6,7 @@ public sealed class ChoiceDto
 
     public Guid QuestionId { get; init; }
 
-    public string Text { get; init; } = string.Empty;
+    public required string Text { get; init; }
 
     public int DisplayOrder { get; init; }
 }

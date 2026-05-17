@@ -1,6 +1,6 @@
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
-using QuizNova.Domain.Entities.Quizzes.Questions.Mcq;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 
 namespace QuizNova.Domain.Entities.QuizAttempts.Answers.McqAnswer;
 

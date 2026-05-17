@@ -8,9 +8,6 @@ public sealed class CreateInstructorCommandValidator : AbstractValidator<CreateI
 {
     public CreateInstructorCommandValidator()
     {
-        RuleFor(command => command.Id)
-            .NotEmpty().WithMessage("Instructor ID is required.");
-
         RuleFor(command => command.Name)
             .NotEmpty().WithMessage("Name is required.");
 

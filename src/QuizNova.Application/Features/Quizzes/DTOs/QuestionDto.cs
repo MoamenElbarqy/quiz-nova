@@ -11,7 +11,7 @@ public abstract class QuestionDto
 
     public Guid QuizId { get; init; }
 
-    public string QuestionText { get; init; } = string.Empty;
+    public required string QuestionText { get; init; }
 
     public int Marks { get; init; }
 }

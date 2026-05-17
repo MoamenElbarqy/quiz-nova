@@ -54,7 +54,6 @@ public sealed class AdminController(ISender sender) : ApiController
     public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminRequest request)
     {
         var command = new CreateAdminCommand(
-            request.Id,
             request.Name,
             request.Email,
             request.Password,

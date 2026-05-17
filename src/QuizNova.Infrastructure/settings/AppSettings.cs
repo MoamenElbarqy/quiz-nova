@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace QuizNova.Infrastructure.Settings;
 
 public class AppSettings
@@ -9,7 +11,12 @@ public class AppSettings
 
 public class CorsSettings
 {
-    public string PolicyName { get; set; } = string.Empty;
+    [SetsRequiredMembers]
+    public CorsSettings()
+    {
+    }
+
+    public required string PolicyName { get; set; }
 
     public string[] AllowedOrigins { get; set; } = Array.Empty<string>();
 }

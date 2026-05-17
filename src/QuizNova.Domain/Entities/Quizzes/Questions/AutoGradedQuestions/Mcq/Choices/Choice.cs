@@ -1,23 +1,26 @@
+using System.Diagnostics.CodeAnalysis;
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
-namespace QuizNova.Domain.Entities.Quizzes.Questions.Mcq.Choices;
+namespace QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 
 public class Choice : Entity
 {
     public Guid QuestionId { get; private set; }
 
-    public string Text { get; private set; } = string.Empty;
+    public required string Text { get; set; }
 
     public int DisplayOrder { get; private set; }
 
     public Question? Question { get; init; }
 
+    [SetsRequiredMembers]
     private Choice()
     {
     }
 
+    [SetsRequiredMembers]
     private Choice(Guid id, Guid questionId, string text, int displayOrder)
         : base(id)
     {
@@ -64,4 +67,3 @@ public class Choice : Entity
         return Result.Updated;
     }
 }
-
