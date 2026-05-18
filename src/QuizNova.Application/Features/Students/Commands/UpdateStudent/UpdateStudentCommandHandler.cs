@@ -22,7 +22,7 @@ public sealed class UpdateStudentCommandHandler(
         logger.LogInformation("Updating student with ID: {StudentId}", request.Id);
 
         var student = await dbContext.Students
-            .Include(s => s.StudentCourses)
+            .Include(s => s.Enrollments)
             .FirstOrDefaultAsync(entity => entity.Id == request.Id, ct);
 
         if (student is null)
@@ -76,6 +76,6 @@ public sealed class UpdateStudentCommandHandler(
 
         logger.LogInformation("Successfully updated student {StudentId}", request.Id);
 
-        return student.ToStudentDto(student.StudentCourses.Count());
+        return student.ToStudentDto(student.Enrollments.Count());
     }
 }

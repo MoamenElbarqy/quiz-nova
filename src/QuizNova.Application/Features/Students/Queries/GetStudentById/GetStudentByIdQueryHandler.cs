@@ -22,7 +22,7 @@ public sealed class GetStudentByIdQueryHandler(
 
         var student = await dbContext.Students
             .AsNoTracking()
-            .Include(s => s.StudentCourses)
+            .Include(s => s.Enrollments)
             .FirstOrDefaultAsync(s => s.Id == request.Id, ct);
 
         if (student is null)
@@ -33,6 +33,6 @@ public sealed class GetStudentByIdQueryHandler(
 
         logger.LogInformation("Successfully retrieved student {StudentId}", request.Id);
 
-        return student.ToStudentDto(student.StudentCourses.Count());
+        return student.ToStudentDto(student.Enrollments.Count());
     }
 }

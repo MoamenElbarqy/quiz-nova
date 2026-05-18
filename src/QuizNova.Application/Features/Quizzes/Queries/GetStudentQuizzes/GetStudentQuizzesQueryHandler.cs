@@ -33,10 +33,10 @@ public sealed class GetStudentQuizzesQueryHandler(
 
         var serverUtc = DateTimeOffset.UtcNow;
 
-        var enrolledCourseIds = await dbContext.StudentCourses
+        var enrolledCourseIds = await dbContext.Enrollments
             .AsNoTracking()
-            .Where(studentCourse => studentCourse.StudentId == request.StudentId)
-            .Select(studentCourse => studentCourse.CourseId)
+            .Where(enrollment => enrollment.StudentId == request.StudentId)
+            .Select(enrollment => enrollment.CourseId)
             .ToListAsync(ct);
 
         if (enrolledCourseIds.Count == 0)

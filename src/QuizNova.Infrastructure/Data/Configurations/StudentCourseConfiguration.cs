@@ -1,15 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-using QuizNova.Domain.Entities.StudentCourses;
+using QuizNova.Domain.Entities.Enrollments;
 
 namespace QuizNova.Infrastructure.Data.Configurations;
 
-public sealed class StudentCourseConfiguration : IEntityTypeConfiguration<StudentCourse>
+public sealed class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollment>
 {
-    public void Configure(EntityTypeBuilder<StudentCourse> builder)
+    public void Configure(EntityTypeBuilder<Enrollment> builder)
     {
-        builder.ToTable("StudentCourses");
+        builder.ToTable("Enrollments");
         builder.HasKey(sc => sc.Id);
 
         // Unique index to prevent duplicate enrollments
@@ -17,11 +17,11 @@ public sealed class StudentCourseConfiguration : IEntityTypeConfiguration<Studen
             .IsUnique();
 
         builder.HasOne(sc => sc.Student)
-            .WithMany(s => s.StudentCourses)
+            .WithMany(s => s.Enrollments)
             .HasForeignKey(sc => sc.StudentId);
 
         builder.HasOne(sc => sc.Course)
-            .WithMany(c => c.StudentCourses)
+            .WithMany(c => c.Enrollments)
             .HasForeignKey(sc => sc.CourseId);
     }
 }

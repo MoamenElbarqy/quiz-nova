@@ -1,10 +1,10 @@
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
 
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Entities.Courses;
+using QuizNova.Domain.Entities.Enrollments;
 using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
@@ -12,7 +12,6 @@ using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
-using QuizNova.Domain.Entities.StudentCourses;
 using QuizNova.Domain.Entities.Users;
 using QuizNova.Domain.Entities.Users.Admins;
 using QuizNova.Domain.Entities.Users.Instructors;
@@ -49,7 +48,7 @@ public class AppDbContext(
 
     public DbSet<Admin> Admins => Set<Admin>();
 
-    public DbSet<StudentCourse> StudentCourses => Set<StudentCourse>();
+    public DbSet<Enrollment> Enrollments => Set<Enrollment>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {

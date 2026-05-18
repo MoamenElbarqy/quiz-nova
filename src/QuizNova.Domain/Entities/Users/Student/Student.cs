@@ -1,7 +1,7 @@
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Enrollments;
 using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.QuizAttempts;
-using QuizNova.Domain.Entities.StudentCourses;
 using QuizNova.Domain.Entities.Users.Student.Events;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
@@ -10,7 +10,7 @@ namespace QuizNova.Domain.Entities.Users.Student;
 public class Student : User
 {
     private readonly List<QuizAttempt> _quizAttempts;
-    private readonly List<StudentCourse> _studentCourses;
+    private readonly List<Enrollment> _enrollments;
 
     private Student()
     {
@@ -20,7 +20,7 @@ public class Student : User
         Guid id,
         PersonalInformation personalInformation,
         List<RefreshToken> refreshTokens,
-        List<StudentCourse> studentCourses,
+        List<Enrollment> enrollments,
         List<QuizAttempt> quizAttempts)
         : base(
             id,
@@ -28,18 +28,18 @@ public class Student : User
             UserRole.Student,
             refreshTokens)
     {
-        _studentCourses = studentCourses;
+        _enrollments = enrollments;
         _quizAttempts = quizAttempts;
     }
 
-    public IEnumerable<StudentCourse> StudentCourses => _studentCourses.AsReadOnly();
+    public IEnumerable<Enrollment> Enrollments => _enrollments.AsReadOnly();
     public IEnumerable<QuizAttempt> QuizAttempts => _quizAttempts.AsReadOnly();
 
     public static Result<Student> Create(
         Guid id,
         PersonalInformation personalInformation,
         List<RefreshToken> refreshTokens,
-        List<StudentCourse> courseEnrollments,
+        List<Enrollment> courseEnrollments,
         List<QuizAttempt> quizAttempts)
     {
         var student = new Student(

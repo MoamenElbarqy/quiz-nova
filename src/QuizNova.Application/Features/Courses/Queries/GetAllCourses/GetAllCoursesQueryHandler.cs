@@ -41,7 +41,7 @@ public sealed class GetAllCoursesQueryHandler(
                     .Where(instructor => instructor.Id == course.InstructorId)
                     .Select(instructor => instructor.PersonalInformation.Name)
                     .FirstOrDefault() ?? string.Empty,
-                dbContext.StudentCourses.Count(studentCourse => studentCourse.CourseId == course.Id),
+                dbContext.Enrollments.Count(enrollment => enrollment.CourseId == course.Id),
                 dbContext.Quizzes.Count(quiz => quiz.CourseId == course.Id),
                 course.MaximumMarks - dbContext.Quizzes
                     .Where(quiz => quiz.CourseId == course.Id)
@@ -73,13 +73,13 @@ public sealed class GetAllCoursesQueryHandler(
         if (request.StudentId.HasValue)
         {
             query = query.Where(course =>
-                dbContext.StudentCourses.Any(sc => sc.StudentId == request.StudentId.Value && sc.CourseId == course.Id));
+                dbContext.Enrollments.Any(sc => sc.StudentId == request.StudentId.Value && sc.CourseId == course.Id));
         }
 
         if (request.EnrolledStudentsCount.HasValue)
         {
             query = query.Where(course =>
-                dbContext.StudentCourses.Count(studentCourse => studentCourse.CourseId == course.Id) ==
+                dbContext.Enrollments.Count(enrollment => enrollment.CourseId == course.Id) ==
                 request.EnrolledStudentsCount.Value);
         }
 

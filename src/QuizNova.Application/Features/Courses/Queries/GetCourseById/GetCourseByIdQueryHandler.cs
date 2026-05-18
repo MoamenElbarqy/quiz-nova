@@ -32,7 +32,7 @@ public sealed class GetCourseByIdQueryHandler(
                     .Where(i => i.Id == c.InstructorId)
                     .Select(i => i.PersonalInformation.Name)
                     .FirstOrDefault() ?? string.Empty,
-                EnrolledStudentsCount = dbContext.StudentCourses.Count(sc => sc.CourseId == c.Id),
+                EnrolledStudentsCount = dbContext.Enrollments.Count(sc => sc.CourseId == c.Id),
                 QuizzesCount = dbContext.Quizzes.Count(q => q.CourseId == c.Id),
                 ConsumedMarks = dbContext.Quizzes
                     .Where(q => q.CourseId == c.Id)

@@ -1,23 +1,23 @@
 using QuizNova.Application.Features.Courses.DTOs;
-using QuizNova.Domain.Entities.StudentCourses;
+using QuizNova.Domain.Entities.Enrollments;
 
 namespace QuizNova.Application.Features.Courses.Mappers;
 
-public static class StudentCourseMapper
+public static class EnrollmentMapper
 {
-    public static StudentCourseDto ToStudentCourseDto(this StudentCourse studentCourse)
+    public static EnrollmentDto ToEnrollmentDto(this Enrollment enrollment)
     {
-        ArgumentNullException.ThrowIfNull(studentCourse);
+        ArgumentNullException.ThrowIfNull(enrollment);
 
-        var course = studentCourse.Course;
+        var course = enrollment.Course;
         var instructorName = course?.Instructor?.PersonalInformation.Name ?? string.Empty;
         var quizzesCount = course?.Quizzes.Count() ?? 0;
 
-        return new StudentCourseDto(
-            studentCourse.CourseId,
+        return new EnrollmentDto(
+            enrollment.CourseId,
             course?.Name ?? string.Empty,
             instructorName,
             quizzesCount,
-            studentCourse.EnrolledOnUtc);
+            enrollment.EnrolledOnUtc);
     }
 }

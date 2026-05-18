@@ -1,10 +1,10 @@
 using FluentValidation;
 
-namespace QuizNova.Application.Features.Courses.Queries.GetStudentCoursesById;
+namespace QuizNova.Application.Features.Courses.Queries.GetEnrollmentsById;
 
-public sealed class GetStudentCoursesByIdQueryValidator : AbstractValidator<GetStudentCoursesByIdQuery>
+public sealed class GetEnrollmentsByIdQueryValidator : AbstractValidator<GetEnrollmentsByIdQuery>
 {
-    public GetStudentCoursesByIdQueryValidator()
+    public GetEnrollmentsByIdQueryValidator()
     {
         RuleFor(query => query.StudentId)
             .NotEmpty().WithMessage("Student ID is required.");
