@@ -1,14 +1,14 @@
 using MediatR;
 
 using QuizNova.Application.Common.Interfaces;
-using QuizNova.Domain.Entities.StudentCourses.Events;
+using QuizNova.Domain.Entities.Enrollments.Events;
 
 namespace QuizNova.Application.Features.Courses.EventHandlers;
 
-public class StudentCourseCreatedCacheInvalidationHandler(ICacheInvalidator cacheInvalidator)
-    : INotificationHandler<StudentCourseCreatedEvent>
+public class EnrollmentCreatedCacheInvalidationHandler(ICacheInvalidator cacheInvalidator)
+    : INotificationHandler<EnrollmentCreatedEvent>
 {
-    public async Task Handle(StudentCourseCreatedEvent notification, CancellationToken ct)
+    public async Task Handle(EnrollmentCreatedEvent notification, CancellationToken ct)
     {
         await cacheInvalidator.InvalidateAsync(["courses", "students"], ct);
     }

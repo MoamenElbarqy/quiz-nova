@@ -20,7 +20,7 @@ public sealed class EnrollStudentInCourseCommandHandler(
             request.CourseId);
 
         var course = await dbContext.Courses
-            .Include(c => c.StudentCourses)
+            .Include(c => c.Enrollments)
             .FirstOrDefaultAsync(c => c.Id == request.CourseId, ct);
 
         if (course is null)

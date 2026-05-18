@@ -53,8 +53,8 @@ public sealed class UpdateCourseInstructorCommandHandler(
                 .FirstOrDefaultAsync(ct) ?? string.Empty
             : string.Empty;
 
-        var enrolledStudentsCount = await dbContext.StudentCourses
-            .CountAsync(studentCourse => studentCourse.CourseId == course.Id, ct);
+        var enrolledStudentsCount = await dbContext.Enrollments
+            .CountAsync(enrollment => enrollment.CourseId == course.Id, ct);
 
         var quizzesCount = await dbContext.Quizzes
             .CountAsync(quiz => quiz.CourseId == course.Id, ct);

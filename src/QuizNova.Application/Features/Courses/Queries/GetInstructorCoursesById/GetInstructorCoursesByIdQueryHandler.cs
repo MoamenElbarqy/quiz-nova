@@ -37,7 +37,7 @@ public sealed class GetInstructorCoursesByIdQueryHandler(
                     .Where(instructor => instructor.Id == course.InstructorId)
                     .Select(instructor => instructor.PersonalInformation.Name)
                     .FirstOrDefault() ?? string.Empty,
-                dbContext.StudentCourses.Count(studentCourse => studentCourse.CourseId == course.Id),
+                dbContext.Enrollments.Count(enrollment => enrollment.CourseId == course.Id),
                 dbContext.Quizzes.Count(quiz => quiz.CourseId == course.Id),
                 course.MaximumMarks - dbContext.Quizzes
                     .Where(quiz => quiz.CourseId == course.Id)

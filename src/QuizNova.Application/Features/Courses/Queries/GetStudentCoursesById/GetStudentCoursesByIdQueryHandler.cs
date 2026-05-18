@@ -8,14 +8,14 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Domain.Common.Results;
 
-namespace QuizNova.Application.Features.Courses.Queries.GetStudentCoursesById;
+namespace QuizNova.Application.Features.Courses.Queries.GetEnrollmentsById;
 
-public sealed class GetStudentCoursesByIdQueryHandler(
+public sealed class GetEnrollmentsByIdQueryHandler(
     IAppDbContext dbContext,
-    ILogger<GetStudentCoursesByIdQueryHandler> logger)
-    : IRequestHandler<GetStudentCoursesByIdQuery, Result<List<StudentCourseDto>>>
+    ILogger<GetEnrollmentsByIdQueryHandler> logger)
+    : IRequestHandler<GetEnrollmentsByIdQuery, Result<List<EnrollmentDto>>>
 {
-    public async Task<Result<List<StudentCourseDto>>> Handle(GetStudentCoursesByIdQuery request, CancellationToken ct)
+    public async Task<Result<List<EnrollmentDto>>> Handle(GetEnrollmentsByIdQuery request, CancellationToken ct)
     {
         logger.LogInformation("Retrieving courses for student with ID: {StudentId}", request.StudentId);
 
@@ -26,10 +26,10 @@ public sealed class GetStudentCoursesByIdQueryHandler(
             return ApplicationErrors.StudentNotFound(request.StudentId);
         }
 
-        var studentCourses = await dbContext.StudentCourses
+        var enrollments = await dbContext.Enrollments
             .Where(sc => sc.StudentId == request.StudentId)
             .AsNoTracking()
-            .Select(sc => new StudentCourseDto(
+            .Select(sc => new EnrollmentDto(
                 sc.CourseId,
                 sc.Course!.Name,
                 sc.Course.Instructor!.PersonalInformation.Name,
@@ -37,8 +37,8 @@ public sealed class GetStudentCoursesByIdQueryHandler(
                 sc.EnrolledOnUtc))
             .ToListAsync(ct);
 
-        logger.LogInformation("Successfully retrieved {Count} courses for student {StudentId}", studentCourses.Count, request.StudentId);
+        logger.LogInformation("Successfully retrieved {Count} courses for student {StudentId}", enrollments.Count, request.StudentId);
 
-        return studentCourses;
+        return enrollments;
     }
 }

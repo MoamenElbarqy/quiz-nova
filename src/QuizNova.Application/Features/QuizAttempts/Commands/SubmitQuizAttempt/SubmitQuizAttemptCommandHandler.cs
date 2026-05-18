@@ -59,11 +59,11 @@ public sealed class SubmitQuizAttemptCommandHandler(
             .Include(question => question.Choices)
             .LoadAsync(ct);
 
-        var isStudentEnrolledInCourse = await dbContext.StudentCourses
+        var isStudentEnrolledInCourse = await dbContext.Enrollments
             .AsNoTracking()
             .AnyAsync(
-                studentCourse => studentCourse.StudentId == studentId &&
-                                 studentCourse.CourseId == quiz.CourseId,
+                enrollment => enrollment.StudentId == studentId &&
+                                 enrollment.CourseId == quiz.CourseId,
                 ct);
 
         if (!isStudentEnrolledInCourse)

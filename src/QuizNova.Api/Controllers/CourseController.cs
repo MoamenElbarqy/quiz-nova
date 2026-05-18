@@ -1,5 +1,4 @@
 using MediatR;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
@@ -14,8 +13,8 @@ using QuizNova.Application.Features.Courses.Commands.UpdateCourseInstructor;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Application.Features.Courses.Queries.GetAllCourses;
 using QuizNova.Application.Features.Courses.Queries.GetCourseById;
+using QuizNova.Application.Features.Courses.Queries.GetEnrollmentsCount;
 using QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesCount;
-using QuizNova.Application.Features.Courses.Queries.GetStudentCoursesCount;
 
 namespace QuizNova.Api.Controllers;
 
@@ -51,7 +50,7 @@ public sealed class CourseController(ISender sender) : ApiController
 
         if (studentId.HasValue)
         {
-            var result = await sender.Send(new GetStudentCoursesCountQuery(studentId.Value));
+            var result = await sender.Send(new GetEnrollmentsCountQuery(studentId.Value));
             return result.Match(Ok, Problem);
         }
 

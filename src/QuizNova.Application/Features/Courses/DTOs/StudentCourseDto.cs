@@ -1,6 +1,6 @@
 namespace QuizNova.Application.Features.Courses.DTOs;
 
-public sealed record StudentCourseDto(
+public sealed record EnrollmentDto(
     Guid CourseId,
     string CourseName,
     string InstructorName,

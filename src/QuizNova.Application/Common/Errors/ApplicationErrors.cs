@@ -76,12 +76,12 @@ public static class ApplicationErrors
 
     public static Error StudentNotEnrolledInCourse(Guid studentId, Guid courseId) =>
         Error.Validation(
-            code: "StudentCourse.Enrollment.NotFound",
+            code: "Enrollment.Enrollment.NotFound",
             description: $"Student with ID '{studentId}' is not enrolled in course '{courseId}'.");
 
     public static Error StudentAlreadyEnrolledInCourse(Guid studentId, Guid courseId) =>
         Error.Conflict(
-            code: "StudentCourse.Enrollment.AlreadyExists",
+            code: "Enrollment.Enrollment.AlreadyExists",
             description: $"Student with ID '{studentId}' is already enrolled in course '{courseId}'.");
 
     public static Error QuizAttemptAlreadyExists(Guid studentId, Guid quizId) =>
@@ -170,8 +170,8 @@ public static class ApplicationErrors
             code: "Course.NotFound",
             description: $"Course with ID '{courseId}' was not found.");
 
-    public static Error StudentCourseEnrollmentIdAlreadyExists(Guid enrollmentId) =>
+    public static Error EnrollmentEnrollmentIdAlreadyExists(Guid enrollmentId) =>
         Error.Conflict(
-            code: "StudentCourse.Enrollment.Id.AlreadyExists",
+            code: "Enrollment.Enrollment.Id.AlreadyExists",
             description: $"Enrollment with ID '{enrollmentId}' already exists.");
 }

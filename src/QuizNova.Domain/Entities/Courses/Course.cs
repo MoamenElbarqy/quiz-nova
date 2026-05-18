@@ -2,8 +2,8 @@ using System.Diagnostics.CodeAnalysis;
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses.Events;
+using QuizNova.Domain.Entities.Enrollments;
 using QuizNova.Domain.Entities.Quizzes;
-using QuizNova.Domain.Entities.StudentCourses;
 using QuizNova.Domain.Entities.Users.Instructors;
 using QuizNova.Domain.Entities.Users.Student;
 
@@ -12,7 +12,7 @@ namespace QuizNova.Domain.Entities.Courses;
 public sealed class Course : Entity
 {
     private readonly List<Quiz> _quizzes;
-    private readonly List<StudentCourse> _studentCourses;
+    private readonly List<Enrollment> _enrollments;
 
     [SetsRequiredMembers]
     private Course()
@@ -27,7 +27,7 @@ public sealed class Course : Entity
         int minimumPassingMarks,
         int maximumMarks,
         List<Quiz> quizzes,
-        List<StudentCourse> studentCourses)
+        List<Enrollment> enrollments)
         : base(id)
     {
         InstructorId = instructorId;
@@ -35,7 +35,7 @@ public sealed class Course : Entity
         MinimumPassingMarks = minimumPassingMarks;
         MaximumMarks = maximumMarks;
         _quizzes = quizzes;
-        _studentCourses = studentCourses;
+        _enrollments = enrollments;
     }
 
     public Guid? InstructorId { get; private set; }
@@ -53,7 +53,7 @@ public sealed class Course : Entity
 
     public IEnumerable<Quiz> Quizzes => _quizzes.AsReadOnly();
 
-    public IEnumerable<StudentCourse> StudentCourses => _studentCourses.AsReadOnly();
+    public IEnumerable<Enrollment> Enrollments => _enrollments.AsReadOnly();
 
     public static Result<Course> Create(
         Guid id,
@@ -62,7 +62,7 @@ public sealed class Course : Entity
         int minimumPassingMarks,
         int maximumMarks,
         List<Quiz> quizzes,
-        List<StudentCourse> studentCourses)
+        List<Enrollment> enrollments)
     {
         if (id == Guid.Empty)
         {
@@ -101,33 +101,33 @@ public sealed class Course : Entity
             minimumPassingMarks,
             maximumMarks,
             quizzes,
-            studentCourses);
+            enrollments);
         course.AddDomainEvent(new CourseCreatedEvent(id));
         return course;
     }
 
-    public Result<StudentCourse> Enroll(Student student, Guid enrollmentId)
+    public Result<Enrollment> Enroll(Student student, Guid enrollmentId)
     {
-        if (_studentCourses.Any(sc => sc.StudentId == student.Id))
+        if (_enrollments.Any(sc => sc.StudentId == student.Id))
         {
             return CourseErrors.StudentAlreadyEnrolled(student.Id);
         }
 
-        var studentCourseResult = StudentCourse.Create(
+        var enrollmentResult = Enrollment.Create(
             enrollmentId,
             student.Id,
             Id,
             DateTimeOffset.UtcNow);
 
-        if (studentCourseResult.IsError)
+        if (enrollmentResult.IsError)
         {
-            return studentCourseResult.TopError;
+            return enrollmentResult.TopError;
         }
 
-        _studentCourses.Add(studentCourseResult.Value);
+        _enrollments.Add(enrollmentResult.Value);
         AddDomainEvent(new StudentEnrolledEvent(Id, student.Id));
 
-        return studentCourseResult.Value;
+        return enrollmentResult.Value;
     }
 
     public Result<Course> UpdateInstructor(Guid? instructorId)

@@ -23,7 +23,7 @@ public sealed class GetAllStudentsQueryHandler(
 
         IQueryable<Student> query = dbContext.Students
             .AsNoTracking()
-            .Include(s => s.StudentCourses)
+            .Include(s => s.Enrollments)
             .AsQueryable();
 
         query = ApplySearchTerm(query, request);
@@ -35,7 +35,7 @@ public sealed class GetAllStudentsQueryHandler(
         var students = await query
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(student => student.ToStudentDto(student.StudentCourses.Count()))
+            .Select(student => student.ToStudentDto(student.Enrollments.Count()))
             .ToListAsync(ct);
 
         var response = new PaginatedList<StudentDto>(
@@ -57,7 +57,7 @@ public sealed class GetAllStudentsQueryHandler(
         if (request.EnrolledCoursesCount.HasValue)
         {
             query = query.Where(student =>
-                dbContext.StudentCourses.Count(studentCourse => studentCourse.StudentId == student.Id) ==
+                dbContext.Enrollments.Count(enrollment => enrollment.StudentId == student.Id) ==
                 request.EnrolledCoursesCount.Value);
         }
 
@@ -65,13 +65,13 @@ public sealed class GetAllStudentsQueryHandler(
         {
             query = request.IsEnrolledInCourse.Value
                 ? query.Where(student =>
-                    dbContext.StudentCourses.Any(studentCourse =>
-                        studentCourse.StudentId == student.Id &&
-                        studentCourse.CourseId == request.CourseId.Value))
+                    dbContext.Enrollments.Any(enrollment =>
+                        enrollment.StudentId == student.Id &&
+                        enrollment.CourseId == request.CourseId.Value))
                 : query.Where(student =>
-                    !dbContext.StudentCourses.Any(studentCourse =>
-                        studentCourse.StudentId == student.Id &&
-                        studentCourse.CourseId == request.CourseId.Value));
+                    !dbContext.Enrollments.Any(enrollment =>
+                        enrollment.StudentId == student.Id &&
+                        enrollment.CourseId == request.CourseId.Value));
         }
 
         return query;

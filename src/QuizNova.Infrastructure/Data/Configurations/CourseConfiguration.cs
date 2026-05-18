@@ -20,8 +20,8 @@ public sealed class CourseConfiguration : IEntityTypeConfiguration<Course>
             .HasField("_quizzes")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
-        builder.Navigation(c => c.StudentCourses)
-            .HasField("_studentCourses")
+        builder.Navigation(c => c.Enrollments)
+            .HasField("_enrollments")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
         builder.HasOne(c => c.Instructor)
