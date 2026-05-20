@@ -2,10 +2,10 @@ using QuizNova.Application.Features.QuizAttempts.DTOs;
 using QuizNova.Application.Features.Quizzes.Mappers;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.McqAnswer;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.TrueFalseAnswer;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.McqAnswer;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalseAnswer;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
 namespace QuizNova.Application.Features.QuizAttempts.Mappers;
@@ -30,7 +30,6 @@ public static class QuizAttemptMapper
             .ToList();
 
         var correctAnswers = answerDtos.Count(answer => answer.IsCorrect);
-        var isPassed = quizAttempt.Quiz != null && quizAttempt.Score >= Math.Ceiling(quizAttempt.Quiz.Marks * 0.5);
 
         return new QuizAttemptDto(
             quizAttempt.Id,
@@ -43,8 +42,7 @@ public static class QuizAttemptMapper
             correctAnswers,
             quizAttempt.Score,
             questionDtos,
-            answerDtos,
-            isPassed);
+            answerDtos);
     }
 
     private static QuestionAnswerDto MapAnswer(
