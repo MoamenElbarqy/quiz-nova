@@ -89,10 +89,11 @@ _ReSharper*/
 *.pid.lock
 .codex
 .gemini
+.antigravitycli
+.agents
 AGENTS.md
 GEMENI.md
 appsettings.Development.json
-
 /shelf/
 /workspace.xml
 /httpRequests/

@@ -1,3 +1,4 @@
+-- Active: 1779134942824@@127.0.0.1@5432@QuizNova
 # Editor configuration, see https://editorconfig.org
 root = true
 
@@ -18,6 +19,8 @@ dotnet_separate_import_directive_groups = true
 csharp_new_line_before_open_brace = all
 csharp_preserve_single_line_blocks = true
 csharp_preserve_single_line_statements = false
+max_line_length = 120
+
 
 # SA1200: Allow using directives outside of namespace
 dotnet_diagnostic.SA1200.severity = none
@@ -73,24 +76,44 @@ dotnet_diagnostic.SA1010.severity = none
 # SA1028: Code should not contain trailing whitespace
 dotnet_diagnostic.SA1028.severity = none
 
+# CS0108: Allow member to hide inherited member without using the 'new' keyword
 dotnet_diagnostic.CS0108.severity = none
 
+# SA1118: Allow method or indexer parameters to span multiple lines
 dotnet_diagnostic.SA1118.severity = none
 
+# Disable SA1206 (required modifier ordering) per user preference
+dotnet_diagnostic.SA1206.severity = none
+
+# SA1116: Parameters must begin on same line or separate lines
+dotnet_diagnostic.SA1116.severity = none
+
+# SA1117: Parameters must begin on same line or separate lines
+dotnet_diagnostic.SA1117.severity = none
+
+
+# SA1000: Allow keywords to be spaced flexibly
 dotnet_diagnostic.SA1000.severity = none
 
+# SA1001: Allow commas to be spaced flexibly
 dotnet_diagnostic.SA1001.severity = none
 
+# SA1003: Allow symbols and operators to be spaced flexibly
 dotnet_diagnostic.SA1003.severity = none
 
+# SA1008: Allow opening parenthesis to be spaced flexibly
 dotnet_diagnostic.SA1008.severity = none
 
+# SA1500: Allow curly brackets for multi-line statements to share a line
 dotnet_diagnostic.SA1500.severity = none
 
+# SA1502: Allow elements to be declared on a single line
 dotnet_diagnostic.SA1502.severity = none
 
+# SA1508: Allow closing curly brackets to be preceded by a blank line
 dotnet_diagnostic.SA1508.severity = none
 
+# SA1516: Allow adjacent elements to be declared without an intervening blank line
 dotnet_diagnostic.SA1516.severity = none
 
 [*.{ts,tsx,js,jsx}]
@@ -104,4 +127,7 @@ typescript_spaces_within_object_literal_braces = true
 max_line_length = off
 trim_trailing_whitespace = false
 
-
+[**Migrations/*.cs]
+generated_code = true
+dotnet_diagnostic.SA1413.severity = none
+dotnet_diagnostic.IDE0005.severity = none
