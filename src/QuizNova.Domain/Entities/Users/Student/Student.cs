@@ -36,12 +36,12 @@ public class Student : User
     public IEnumerable<QuizAttempt> QuizAttempts => _quizAttempts.AsReadOnly();
 
     public static Result<Student> Create(
-        Guid id,
         PersonalInformation personalInformation,
         List<RefreshToken> refreshTokens,
         List<Enrollment> courseEnrollments,
         List<QuizAttempt> quizAttempts)
     {
+        var id = Guid.NewGuid();
         var student = new Student(
             id,
             personalInformation,

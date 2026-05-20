@@ -83,7 +83,6 @@ public sealed class CreateQuizCommandHandler(
             request.Title,
             request.StartsAtUtc,
             request.EndsAtUtc,
-            questions.Sum(question => question.Marks),
             questions);
 
         if (createQuizResult.IsError)

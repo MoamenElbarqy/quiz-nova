@@ -24,10 +24,10 @@ public class Admin : User
     }
 
     public static Result<Admin> Create(
-        Guid id,
         PersonalInformation personalInformation,
         List<RefreshToken> refreshTokens)
     {
+        var id = Guid.NewGuid();
         var admin = new Admin(id, personalInformation, refreshTokens);
         admin.AddDomainEvent(new AdminCreatedEvent(id));
         return admin;

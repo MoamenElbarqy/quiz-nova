@@ -38,7 +38,7 @@ public sealed class EnrollStudentInCourseCommandHandler(
             return ApplicationErrors.StudentNotFound(request.StudentId);
         }
 
-        var enrollmentResult = course.Enroll(student, Guid.NewGuid());
+        var enrollmentResult = course.Enroll(student);
 
         if (enrollmentResult.IsError)
         {

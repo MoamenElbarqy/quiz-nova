@@ -63,7 +63,6 @@ public sealed class CreateAdminCommandHandler(
         }
 
         var createAdminResult = Admin.Create(
-            Guid.NewGuid(),
             personalInformationResult.Value,
             []);
 
