@@ -9,4 +9,10 @@ public static class McqErrors
 
     public static readonly Error CorrectChoiceIdRequired =
         Error.Validation("Mcq_CorrectChoiceId_Required", "Correct choice ID is required.");
+
+    public static readonly Error TitleTooShort =
+        Error.Validation("Mcq_Title_TooShort", "MCQ question text must be at least 3 characters long.");
+
+    public static readonly Error TitleTooLong =
+        Error.Validation("Mcq_Title_TooLong", "MCQ question text cannot exceed 500 characters.");
 }

@@ -13,7 +13,7 @@ public sealed class ChoiceConfiguration : IEntityTypeConfiguration<Choice>
         builder.HasKey(c => c.Id);
 
         builder.Property(c => c.Text)
-            .HasMaxLength(500)
+            .HasMaxLength(100)
             .IsRequired();
 
         builder.HasOne(c => c.Question)

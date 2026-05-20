@@ -55,6 +55,7 @@ public sealed class CreateQuestionCommandValidator : AbstractValidator<CreateQue
     {
         RuleFor(x => x.QuestionText)
             .NotEmpty().WithMessage("Question text is required.")
+            .MinimumLength(3).WithMessage("Question text must be at least 3 characters long.")
             .MaximumLength(500).WithMessage("Question text must not exceed 500 characters.");
 
         RuleFor(x => x.Marks)
@@ -99,6 +100,7 @@ public sealed class CreateChoiceCommandValidator : AbstractValidator<CreateChoic
 
         RuleFor(x => x.Text)
             .NotEmpty().WithMessage("Choice text is required.")
-            .MaximumLength(200).WithMessage("Choice text must not exceed 200 characters.");
+            .MinimumLength(3).WithMessage("Choice text must be at least 3 characters long.")
+            .MaximumLength(100).WithMessage("Choice text must not exceed 100 characters.");
     }
 }

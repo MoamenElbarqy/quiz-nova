@@ -16,6 +16,7 @@ public sealed class UpdateQuestionCommandValidator : AbstractValidator<UpdateQue
 
         RuleFor(x => x.QuestionText)
             .NotEmpty().WithMessage("Question text is required.")
+            .MinimumLength(3).WithMessage("Question text must be at least 3 characters long.")
             .MaximumLength(500).WithMessage("Question text must not exceed 500 characters.");
 
         RuleFor(x => x.Marks)
