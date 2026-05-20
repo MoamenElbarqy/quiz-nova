@@ -65,7 +65,6 @@ public sealed class CreateInstructorCommandHandler(
         }
 
         var createInstructorResult = Instructor.Create(
-            Guid.NewGuid(),
             personalInformationResult.Value,
             [],
             [],

@@ -64,7 +64,6 @@ public sealed class CreateStudentCommandHandler(
         }
 
         var createStudentResult = Student.Create(
-            Guid.NewGuid(),
             personalInformationResult.Value,
             [],
             [],

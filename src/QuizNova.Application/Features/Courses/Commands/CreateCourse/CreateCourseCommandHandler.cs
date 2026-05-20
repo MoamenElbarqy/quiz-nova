@@ -27,7 +27,6 @@ public sealed class CreateCourseCommandHandler(
         }
 
         var createCourseResult = Course.Create(
-            Guid.NewGuid(),
             request.InstructorId,
             request.Name,
             request.MinimumPassingMarks,
@@ -46,6 +45,6 @@ public sealed class CreateCourseCommandHandler(
 
         logger.LogInformation("Successfully created course {CourseId}", createCourseResult.Value.Id);
 
-        return createCourseResult.Value.ToCourseDto();
+        return createCourseResult.Value.ToCourseDto(0);
     }
 }
