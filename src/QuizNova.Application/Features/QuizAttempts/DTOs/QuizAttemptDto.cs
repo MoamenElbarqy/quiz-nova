@@ -13,5 +13,4 @@ public sealed record QuizAttemptDto(
     int CorrectAnswers,
     int Score,
     IReadOnlyList<QuestionDto> Questions,
-    IReadOnlyList<QuestionAnswerDto> Answers,
-    bool IsPassed);
+    IReadOnlyList<QuestionAnswerDto> Answers);

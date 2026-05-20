@@ -7,8 +7,6 @@ public static class EnrollmentMapper
 {
     public static EnrollmentDto ToEnrollmentDto(this Enrollment enrollment)
     {
-        ArgumentNullException.ThrowIfNull(enrollment);
-
         var course = enrollment.Course;
         var instructorName = course?.Instructor?.PersonalInformation.Name ?? string.Empty;
         var quizzesCount = course?.Quizzes.Count() ?? 0;

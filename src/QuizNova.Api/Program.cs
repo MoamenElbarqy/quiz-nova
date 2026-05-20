@@ -32,11 +32,13 @@ app.UseCors(appSettings.Cors.PolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("AutoMigrateDb"))
 {
     await app.Services.InitializeDevelopmentDatabaseAsync();
+}
 
+if (app.Environment.IsDevelopment())
+{
     app.MapOpenApi();
 
     app.UseSwaggerUI(options =>

@@ -2,11 +2,11 @@ using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 
 namespace QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
 
-public class ManuallyGradedAnswers : QuestionAnswer
+public abstract class ManuallyGradedAnswers : QuestionAnswer
 {
     public int? Score { get; private set; }
 
-    public ManuallyGradedAnswers(
+    protected ManuallyGradedAnswers(
         Guid id,
         Guid studentId,
         Guid questionId,

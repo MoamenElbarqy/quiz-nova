@@ -2,10 +2,10 @@ using Microsoft.EntityFrameworkCore;
 
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
+using QuizNova.Domain.Entities.Enrollments;
 using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.Quizzes;
-using QuizNova.Domain.Entities.StudentCourses;
 using QuizNova.Domain.Entities.Users.Admins;
 using QuizNova.Domain.Entities.Users.Instructors;
 using QuizNova.Domain.Entities.Users.Student;
@@ -17,7 +17,7 @@ public sealed class DbInitializer(AppDbContext dbContext)
 {
     public async Task InitializeAsync(CancellationToken ct = default)
     {
-        await dbContext.Database.EnsureCreatedAsync(ct);
+        await dbContext.Database.MigrateAsync(ct);
 
         if (!await dbContext.Admins.AnyAsync(ct))
         {
@@ -65,7 +65,7 @@ public sealed class DbInitializer(AppDbContext dbContext)
             "admin personal information");
 
         return EnsureSuccess(
-            Admin.Create(Guid.NewGuid(), personalInfo, new List<RefreshToken>()),
+            Admin.Create(personalInfo, new List<RefreshToken>()),
             "admin");
     }
 
@@ -91,7 +91,6 @@ public sealed class DbInitializer(AppDbContext dbContext)
         [
             EnsureSuccess(
                 Instructor.Create(
-                    Guid.NewGuid(),
                     instructorOneInfo,
                     new List<RefreshToken>(),
                     new List<Course>(),
@@ -99,7 +98,6 @@ public sealed class DbInitializer(AppDbContext dbContext)
                 "instructor one"),
             EnsureSuccess(
                 Instructor.Create(
-                    Guid.NewGuid(),
                     instructorTwoInfo,
                     new List<RefreshToken>(),
                     new List<Course>(),
@@ -114,23 +112,21 @@ public sealed class DbInitializer(AppDbContext dbContext)
         [
             EnsureSuccess(
                 Course.Create(
-                    Guid.NewGuid(),
                     instructors[0].Id,
                     "Backend Fundamentals",
                     minimumPassingMarks: 50,
                     maximumMarks: 100,
                     quizzes: new List<Quiz>(),
-                    studentCourses: new List<StudentCourse>()),
+                    enrollments: new List<Enrollment>()),
                 "course one"),
             EnsureSuccess(
                 Course.Create(
-                    Guid.NewGuid(),
                     instructors[1].Id,
                     "Frontend Fundamentals",
                     minimumPassingMarks: 50,
                     maximumMarks: 100,
                     quizzes: new List<Quiz>(),
-                    studentCourses: new List<StudentCourse>()),
+                    enrollments: new List<Enrollment>()),
                 "course two"),
         ];
     }
@@ -154,10 +150,9 @@ public sealed class DbInitializer(AppDbContext dbContext)
 
         return EnsureSuccess(
             Student.Create(
-                Guid.NewGuid(),
                 personalInfo,
                 new List<RefreshToken>(),
-                new List<StudentCourse>(),
+                new List<Enrollment>(),
                 new List<QuizAttempt>()),
             name);
     }
