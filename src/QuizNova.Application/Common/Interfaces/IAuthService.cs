@@ -15,5 +15,7 @@ public interface IAuthService
 
     Task<Result<UserDto>> GetUserByIdAsync(string userId);
 
+    Task<string> GetUserNameAsync(string userId);
+
     Task<Result<Success>> ValidateAndRevokeRefreshTokenAsync(string userId, string refreshToken, CancellationToken ct);
 }
