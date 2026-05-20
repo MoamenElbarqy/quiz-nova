@@ -49,6 +49,9 @@ public static class QuizErrors
     public static readonly Error TitleTooShort =
         Error.Validation("Quiz_Title_TooShort", "Quiz title must be at least 3 characters long.");
 
+    public static readonly Error TitleTooLong =
+        Error.Validation("Quiz_Title_TooLong", "Quiz title cannot exceed 30 characters.");
+
     public static readonly Error QuestionSequenceInvalid =
         Error.Validation("Quiz_QuestionSequenceInvalid", "Question display orders must contain exactly all values from 1 to N without any missing values.");
 

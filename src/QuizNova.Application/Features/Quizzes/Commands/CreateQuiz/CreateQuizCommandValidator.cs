@@ -8,7 +8,8 @@ public sealed class CreateQuizCommandValidator : AbstractValidator<CreateQuizCom
     {
         RuleFor(x => x.Title)
             .NotEmpty().WithMessage("Title is required.")
-            .MaximumLength(100).WithMessage("Title must not exceed 100 characters.");
+            .MinimumLength(3).WithMessage("Title must not less than 3 characters.")
+            .MaximumLength(30).WithMessage("Title must not exceed 30 characters.");
 
         RuleFor(x => x.CourseId)
             .NotEmpty().WithMessage("Course ID is required.");
