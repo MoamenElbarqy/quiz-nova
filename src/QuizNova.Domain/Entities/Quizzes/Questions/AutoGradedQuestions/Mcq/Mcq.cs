@@ -59,6 +59,18 @@ public class Mcq : AutoGradedQuestion<Guid>
             return validationError.TopError;
         }
 
+        var trimmedText = questionText.Trim();
+
+        if (trimmedText.Length < 3)
+        {
+            return McqErrors.TitleTooShort;
+        }
+
+        if (trimmedText.Length > 500)
+        {
+            return McqErrors.TitleTooLong;
+        }
+
         if (choices.Count < 2)
         {
             return McqErrors.NumberOfChoicesInvalid;
@@ -91,6 +103,18 @@ public class Mcq : AutoGradedQuestion<Guid>
         if (baseResult.IsError)
         {
             return baseResult.TopError;
+        }
+
+        var trimmedText = questionText.Trim();
+
+        if (trimmedText.Length < 3)
+        {
+            return McqErrors.TitleTooShort;
+        }
+
+        if (trimmedText.Length > 500)
+        {
+            return McqErrors.TitleTooLong;
         }
 
         if (choices.Count < 2)

@@ -41,6 +41,18 @@ public class Choice : Entity
             return ChoiceErrors.TextRequired;
         }
 
+        var trimmedText = text.Trim();
+
+        if (trimmedText.Length < 3)
+        {
+            return ChoiceErrors.ChoiceTooShort;
+        }
+
+        if (trimmedText.Length > 100)
+        {
+            return ChoiceErrors.ChoiceTooLong;
+        }
+
         if (displayOrder < 0)
         {
             return ChoiceErrors.DisplayOrderInvalid;
@@ -54,6 +66,18 @@ public class Choice : Entity
         if (string.IsNullOrWhiteSpace(text))
         {
             return ChoiceErrors.TextRequired;
+        }
+
+        var trimmedText = text.Trim();
+
+        if (trimmedText.Length < 3)
+        {
+            return ChoiceErrors.ChoiceTooShort;
+        }
+
+        if (trimmedText.Length > 100)
+        {
+            return ChoiceErrors.ChoiceTooLong;
         }
 
         if (displayOrder < 0)
