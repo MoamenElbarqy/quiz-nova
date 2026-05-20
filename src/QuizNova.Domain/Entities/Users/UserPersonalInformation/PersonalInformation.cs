@@ -40,12 +40,19 @@ public sealed class PersonalInformation
             return PersonalInformationErrors.NameRequired;
         }
 
+        var trimmedName = name.Trim();
+        if (trimmedName.Length < 3)
+        {
+            return PersonalInformationErrors.NameInvalid;
+        }
+
         if (string.IsNullOrWhiteSpace(email))
         {
             return PersonalInformationErrors.EmailRequired;
         }
 
-        if (!ValidationUtils.IsValidEmailFormat(email))
+        var trimmedEmail = email.Trim();
+        if (!ValidationUtils.IsValidEmailFormat(trimmedEmail))
         {
             return PersonalInformationErrors.EmailInvalid;
         }
@@ -55,11 +62,23 @@ public sealed class PersonalInformation
             return PersonalInformationErrors.PasswordRequired;
         }
 
+        var trimmedPassword = password.Trim();
+        if (trimmedPassword.Length < 8)
+        {
+            return PersonalInformationErrors.PasswordInvalid;
+        }
+
         if (string.IsNullOrWhiteSpace(phoneNumber))
         {
             return PersonalInformationErrors.PhoneNumberRequired;
         }
 
-        return new PersonalInformation(name, email, password, phoneNumber);
+        var trimmedPhone = phoneNumber.Trim();
+        if (trimmedPhone.Length < 7 || trimmedPhone.Length > 15)
+        {
+            return PersonalInformationErrors.PhoneNumberInvalid;
+        }
+
+        return new PersonalInformation(trimmedName, trimmedEmail, trimmedPassword, trimmedPhone);
     }
 }
