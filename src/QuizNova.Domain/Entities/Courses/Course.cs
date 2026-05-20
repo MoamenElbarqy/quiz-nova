@@ -1,6 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
+
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Courses.Enums;
 using QuizNova.Domain.Entities.Courses.Events;
 using QuizNova.Domain.Entities.Enrollments;
 using QuizNova.Domain.Entities.Quizzes;
@@ -34,11 +36,14 @@ public sealed class Course : Entity
         Name = name;
         MinimumPassingMarks = minimumPassingMarks;
         MaximumMarks = maximumMarks;
+        Status = CourseStatus.Active;
         _quizzes = quizzes;
         _enrollments = enrollments;
     }
 
     public Guid? InstructorId { get; private set; }
+
+    public CourseStatus Status { get; private set; }
 
     public required string Name { get; init; }
 
@@ -56,7 +61,6 @@ public sealed class Course : Entity
     public IEnumerable<Enrollment> Enrollments => _enrollments.AsReadOnly();
 
     public static Result<Course> Create(
-        Guid id,
         Guid? instructorId,
         string name,
         int minimumPassingMarks,
@@ -64,10 +68,7 @@ public sealed class Course : Entity
         List<Quiz> quizzes,
         List<Enrollment> enrollments)
     {
-        if (id == Guid.Empty)
-        {
-            return CourseErrors.IdRequired;
-        }
+        var id = Guid.NewGuid();
 
         if (instructorId.HasValue && instructorId.Value == Guid.Empty)
         {
@@ -77,6 +78,12 @@ public sealed class Course : Entity
         if (string.IsNullOrWhiteSpace(name))
         {
             return CourseErrors.NameRequired;
+        }
+
+        var trimmedName = name.Trim();
+        if (trimmedName.Length < 3 || trimmedName.Length > 30)
+        {
+            return CourseErrors.NameInvalid;
         }
 
         if (minimumPassingMarks <= 0)
@@ -97,7 +104,7 @@ public sealed class Course : Entity
         var course = new Course(
             id,
             instructorId,
-            name,
+            trimmedName,
             minimumPassingMarks,
             maximumMarks,
             quizzes,
@@ -106,15 +113,20 @@ public sealed class Course : Entity
         return course;
     }
 
-    public Result<Enrollment> Enroll(Student student, Guid enrollmentId)
+    public Result<Enrollment> Enroll(Student student)
     {
+        if (Status == CourseStatus.Completed)
+        {
+            return CourseErrors.CannotEnrollInCompletedCourse;
+        }
+
         if (_enrollments.Any(sc => sc.StudentId == student.Id))
         {
             return CourseErrors.StudentAlreadyEnrolled(student.Id);
         }
 
         var enrollmentResult = Enrollment.Create(
-            enrollmentId,
+            Guid.NewGuid(),
             student.Id,
             Id,
             DateTimeOffset.UtcNow);
@@ -132,6 +144,11 @@ public sealed class Course : Entity
 
     public Result<Course> UpdateInstructor(Guid? instructorId)
     {
+        if (Status == CourseStatus.Completed)
+        {
+            return CourseErrors.CannotUpdateCompletedCourse;
+        }
+
         if (instructorId.HasValue && instructorId.Value == Guid.Empty)
         {
             return CourseErrors.InstructorIdRequired;
@@ -147,5 +164,12 @@ public sealed class Course : Entity
     {
         AddDomainEvent(new CourseDeletedEvent(Id));
         return Result.Deleted;
+    }
+
+    public Result<Updated> MarkAsCompeleted()
+    {
+        Status = CourseStatus.Completed;
+        AddDomainEvent(new CourseCompletedEvent(Id));
+        return Result.Updated;
     }
 }

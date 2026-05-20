@@ -1,11 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
+
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
+using QuizNova.Domain.Entities.Courses.Enums;
 using QuizNova.Domain.Entities.QuizAttempts;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.McqAnswer;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.TrueFalseAnswer;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.McqAnswer;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalseAnswer;
 using QuizNova.Domain.Entities.Quizzes.Enums;
 using QuizNova.Domain.Entities.Quizzes.Events;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
@@ -75,7 +77,6 @@ public class Quiz : Entity
         string title,
         DateTimeOffset startsAtUtc,
         DateTimeOffset endsAtUtc,
-        int marks,
         List<Question> questions)
     {
         if (courseId == Guid.Empty)
@@ -88,9 +89,16 @@ public class Quiz : Entity
             return QuizErrors.InstructorIdRequired;
         }
 
-        if (string.IsNullOrWhiteSpace(title))
+        var trimmedTitle = title.Trim();
+
+        if (string.IsNullOrWhiteSpace(trimmedTitle))
         {
             return QuizErrors.TitleRequired;
+        }
+
+        if (trimmedTitle.Length < 3)
+        {
+            return QuizErrors.TitleTooShort;
         }
 
         if (startsAtUtc >= endsAtUtc)
@@ -103,14 +111,25 @@ public class Quiz : Entity
             return QuizErrors.MarksInvalid;
         }
 
-        if (questions.Count == 0)
+        if (questions.Count < 3)
         {
             return QuizErrors.QuestionsRequired;
+        }
+
+        var displayOrders = questions.Select(q => q.DisplayOrder).ToHashSet();
+
+        for (int i = 1; i <= questions.Count; i++)
+        {
+            if (!displayOrders.Contains(i))
+            {
+                return QuizErrors.QuestionSequenceInvalid;
+            }
         }
 
         if (questions.Any(q => q.QuizId != id))
         {
             var invalidQuestion = questions.First(q => q.QuizId != id);
+
             return QuizErrors.QuestionBelongsToDifferentQuiz(invalidQuestion.Id);
         }
 
@@ -118,11 +137,13 @@ public class Quiz : Entity
             id,
             courseId,
             instructorId,
-            title,
+            trimmedTitle,
             startsAtUtc,
             endsAtUtc,
             questions);
+
         quiz.AddDomainEvent(new QuizCreatedEvent(id));
+
         return quiz;
     }
 
@@ -131,14 +152,26 @@ public class Quiz : Entity
         DateTimeOffset startsAtUtc,
         DateTimeOffset endsAtUtc)
     {
+        if (Course?.Status == CourseStatus.Completed)
+        {
+            return QuizErrors.CourseCompleted;
+        }
+
         if (Status != QuizStatus.Scheduled)
         {
             return QuizErrors.CannotUpdateStartedOrCompletedQuiz;
         }
 
-        if (string.IsNullOrWhiteSpace(title))
+        var trimmedTitle = title.Trim();
+
+        if (string.IsNullOrWhiteSpace(trimmedTitle))
         {
             return QuizErrors.TitleRequired;
+        }
+
+        if (trimmedTitle.Length < 3)
+        {
+            return QuizErrors.TitleTooShort;
         }
 
         if (startsAtUtc >= endsAtUtc)
@@ -146,7 +179,7 @@ public class Quiz : Entity
             return QuizErrors.ScheduleInvalid;
         }
 
-        Title = title;
+        Title = trimmedTitle;
         StartsAtUtc = startsAtUtc;
         EndsAtUtc = endsAtUtc;
 
@@ -155,6 +188,11 @@ public class Quiz : Entity
 
     public Result<Updated> UpdateCourseId(Guid newCourseId)
     {
+        if (Course?.Status == CourseStatus.Completed)
+        {
+            return QuizErrors.CourseCompleted;
+        }
+
         if (newCourseId == Guid.Empty)
         {
             return QuizErrors.CourseIdRequired;
@@ -173,6 +211,11 @@ public class Quiz : Entity
 
     public Result<Added> AddQuestion(Question question)
     {
+        if (Course?.Status == CourseStatus.Completed)
+        {
+            return QuizErrors.CourseCompleted;
+        }
+
         if (Status != QuizStatus.Scheduled)
         {
             return QuizErrors.CannotUpdateStartedOrCompletedQuiz;
@@ -195,6 +238,11 @@ public class Quiz : Entity
 
     public Result<Deleted> DeleteQuestion(Question question)
     {
+        if (Course?.Status == CourseStatus.Completed)
+        {
+            return QuizErrors.CourseCompleted;
+        }
+
         if (Status != QuizStatus.Scheduled)
         {
             return QuizErrors.CannotUpdateStartedOrCompletedQuiz;
@@ -210,7 +258,7 @@ public class Quiz : Entity
             return QuizErrors.QuestionNotFound;
         }
 
-        if (_questions.Count <= 5)
+        if (_questions.Count <= 3)
         {
             return QuizErrors.MinimumQuestionsReached;
         }
@@ -225,10 +273,15 @@ public class Quiz : Entity
         string questionText,
         int displayOrder,
         int marks,
-        Guid? correctChoiceId,
-        bool? tfCorrectChoice,
-        List<Choice>? choices)
+        Guid? correctChoiceId = null,
+        bool? tfCorrectChoice = null,
+        List<Choice>? choices = null)
     {
+        if (Course?.Status == CourseStatus.Completed)
+        {
+            return QuizErrors.CourseCompleted;
+        }
+
         if (Status != QuizStatus.Scheduled)
         {
             return QuizErrors.CannotUpdateStartedOrCompletedQuiz;
@@ -261,6 +314,11 @@ public class Quiz : Entity
         DateTimeOffset submittedAt,
         IReadOnlyCollection<QuestionAnswer> questionAnswers)
     {
+        if (Course?.Status == CourseStatus.Completed)
+        {
+            return QuizErrors.CourseCompleted;
+        }
+
         if (attemptId == Guid.Empty)
         {
             return QuizAttemptErrors.AttemptIdRequired;

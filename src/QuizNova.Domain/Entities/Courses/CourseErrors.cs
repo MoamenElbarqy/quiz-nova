@@ -7,11 +7,20 @@ public static class CourseErrors
     public static readonly Error IdRequired =
         Error.Validation("Course.Id.Required", "Course Id is required.");
 
+    public static readonly Error InvalidIdFormat =
+        Error.Validation("Course.Id.InvalidFormat", "Course Id format is invalid.");
+
     public static readonly Error InstructorIdRequired =
         Error.Validation("Course_InstructorId_Required", "Instructor ID is required.");
 
+    public static readonly Error InvalidInstructorIdFormat =
+        Error.Validation("Course.InstructorId.InvalidFormat", "Instructor ID format is invalid.");
+
     public static readonly Error NameRequired =
         Error.Validation("Course_Name_Required", "Course name is required.");
+
+    public static readonly Error NameInvalid =
+        Error.Validation("Course_Name_Invalid", "Course name is invalid.");
 
     public static readonly Error MinimumPassingMarksInvalid =
         Error.Validation("Course_MinimumPassingMarks_Invalid", "Minimum passing marks cannot be negative.");
@@ -21,6 +30,12 @@ public static class CourseErrors
 
     public static readonly Error ScoringRangeInvalid =
         Error.Validation("Course_ScoringRange_Invalid", "Scoring configuration is inconsistent.");
+
+    public static readonly Error CannotEnrollInCompletedCourse =
+        Error.Validation("Course_CannotEnroll_Completed", "Cannot enroll in a completed course.");
+
+    public static readonly Error CannotUpdateCompletedCourse =
+        Error.Validation("Course_CannotUpdate_Completed", "Cannot update a completed course.");
 
     public static Error StudentAlreadyEnrolled(Guid studentId) =>
         Error.Conflict("Course_Student_Already_Enrolled", $"Student {studentId} is already enrolled in this course.");

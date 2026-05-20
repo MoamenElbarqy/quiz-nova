@@ -20,7 +20,7 @@ public static class QuizErrors
         Error.Validation("Quiz_Marks_Invalid", "Marks must be greater than zero.");
 
     public static readonly Error QuestionsRequired =
-        Error.Validation("Quiz_Questions_Required", "At least one question is required to instantiate a quiz.");
+        Error.Validation("Quiz_Questions_Required", "At least 3 questions are required to instantiate a quiz.");
 
     public static readonly Error CannotUpdateStartedQuiz =
         Error.Validation("Quiz_CannotUpdateStartedQuiz", "Cannot update a quiz that has already started.");
@@ -36,7 +36,7 @@ public static class QuizErrors
             $"Question with ID '{questionId}' already exists in the quiz.");
 
     public static readonly Error MinimumQuestionsReached =
-        Error.Validation("Quiz_MinimumQuestionsReached", "A quiz must have at least 5 questions.");
+        Error.Validation("Quiz_MinimumQuestionsReached", "A quiz must have at least 3 questions.");
 
     public static readonly Error QuestionNotFound =
         Error.NotFound("Quiz_QuestionNotFound", "Question not found in the quiz.");
@@ -45,4 +45,13 @@ public static class QuizErrors
         Error.Validation(
             "Quiz_CannotUpdateStartedOrCompletedQuiz",
             "Cannot edit a quiz that has already started or completed.");
+
+    public static readonly Error TitleTooShort =
+        Error.Validation("Quiz_Title_TooShort", "Quiz title must be at least 3 characters long.");
+
+    public static readonly Error QuestionSequenceInvalid =
+        Error.Validation("Quiz_QuestionSequenceInvalid", "Question display orders must contain exactly all values from 1 to N without any missing values.");
+
+    public static readonly Error CourseCompleted =
+        Error.Validation("Quiz_CourseCompleted", "Cannot perform operations on a quiz belonging to a completed course.");
 }
