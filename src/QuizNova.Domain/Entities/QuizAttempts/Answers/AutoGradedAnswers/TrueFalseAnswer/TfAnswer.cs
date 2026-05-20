@@ -1,8 +1,7 @@
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
 
-namespace QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalseAnswer;
+namespace QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.TrueFalseAnswer;
 
 public class TfAnswer : AutoGradedAnswer
 {

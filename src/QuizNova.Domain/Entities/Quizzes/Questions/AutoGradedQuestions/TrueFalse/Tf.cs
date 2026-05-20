@@ -1,8 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.TrueFalseAnswer;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.TrueFalseAnswer;
 
 namespace QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
 

@@ -1,8 +1,7 @@
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 
-namespace QuizNova.Domain.Entities.QuizAttempts.Answers.McqAnswer;
+namespace QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.McqAnswer;
 
 public class McqAnswer : AutoGradedAnswer
 {

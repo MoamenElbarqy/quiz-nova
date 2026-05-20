@@ -1,8 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.McqAnswer;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.McqAnswer;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 
 namespace QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
