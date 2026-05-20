@@ -23,5 +23,8 @@
     <Project Path="src/QuizNova.Infrastructure/QuizNova.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/QuizNova.Application.UnitTests/QuizNova.Application.UnitTests.csproj" />
+    <Project Path="tests/QuizNova.Domain.UnitTests/QuizNova.Domain.UnitTests.csproj" />
+    <Project Path="tests/QuizNova.Tests.Common/QuizNova.Tests.Common.csproj" />
   </Folder>
 </Solution>
