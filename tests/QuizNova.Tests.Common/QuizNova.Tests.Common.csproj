@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\QuizNova.Application\QuizNova.Application.csproj" />
+    <ProjectReference Include="..\..\src\QuizNova.Domain\QuizNova.Domain.csproj" />
+    <ProjectReference Include="..\..\src\QuizNova.Infrastructure\QuizNova.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
