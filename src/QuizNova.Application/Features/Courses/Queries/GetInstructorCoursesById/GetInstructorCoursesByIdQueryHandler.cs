@@ -33,14 +33,10 @@ public sealed class GetInstructorCoursesByIdQueryHandler(
                 course.Id,
                 course.Name,
                 course.InstructorId,
-                dbContext.Instructors
-                    .Where(instructor => instructor.Id == course.InstructorId)
-                    .Select(instructor => instructor.PersonalInformation.Name)
-                    .FirstOrDefault() ?? string.Empty,
-                dbContext.Enrollments.Count(enrollment => enrollment.CourseId == course.Id),
-                dbContext.Quizzes.Count(quiz => quiz.CourseId == course.Id),
-                course.MaximumMarks - dbContext.Quizzes
-                    .Where(quiz => quiz.CourseId == course.Id)
+                course.Instructor != null ? course.Instructor.PersonalInformation.Name : string.Empty,
+                course.Enrollments.Count(),
+                course.Quizzes.Count(),
+                course.MaximumMarks - course.Quizzes
                     .SelectMany(quiz => quiz.Questions)
                     .Sum(q => q.Marks)))
             .ToListAsync(ct);
@@ -51,9 +47,9 @@ public sealed class GetInstructorCoursesByIdQueryHandler(
             return ApplicationErrors.NoCoursesForInstructor(request.InstructorId);
         }
 
-        logger.LogInformation("Successfully retrieved {Count} courses for instructor {InstructorId}", instructorCourses.Count, request.InstructorId);
+        logger.LogInformation("Successfully retrieved {Count} courses for instructor {InstructorId}",
+            instructorCourses.Count, request.InstructorId);
 
         return instructorCourses;
     }
 }
-

@@ -173,6 +173,22 @@ public sealed class AuthService(AppDbContext dbContext, IOptions<JwtSettings> jw
         return MapUserDto(user);
     }
 
+    public async Task<string> GetUserNameAsync(string userId)
+    {
+        if (!Guid.TryParse(userId, out var parsedUserId))
+        {
+            return string.Empty;
+        }
+
+        var name = await dbContext.Users
+            .AsNoTracking()
+            .Where(u => u.Id == parsedUserId)
+            .Select(u => u.PersonalInformation.Name)
+            .FirstOrDefaultAsync();
+
+        return name ?? string.Empty;
+    }
+
     public async Task<Result<Success>> ValidateAndRevokeRefreshTokenAsync(
         string userId,
         string refreshToken,
