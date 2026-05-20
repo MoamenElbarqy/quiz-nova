@@ -13,7 +13,7 @@ public sealed class QuizConfiguration : IEntityTypeConfiguration<Quiz>
         builder.HasKey(q => q.Id);
 
         builder.Property(q => q.Title)
-            .HasMaxLength(300)
+            .HasMaxLength(30)
             .IsRequired();
 
         builder.Navigation(q => q.Questions)

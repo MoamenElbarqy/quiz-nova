@@ -101,6 +101,11 @@ public class Quiz : Entity
             return QuizErrors.TitleTooShort;
         }
 
+        if (trimmedTitle.Length > 30)
+        {
+            return QuizErrors.TitleTooLong;
+        }
+
         if (startsAtUtc >= endsAtUtc)
         {
             return QuizErrors.ScheduleInvalid;
@@ -172,6 +177,11 @@ public class Quiz : Entity
         if (trimmedTitle.Length < 3)
         {
             return QuizErrors.TitleTooShort;
+        }
+
+        if (trimmedTitle.Length > 30)
+        {
+            return QuizErrors.TitleTooLong;
         }
 
         if (startsAtUtc >= endsAtUtc)
