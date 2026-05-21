@@ -1,11 +1,11 @@
 using MediatR;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Enrollments;
-using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
@@ -17,16 +17,15 @@ using QuizNova.Domain.Entities.Users;
 using QuizNova.Domain.Entities.Users.Admins;
 using QuizNova.Domain.Entities.Users.Instructors;
 using QuizNova.Domain.Entities.Users.Student;
+using QuizNova.Infrastructure.Identity;
 
 namespace QuizNova.Infrastructure.Data;
 
 public class AppDbContext(
     DbContextOptions<AppDbContext> options,
     IMediator mediator)
-    : DbContext(options), IAppDbContext
+    : IdentityDbContext<AppUser>(options), IAppDbContext
 {
-    public DbSet<User> Users => Set<User>();
-
     public DbSet<Course> Courses => Set<Course>();
 
     public DbSet<QuizAttempt> QuizAttempts => Set<QuizAttempt>();
@@ -43,7 +42,9 @@ public class AppDbContext(
 
     public DbSet<Choice> Choices => Set<Choice>();
 
-    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<UserRefreshToken> UserRefreshTokens => Set<UserRefreshToken>();
+
+    public new DbSet<User> Users => Set<User>();
 
     public DbSet<Instructor> Instructors => Set<Instructor>();
 

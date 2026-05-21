@@ -9,6 +9,5 @@ public sealed record UpdateAdminCommand(
     Guid Id,
     string Name,
     string Email,
-    string Password,
     string PhoneNumber)
     : IRequest<Result<AdminDto>>;

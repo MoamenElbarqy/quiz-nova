@@ -77,7 +77,6 @@ public sealed class AdminController(ISender sender) : ApiController
             adminId,
             request.Name,
             request.Email,
-            request.Password,
             request.PhoneNumber);
 
         var result = await sender.Send(command);

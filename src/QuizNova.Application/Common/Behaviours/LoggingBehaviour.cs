@@ -6,7 +6,7 @@ using QuizNova.Application.Common.Interfaces;
 
 namespace QuizNova.Application.Common.Behaviours;
 
-public class LoggingBehaviour<TRequest>(ILogger<TRequest> logger, IUser user, IAuthService authService)
+public class LoggingBehaviour<TRequest>(ILogger<TRequest> logger, IUser user, IIdentityService identityService)
     : IRequestPreProcessor<TRequest>
     where TRequest : notnull
 {
@@ -18,7 +18,7 @@ public class LoggingBehaviour<TRequest>(ILogger<TRequest> logger, IUser user, IA
 
         if (!string.IsNullOrEmpty(userId))
         {
-            userName = await authService.GetUserNameAsync(userId);
+            userName = await identityService.GetUserNameAsync(userId);
         }
 
         logger.LogInformation(

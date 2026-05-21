@@ -16,6 +16,7 @@ namespace QuizNova.Application.Features.Students.Commands.CreateStudent;
 
 public sealed class CreateStudentCommandHandler(
     IAppDbContext dbContext,
+    IIdentityService identityService,
     ILogger<CreateStudentCommandHandler> logger)
     : IRequestHandler<CreateStudentCommand, Result<StudentDto>>
 {
@@ -35,13 +36,7 @@ public sealed class CreateStudentCommandHandler(
             return ApplicationErrors.CreateStudentRoleInvalid(request.Role);
         }
 
-        if (await dbContext.Users.AnyAsync(user => user.PersonalInformation.Email == request.Email, ct))
-        {
-            logger.LogWarning("Student creation failed: Email {Email} already exists", request.Email);
-            return ApplicationErrors.UserEmailAlreadyExists(request.Email);
-        }
-
-        if (await dbContext.Users.AnyAsync(user => user.PersonalInformation.PhoneNumber == request.PhoneNumber, ct))
+        if (await dbContext.Users.AnyAsync(u => u.PersonalInformation.PhoneNumber == request.PhoneNumber, ct))
         {
             logger.LogWarning(
                 "Student creation failed: Phone number {PhoneNumber} already exists",
@@ -49,10 +44,27 @@ public sealed class CreateStudentCommandHandler(
             return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PhoneNumber);
         }
 
+        // 1. Register User in Identity Database
+        var identityResult = await identityService.RegisterUserAsync(
+            request.Email,
+            request.Password,
+            request.Name,
+            nameof(UserRole.Student),
+            ct);
+
+        if (identityResult.IsError)
+        {
+            logger.LogWarning("Student creation failed: Error registering identity user. Error: {ErrorDescription}",
+                identityResult.TopError.Description);
+            return identityResult.Errors;
+        }
+
+        var userId = Guid.Parse(identityResult.Value);
+
+        // 2. Create PersonalInformation Domain Value Object
         var personalInformationResult = PersonalInformation.Create(
             request.Name,
             request.Email,
-            request.Password,
             request.PhoneNumber);
 
         if (personalInformationResult.IsError)
@@ -63,9 +75,10 @@ public sealed class CreateStudentCommandHandler(
             return personalInformationResult.TopError;
         }
 
+        // 3. Create Student Domain Aggregate
         var createStudentResult = Student.Create(
+            userId,
             personalInformationResult.Value,
-            [],
             [],
             []);
 

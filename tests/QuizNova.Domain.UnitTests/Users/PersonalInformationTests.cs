@@ -11,7 +11,6 @@ public class PersonalInformationTests
         var result = PersonalInformation.Create(
             "Valid User Name",
             "user@example.com",
-            "SecurePassword123!",
             "1234567890");
 
         // Assert
@@ -19,9 +18,8 @@ public class PersonalInformationTests
         Assert.NotNull(result.Value);
         Assert.Equal("Valid User Name", result.Value.Name);
         Assert.Equal("user@example.com", result.Value.Email);
-        Assert.Equal("SecurePassword123!", result.Value.Password);
         Assert.Equal("1234567890", result.Value.PhoneNumber);
-}
+    }
 
     [Fact]
     public void Create_ShouldTrimInputData_WhenValidDataProvided()
@@ -30,7 +28,6 @@ public class PersonalInformationTests
         var result = PersonalInformation.Create(
             "   Valid User Name   ",
             "   user@example.com   ",
-            "   SecurePassword123!   ",
             "   1234567890   ");
 
         // Assert
@@ -38,9 +35,8 @@ public class PersonalInformationTests
         Assert.NotNull(result.Value);
         Assert.Equal("Valid User Name", result.Value.Name);
         Assert.Equal("user@example.com", result.Value.Email);
-        Assert.Equal("SecurePassword123!", result.Value.Password);
         Assert.Equal("1234567890", result.Value.PhoneNumber);
-}
+    }
 
     [Theory]
     [InlineData("")]
@@ -52,13 +48,12 @@ public class PersonalInformationTests
         var result = PersonalInformation.Create(
             name!,
             "user@example.com",
-            "SecurePassword123!",
             "1234567890");
 
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(PersonalInformationErrors.NameRequired, result.TopError);
-}
+    }
 
     [Theory]
     [InlineData("a")]
@@ -72,7 +67,6 @@ public class PersonalInformationTests
         var result = PersonalInformation.Create(
             name,
             "user@example.com",
-            "SecurePassword123!",
             "1234567890");
 
         // Assert
@@ -82,7 +76,7 @@ public class PersonalInformationTests
         {
             Assert.Equal(PersonalInformationErrors.NameInvalid, result.TopError);
         }
-}
+    }
 
     [Theory]
     [InlineData("")]
@@ -94,13 +88,12 @@ public class PersonalInformationTests
         var result = PersonalInformation.Create(
             "Valid User Name",
             email!,
-            "SecurePassword123!",
             "1234567890");
 
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(PersonalInformationErrors.EmailRequired, result.TopError);
-}
+    }
 
     [Theory]
     [InlineData("@gmail.com")]
@@ -115,7 +108,6 @@ public class PersonalInformationTests
         var result = PersonalInformation.Create(
             "Valid User Name",
             email,
-            "SecurePassword123!",
             "1234567890");
 
         // Assert
@@ -129,43 +121,7 @@ public class PersonalInformationTests
         {
             Assert.Equal(PersonalInformationErrors.EmailInvalid, result.TopError);
         }
-}
-
-    [Theory]
-    [InlineData("")]
-    [InlineData("   ")]
-    [InlineData(null)]
-    public void Create_ShouldFail_WithEmptyPasswordOrNull(string? password)
-    {
-        // Act
-        var result = PersonalInformation.Create(
-            "Valid User Name",
-            "user@example.com",
-            password!,
-            "1234567890");
-
-        // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(PersonalInformationErrors.PasswordRequired, result.TopError);
-}
-
-    [Theory]
-    [InlineData("123")]
-    [InlineData("1234567")]
-    [InlineData("  1234567  ")]
-    public void Create_ShouldFail_WithInvalidPassword(string password)
-    {
-        // Act
-        var result = PersonalInformation.Create(
-            "Valid User Name",
-            "user@example.com",
-            password,
-            "1234567890");
-
-        // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(PersonalInformationErrors.PasswordInvalid, result.TopError);
-}
+    }
 
     [Theory]
     [InlineData("")]
@@ -177,13 +133,12 @@ public class PersonalInformationTests
         var result = PersonalInformation.Create(
             "Valid User Name",
             "user@example.com",
-            "SecurePassword123!",
             phone!);
 
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(PersonalInformationErrors.PhoneNumberRequired, result.TopError);
-}
+    }
 
     [Theory]
     [InlineData("               a")]
@@ -196,11 +151,10 @@ public class PersonalInformationTests
         var result = PersonalInformation.Create(
             "Valid User Name",
             "user@example.com",
-            "SecurePassword123!",
             phone);
 
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(PersonalInformationErrors.PhoneNumberInvalid, result.TopError);
-}
+    }
 }

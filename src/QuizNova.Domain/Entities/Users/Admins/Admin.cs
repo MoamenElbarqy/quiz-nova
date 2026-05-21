@@ -13,22 +13,19 @@ public class Admin : User
 
     private Admin(
         Guid id,
-        PersonalInformation personalInformation,
-        List<RefreshToken> refreshTokens)
+        PersonalInformation personalInformation)
         : base(
             id,
             personalInformation,
-            UserRole.Admin,
-            refreshTokens)
+            UserRole.Admin)
     {
     }
 
     public static Result<Admin> Create(
-        PersonalInformation personalInformation,
-        List<RefreshToken> refreshTokens)
+        Guid id,
+        PersonalInformation personalInformation)
     {
-        var id = Guid.NewGuid();
-        var admin = new Admin(id, personalInformation, refreshTokens);
+        var admin = new Admin(id, personalInformation);
         admin.AddDomainEvent(new AdminCreatedEvent(id));
         return admin;
     }

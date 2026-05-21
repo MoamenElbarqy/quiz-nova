@@ -50,7 +50,6 @@ public sealed class UpdateStudentCommandHandler(
         var personalInformationResult = PersonalInformation.Create(
             request.Name,
             request.Email,
-            request.Password,
             request.PhoneNumber);
 
         if (personalInformationResult.IsError)

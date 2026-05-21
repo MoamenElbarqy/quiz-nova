@@ -19,12 +19,6 @@ public static class PersonalInformationErrors
     public static readonly Error EmailInvalid =
         Error.Validation("PersonalInformation_Email_Invalid", "Email format is invalid.");
 
-    public static readonly Error PasswordRequired =
-        Error.Validation("PersonalInformation_Password_Required", "Password is required.");
-
-    public static readonly Error PasswordInvalid =
-        Error.Validation("PersonalInformation_Password_Invalid", "Password is invalid.");
-
     public static readonly Error PhoneNumberRequired =
         Error.Validation("PersonalInformation_PhoneNumber_Required", "Phone number is required.");
 

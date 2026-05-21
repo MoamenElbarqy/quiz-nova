@@ -12,27 +12,22 @@ public sealed class PersonalInformation
     private PersonalInformation(
         string name,
         string email,
-        string password,
         string phoneNumber)
     {
         Name = name;
         Email = email;
-        Password = password;
         PhoneNumber = phoneNumber;
     }
 
-    public string Name { get; private set; } = null!;
+    public string Name { get; private set; }
 
-    public string Email { get; private set; } = null!;
+    public string Email { get; private set; }
 
-    public string Password { get; private set; } = null!;
-
-    public string PhoneNumber { get; private set; } = null!;
+    public string PhoneNumber { get; private set; }
 
     public static Result<PersonalInformation> Create(
         string name,
         string email,
-        string password,
         string phoneNumber)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -57,28 +52,17 @@ public sealed class PersonalInformation
             return PersonalInformationErrors.EmailInvalid;
         }
 
-        if (string.IsNullOrWhiteSpace(password))
-        {
-            return PersonalInformationErrors.PasswordRequired;
-        }
-
-        var trimmedPassword = password.Trim();
-        if (trimmedPassword.Length < 8)
-        {
-            return PersonalInformationErrors.PasswordInvalid;
-        }
-
         if (string.IsNullOrWhiteSpace(phoneNumber))
         {
             return PersonalInformationErrors.PhoneNumberRequired;
         }
 
         var trimmedPhone = phoneNumber.Trim();
-        if (trimmedPhone.Length < 7 || trimmedPhone.Length > 15)
+        if (trimmedPhone.Length is < 7 or > 15)
         {
             return PersonalInformationErrors.PhoneNumberInvalid;
         }
 
-        return new PersonalInformation(trimmedName, trimmedEmail, trimmedPassword, trimmedPhone);
+        return new PersonalInformation(trimmedName, trimmedEmail, trimmedPhone);
     }
 }

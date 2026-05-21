@@ -12,32 +12,32 @@ public class AdminTests
     public void Create_ShouldSuccess_WithValidData()
     {
         // Arrange
+        var id = Guid.NewGuid();
         var personalInfoResult = PersonalInformation.Create(
             "Valid Admin Name",
             "admin@example.com",
-            "SecurePassword123!",
             "1234567890");
 
         // Act
-        var result = Admin.Create(personalInfoResult.Value, []);
+        var result = Admin.Create(id, personalInfoResult.Value);
 
         // Assert
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
-        Assert.NotEqual(Guid.Empty, result.Value.Id);
+        Assert.Equal(id, result.Value.Id);
         Assert.Equal("Valid Admin Name", result.Value.PersonalInformation.Name);
         Assert.Equal("admin@example.com", result.Value.PersonalInformation.Email);
 
         var createdEvent = Assert.Single(result.Value.DomainEvents);
         var adminCreatedEvent = Assert.IsType<AdminCreatedEvent>(createdEvent);
         Assert.Equal(result.Value.Id, adminCreatedEvent.Id);
-}
+    }
 
     [Fact]
     public void Update_ShouldSuccess_WithValidData()
     {
         // Arrange
-        var admin = AdminFactory.CreateAdmin().Value;
+        var admin = AdminFactory.Create().Value;
         var newPersonalInfo = PersonalInformationFactory.CreatePersonalInformation(
             name: "Updated Admin Name",
             email: "updated.admin@example.com");
@@ -54,13 +54,13 @@ public class AdminTests
         var updatedEvent = Assert.Single(admin.DomainEvents);
         var adminUpdatedEvent = Assert.IsType<AdminUpdatedEvent>(updatedEvent);
         Assert.Equal(admin.Id, adminUpdatedEvent.Id);
-}
+    }
 
     [Fact]
     public void Delete_ShouldSuccess()
     {
         // Arrange
-        var admin = AdminFactory.CreateAdmin().Value;
+        var admin = AdminFactory.Create().Value;
         admin.ClearDomainEvents();
 
         // Act
@@ -72,5 +72,5 @@ public class AdminTests
         var deletedEvent = Assert.Single(admin.DomainEvents);
         var adminDeletedEvent = Assert.IsType<AdminDeletedEvent>(deletedEvent);
         Assert.Equal(admin.Id, adminDeletedEvent.Id);
-}
+    }
 }

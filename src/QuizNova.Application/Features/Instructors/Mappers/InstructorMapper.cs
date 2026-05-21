@@ -11,7 +11,6 @@ public static class InstructorMapper
             instructor.Id,
             instructor.PersonalInformation.Name,
             instructor.PersonalInformation.Email,
-            instructor.PersonalInformation.Password,
             instructor.PersonalInformation.PhoneNumber,
             coursesCount,
             quizzesCount);

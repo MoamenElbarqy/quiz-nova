@@ -10,12 +10,12 @@ namespace QuizNova.Application.Features.Users.Queries.GetUserById;
 
 public class GetUserByIdQueryHandler(
     ILogger<GetUserByIdQueryHandler> logger,
-    IAuthService authService)
+    IIdentityService identityService)
     : IRequestHandler<GetUserByIdQuery, Result<UserDto>>
 {
     public async Task<Result<UserDto>> Handle(GetUserByIdQuery request, CancellationToken ct)
     {
-        var getUserByIdResult = await authService.GetUserByIdAsync(request.UserId);
+        var getUserByIdResult = await identityService.GetUserByIdAsync(request.UserId);
 
         if (getUserByIdResult.IsError)
         {

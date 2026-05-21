@@ -11,7 +11,7 @@ public class AdminMapperTests
     public void ToAdminDto_ShouldMapFieldsCorrectly()
     {
         // Arrange
-        var admin = AdminFactory.CreateAdmin().Value;
+        var admin = AdminFactory.Create().Value;
 
         // Act
         var dto = admin.ToAdminDto();
@@ -21,7 +21,6 @@ public class AdminMapperTests
         Assert.Equal(admin.Id, dto.AdminId);
         Assert.Equal(admin.PersonalInformation.Name, dto.Name);
         Assert.Equal(admin.PersonalInformation.Email, dto.Email);
-        Assert.Equal(admin.PersonalInformation.Password, dto.Password);
         Assert.Equal(admin.PersonalInformation.PhoneNumber, dto.PhoneNumber);
-}
+    }
 }

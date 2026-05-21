@@ -16,6 +16,7 @@ namespace QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
 
 public sealed class CreateInstructorCommandHandler(
     IAppDbContext dbContext,
+    IIdentityService identityService,
     ILogger<CreateInstructorCommandHandler> logger)
     : IRequestHandler<CreateInstructorCommand, Result<InstructorDto>>
 {
@@ -50,10 +51,27 @@ public sealed class CreateInstructorCommandHandler(
             return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PhoneNumber);
         }
 
+        // 1. Register User in Identity Database
+        var identityResult = await identityService.RegisterUserAsync(
+            request.Email,
+            request.Password,
+            request.Name,
+            nameof(UserRole.Instructor),
+            ct);
+
+        if (identityResult.IsError)
+        {
+            logger.LogWarning("Instructor creation failed: Error registering identity user. Error: {ErrorDescription}",
+                identityResult.TopError.Description);
+            return identityResult.Errors;
+        }
+
+        var userId = Guid.Parse(identityResult.Value);
+
+        // 2. Create PersonalInformation Domain Value Object
         var personalInformationResult = PersonalInformation.Create(
             request.Name,
             request.Email,
-            request.Password,
             request.PhoneNumber);
 
         if (personalInformationResult.IsError)
@@ -64,9 +82,10 @@ public sealed class CreateInstructorCommandHandler(
             return personalInformationResult.TopError;
         }
 
+        // 3. Create Instructor Domain Aggregate
         var createInstructorResult = Instructor.Create(
+            userId,
             personalInformationResult.Value,
-            [],
             [],
             []);
 

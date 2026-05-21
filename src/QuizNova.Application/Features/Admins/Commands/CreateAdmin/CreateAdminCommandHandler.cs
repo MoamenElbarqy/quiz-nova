@@ -16,6 +16,7 @@ namespace QuizNova.Application.Features.Admins.Commands.CreateAdmin;
 
 public sealed class CreateAdminCommandHandler(
     IAppDbContext dbContext,
+    IIdentityService identityService,
     ILogger<CreateAdminCommandHandler> logger)
     : IRequestHandler<CreateAdminCommand, Result<AdminDto>>
 {
@@ -49,10 +50,27 @@ public sealed class CreateAdminCommandHandler(
             return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PhoneNumber);
         }
 
+        // 1. Register User in Identity Database
+        var identityResult = await identityService.RegisterUserAsync(
+            request.Email,
+            request.Password,
+            request.Name,
+            nameof(UserRole.Admin),
+            ct);
+
+        if (identityResult.IsError)
+        {
+            logger.LogWarning("Admin creation failed: Error registering identity user. Error: {ErrorDescription}",
+                identityResult.TopError.Description);
+            return identityResult.Errors;
+        }
+
+        var userId = Guid.Parse(identityResult.Value);
+
+        // 2. Create PersonalInformation Domain Value Object
         var personalInformationResult = PersonalInformation.Create(
             request.Name,
             request.Email,
-            request.Password,
             request.PhoneNumber);
 
         if (personalInformationResult.IsError)
@@ -62,9 +80,10 @@ public sealed class CreateAdminCommandHandler(
             return personalInformationResult.TopError;
         }
 
+        // 3. Create Admin Domain Aggregate
         var createAdminResult = Admin.Create(
-            personalInformationResult.Value,
-            []);
+            userId,
+            personalInformationResult.Value);
 
         if (createAdminResult.IsError)
         {
