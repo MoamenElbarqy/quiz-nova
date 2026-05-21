@@ -1,17 +1,13 @@
-using System.Security.Claims;
-
 using QuizNova.Application.Features.Auth.DTOs;
 using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Application.Common.Interfaces;
 
-public interface IAuthService
+public interface IIdentityService
 {
-    Task<Result<TokenDto>> GenerateJwtTokenAsync(UserDto user, CancellationToken ct);
-
-    ClaimsPrincipal? GetPrincipalFromExpiredToken(string token);
-
     Task<Result<UserDto>> AuthenticateAsync(string email, string password);
+
+    Task<Result<string>> RegisterUserAsync(string email, string password, string name, string role, CancellationToken ct);
 
     Task<Result<UserDto>> GetUserByIdAsync(string userId);
 

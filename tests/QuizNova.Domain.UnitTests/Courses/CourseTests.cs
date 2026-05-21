@@ -36,7 +36,7 @@ public class CourseTests
         var createdEvent = Assert.Single(result.Value.DomainEvents);
         var courseCreatedEvent = Assert.IsType<CourseCreatedEvent>(createdEvent);
         Assert.Equal(result.Value.Id, courseCreatedEvent.Id);
-}
+    }
 
     [Fact]
     public void Create_ShouldSuccess_WithNullInstructorId()
@@ -47,7 +47,7 @@ public class CourseTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value.InstructorId);
-}
+    }
 
     [Fact]
     public void Create_ShouldFail_WithEmptyInstructorId()
@@ -58,7 +58,7 @@ public class CourseTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(CourseErrors.InstructorIdRequired, result.TopError);
-}
+    }
 
     [Theory]
     [InlineData("")]
@@ -72,7 +72,7 @@ public class CourseTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(CourseErrors.NameRequired, result.TopError);
-}
+    }
 
     [Theory]
     [InlineData("ab")]
@@ -87,7 +87,7 @@ public class CourseTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(CourseErrors.NameInvalid, result.TopError);
-}
+    }
 
     [Fact]
     public void Create_ShouldTrimName()
@@ -98,7 +98,7 @@ public class CourseTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.Equal("Database Systems", result.Value.Name);
-}
+    }
 
     [Theory]
     [InlineData(-5)]
@@ -111,7 +111,7 @@ public class CourseTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(CourseErrors.MinimumPassingMarksInvalid, result.TopError);
-}
+    }
 
     [Theory]
     [InlineData(-10)]
@@ -124,7 +124,7 @@ public class CourseTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(CourseErrors.MaximumMarksInvalid, result.TopError);
-}
+    }
 
     [Fact]
     public void Create_ShouldFail_WithMinimumPassingMarksGreaterThanMaximumMarks()
@@ -135,7 +135,7 @@ public class CourseTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(CourseErrors.ScoringRangeInvalid, result.TopError);
-}
+    }
 
     [Fact]
     public void Create_ShouldSuccess_WithMinimumPassingMarksEqualsMaximumMarks()
@@ -147,7 +147,7 @@ public class CourseTests
         Assert.True(result.IsSuccess);
         Assert.Equal(50, result.Value.MinimumPassingMarks);
         Assert.Equal(50, result.Value.MaximumMarks);
-}
+    }
 
     [Fact]
     public void Create_ShouldSuccess_WithMinimumPassingMarksLessThanMaximumMarks()
@@ -159,7 +159,7 @@ public class CourseTests
         Assert.True(result.IsSuccess);
         Assert.Equal(40, result.Value.MinimumPassingMarks);
         Assert.Equal(100, result.Value.MaximumMarks);
-}
+    }
 
     [Fact]
     public void Enroll_ShouldSuccess_WhenCourseActive()
@@ -181,7 +181,7 @@ public class CourseTests
         var studentEnrolledEvent = Assert.IsType<StudentEnrolledEvent>(enrolledEvent);
         Assert.Equal(course.Id, studentEnrolledEvent.CourseId);
         Assert.Equal(student.Id, studentEnrolledEvent.StudentId);
-}
+    }
 
     [Fact]
     public void Enroll_ShouldFail_WhenStudentAlreadyEnrolled()
@@ -197,7 +197,7 @@ public class CourseTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(CourseErrors.StudentAlreadyEnrolled(student.Id).Code, result.TopError.Code);
-}
+    }
 
     [Fact]
     public void Enroll_ShouldFail_WhenCourseCompleted()
@@ -213,7 +213,7 @@ public class CourseTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(CourseErrors.CannotEnrollInCompletedCourse, result.TopError);
-}
+    }
 
     [Fact]
     public void MarkAsCompleted_ShouldSuccess()
@@ -232,7 +232,7 @@ public class CourseTests
         var completedEvent = Assert.Single(course.DomainEvents);
         var courseCompletedEvent = Assert.IsType<CourseCompletedEvent>(completedEvent);
         Assert.Equal(course.Id, courseCompletedEvent.Id);
-}
+    }
 
     [Fact]
     public void UpdateInstructor_ShouldSuccess_WhenCourseActive()
@@ -252,7 +252,7 @@ public class CourseTests
         var updatedEvent = Assert.Single(course.DomainEvents);
         var courseUpdatedEvent = Assert.IsType<CourseUpdatedEvent>(updatedEvent);
         Assert.Equal(course.Id, courseUpdatedEvent.Id);
-}
+    }
 
     [Fact]
     public void UpdateInstructor_ShouldFail_WhenCourseCompleted()
@@ -267,7 +267,7 @@ public class CourseTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(CourseErrors.CannotUpdateCompletedCourse, result.TopError);
-}
+    }
 
     [Fact]
     public void Delete_ShouldSuccess()
@@ -285,5 +285,5 @@ public class CourseTests
         var deletedEvent = Assert.Single(course.DomainEvents);
         var courseDeletedEvent = Assert.IsType<CourseDeletedEvent>(deletedEvent);
         Assert.Equal(course.Id, courseDeletedEvent.Id);
-}
+    }
 }

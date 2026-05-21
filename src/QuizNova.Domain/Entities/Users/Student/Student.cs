@@ -19,14 +19,12 @@ public class Student : User
     private Student(
         Guid id,
         PersonalInformation personalInformation,
-        List<RefreshToken> refreshTokens,
         List<Enrollment> enrollments,
         List<QuizAttempt> quizAttempts)
         : base(
             id,
             personalInformation,
-            UserRole.Student,
-            refreshTokens)
+            UserRole.Student)
     {
         _enrollments = enrollments;
         _quizAttempts = quizAttempts;
@@ -36,16 +34,14 @@ public class Student : User
     public IEnumerable<QuizAttempt> QuizAttempts => _quizAttempts.AsReadOnly();
 
     public static Result<Student> Create(
+        Guid id,
         PersonalInformation personalInformation,
-        List<RefreshToken> refreshTokens,
         List<Enrollment> courseEnrollments,
         List<QuizAttempt> quizAttempts)
     {
-        var id = Guid.NewGuid();
         var student = new Student(
             id,
             personalInformation,
-            refreshTokens,
             courseEnrollments,
             quizAttempts);
         student.AddDomainEvent(new StudentCreatedEvent(id));

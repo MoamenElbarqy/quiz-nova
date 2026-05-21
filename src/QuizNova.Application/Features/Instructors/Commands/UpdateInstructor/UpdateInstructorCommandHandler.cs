@@ -51,7 +51,6 @@ public sealed class UpdateInstructorCommandHandler(
         var personalInformationResult = PersonalInformation.Create(
             request.Name,
             request.Email,
-            request.Password,
             request.PhoneNumber);
 
         if (personalInformationResult.IsError)

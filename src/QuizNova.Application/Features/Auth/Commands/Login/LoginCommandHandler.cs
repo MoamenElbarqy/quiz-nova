@@ -12,19 +12,20 @@ namespace QuizNova.Application.Features.Auth.Commands.Login;
 
 public sealed class LoginCommandHandler(
     ILogger<LoginCommandHandler> logger,
-    IAuthService authService)
+    IIdentityService identityService,
+    ITokenService tokenService)
     : IRequestHandler<LoginCommand, Result<AuthDto>>
 {
     public async Task<Result<AuthDto>> Handle(LoginCommand request, CancellationToken ct)
     {
-        var userResult = await authService.AuthenticateAsync(request.Email, request.Password);
+        var userResult = await identityService.AuthenticateAsync(request.Email, request.Password);
 
         if (userResult.IsError)
         {
             return userResult.Errors;
         }
 
-        var tokenResult = await authService.GenerateJwtTokenAsync(userResult.Value, ct);
+        var tokenResult = await tokenService.GenerateJwtTokenAsync(userResult.Value, ct);
 
         if (tokenResult.IsError)
         {

@@ -11,7 +11,6 @@ public static class StudentMapper
             student.Id,
             student.PersonalInformation.Name,
             student.PersonalInformation.Email,
-            student.PersonalInformation.Password,
             student.PersonalInformation.PhoneNumber,
             enrolledCoursesCount);
     }

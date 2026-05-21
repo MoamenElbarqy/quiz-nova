@@ -12,30 +12,30 @@ public class StudentTests
     public void Create_ShouldSuccess_WithValidData()
     {
         // Arrange
+        var id = Guid.NewGuid();
         var personalInfoResult = PersonalInformation.Create(
             "Valid Student Name",
             "student@example.com",
-            "SecurePassword123!",
             "1234567890");
 
         // Act
         var result = Student.Create(
+            id,
             personalInfoResult.Value,
-            [],
             [],
             []);
 
         // Assert
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
-        Assert.NotEqual(Guid.Empty, result.Value.Id);
+        Assert.Equal(id, result.Value.Id);
         Assert.Equal("Valid Student Name", result.Value.PersonalInformation.Name);
         Assert.Equal("student@example.com", result.Value.PersonalInformation.Email);
 
         var createdEvent = Assert.Single(result.Value.DomainEvents);
         var studentCreatedEvent = Assert.IsType<StudentCreatedEvent>(createdEvent);
         Assert.Equal(result.Value.Id, studentCreatedEvent.Id);
-}
+    }
 
     [Fact]
     public void Update_ShouldSuccess_WithValidData()
@@ -58,7 +58,7 @@ public class StudentTests
         var updatedEvent = Assert.Single(student.DomainEvents);
         var studentUpdatedEvent = Assert.IsType<StudentUpdatedEvent>(updatedEvent);
         Assert.Equal(student.Id, studentUpdatedEvent.Id);
-}
+    }
 
     [Fact]
     public void Delete_ShouldSuccess()
@@ -76,5 +76,5 @@ public class StudentTests
         var deletedEvent = Assert.Single(student.DomainEvents);
         var studentDeletedEvent = Assert.IsType<StudentDeletedEvent>(deletedEvent);
         Assert.Equal(student.Id, studentDeletedEvent.Id);
-}
+    }
 }

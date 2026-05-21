@@ -13,7 +13,7 @@ public class LoggingBehaviourTests
 {
     private readonly ILogger<DummyRequest> _logger = Substitute.For<ILogger<DummyRequest>>();
     private readonly IUser _user = Substitute.For<IUser>();
-    private readonly IAuthService _identityService = Substitute.For<IAuthService>();
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
 
     private readonly LoggingBehaviour<DummyRequest> _sut;
 

@@ -20,14 +20,12 @@ public class Instructor : User
     private Instructor(
         Guid id,
         PersonalInformation personalInformation,
-        List<RefreshToken> refreshTokens,
         List<Course> courses,
         List<Quiz> quizzes)
         : base(
             id,
             personalInformation,
-            UserRole.Instructor,
-            refreshTokens)
+            UserRole.Instructor)
     {
         _courses = courses;
         _quizzes = quizzes;
@@ -38,16 +36,14 @@ public class Instructor : User
     public IEnumerable<Quiz> Quizzes => _quizzes.AsReadOnly();
 
     public static Result<Instructor> Create(
+        Guid id,
         PersonalInformation personalInformation,
-        List<RefreshToken> refreshTokens,
         List<Course> courses,
         List<Quiz> quizzes)
     {
-        var id = Guid.NewGuid();
         var instructor = new Instructor(
             id,
             personalInformation,
-            refreshTokens,
             courses,
             quizzes);
         instructor.AddDomainEvent(new InstructorCreatedEvent(id));

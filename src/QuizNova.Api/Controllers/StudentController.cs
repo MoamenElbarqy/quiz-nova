@@ -91,7 +91,6 @@ public sealed class StudentController(ISender sender) : ApiController
             studentId,
             request.Name,
             request.Email,
-            request.Password,
             request.PhoneNumber);
 
         var result = await sender.Send(command);

@@ -26,7 +26,7 @@ public class CourseMapperTests
         Assert.Equal(0, dto.EnrolledStudentsCount);
         Assert.Equal(course.Quizzes.Count(), dto.QuizzesCount);
         Assert.Equal(course.RemainingMarks, dto.RemainingMarks);
-}
+    }
 
     [Fact]
     public void ToCourseDto_WithNullInstructor_TheNameShouldBeNull()
@@ -40,5 +40,5 @@ public class CourseMapperTests
         // Assert
         Assert.NotNull(dto);
         Assert.Null(dto.InstructorName);
-}
+    }
 }

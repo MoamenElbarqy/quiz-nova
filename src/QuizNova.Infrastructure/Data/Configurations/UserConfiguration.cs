@@ -22,14 +22,9 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             {
                 personalInformation.Property(p => p.Name).HasColumnName("Name").HasMaxLength(100).IsRequired();
                 personalInformation.Property(p => p.Email).HasColumnName("Email").HasMaxLength(256).IsRequired();
-                personalInformation.Property(p => p.Password).HasColumnName("Password").HasMaxLength(500).IsRequired();
                 personalInformation.Property(p => p.PhoneNumber).HasColumnName("PhoneNumber").HasMaxLength(20).IsRequired();
             });
 
         builder.Navigation(e => e.PersonalInformation).IsRequired();
-
-        builder.Navigation(u => u.RefreshTokens)
-            .HasField("_refreshTokens")
-            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

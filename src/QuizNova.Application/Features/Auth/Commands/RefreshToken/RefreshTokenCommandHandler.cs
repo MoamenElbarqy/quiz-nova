@@ -13,12 +13,13 @@ namespace QuizNova.Application.Features.Auth.Commands.RefreshToken;
 
 public sealed class RefreshTokenCommandHandler(
     ILogger<RefreshTokenCommandHandler> logger,
-    IAuthService authService)
+    IIdentityService identityService,
+    ITokenService tokenService)
     : IRequestHandler<RefreshTokenCommand, Result<TokenDto>>
 {
     public async Task<Result<TokenDto>> Handle(RefreshTokenCommand request, CancellationToken ct)
     {
-        var principal = authService.GetPrincipalFromExpiredToken(request.ExpiredAccessToken);
+        var principal = tokenService.GetPrincipalFromExpiredToken(request.ExpiredAccessToken);
         if (principal is null)
         {
             logger.LogError("Expired access token is not valid");
@@ -32,20 +33,21 @@ public sealed class RefreshTokenCommandHandler(
             return ApplicationErrors.UserIdClaimInvalid;
         }
 
-        var getUserResult = await authService.GetUserByIdAsync(userId);
+        var getUserResult = await identityService.GetUserByIdAsync(userId);
         if (getUserResult.IsError)
         {
             logger.LogError("Get user by id error occurred: {ErrorDescription}", getUserResult.TopError.Description);
             return getUserResult.Errors;
         }
 
-        var validateRefreshTokenResult = await authService.ValidateAndRevokeRefreshTokenAsync(userId, request.RefreshToken, ct);
+        var validateRefreshTokenResult =
+            await identityService.ValidateAndRevokeRefreshTokenAsync(userId, request.RefreshToken, ct);
         if (validateRefreshTokenResult.IsError)
         {
             return validateRefreshTokenResult.Errors;
         }
 
-        var tokenResult = await authService.GenerateJwtTokenAsync(getUserResult.Value, ct);
+        var tokenResult = await tokenService.GenerateJwtTokenAsync(getUserResult.Value, ct);
         if (tokenResult.IsError)
         {
             logger.LogError("Generate token error occurred: {ErrorDescription}", tokenResult.TopError.Description);

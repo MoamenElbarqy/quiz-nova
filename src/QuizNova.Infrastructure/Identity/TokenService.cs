@@ -2,25 +2,18 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Auth.DTOs;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Identity;
-using QuizNova.Domain.Entities.Users;
 using QuizNova.Infrastructure.Data;
 using QuizNova.Infrastructure.Settings;
 
-using static System.Security.Claims.ClaimTypes;
+namespace QuizNova.Infrastructure.Identity;
 
-namespace QuizNova.Infrastructure.Services;
-
-public sealed class AuthService(AppDbContext dbContext, IOptions<JwtSettings> jwtOptions) : IAuthService
+public sealed class TokenService(AppDbContext dbContext, IOptions<JwtSettings> jwtOptions) : ITokenService
 {
     private const int DefaultAccessTokenExpiryInMinutes = 7;
     private const int DefaultRefreshTokenExpiryInDays = 7;
@@ -29,11 +22,6 @@ public sealed class AuthService(AppDbContext dbContext, IOptions<JwtSettings> jw
 
     public async Task<Result<TokenDto>> GenerateJwtTokenAsync(UserDto user, CancellationToken ct)
     {
-        if (!Guid.TryParse(user.UserId, out var userId))
-        {
-            return ApplicationErrors.UserIdClaimInvalid;
-        }
-
         var issuer = _jwtSettings.Issuer;
         var audience = _jwtSettings.Audience;
         var secret = _jwtSettings.Secret;
@@ -65,18 +53,15 @@ public sealed class AuthService(AppDbContext dbContext, IOptions<JwtSettings> jw
         var refreshTokenValue = GenerateSecureRefreshToken();
         var refreshTokenExpiresOnUtc = DateTimeOffset.UtcNow.AddDays(refreshTokenExpiryInDays);
 
-        var refreshTokenResult = RefreshToken.Create(
-            Guid.NewGuid(),
-            refreshTokenValue,
-            userId,
-            refreshTokenExpiresOnUtc);
-
-        if (refreshTokenResult.IsError)
+        var userRefreshToken = new UserRefreshToken
         {
-            return refreshTokenResult.TopError;
-        }
+            Id = Guid.NewGuid(),
+            Token = refreshTokenValue,
+            UserId = user.UserId,
+            ExpiresOnUtc = refreshTokenExpiresOnUtc,
+        };
 
-        await dbContext.RefreshTokens.AddAsync(refreshTokenResult.Value, ct);
+        await dbContext.UserRefreshTokens.AddAsync(userRefreshToken, ct);
         await dbContext.SaveChangesAsync(ct);
 
         return new TokenDto
@@ -135,98 +120,16 @@ public sealed class AuthService(AppDbContext dbContext, IOptions<JwtSettings> jw
         }
     }
 
-    public async Task<Result<UserDto>> AuthenticateAsync(string email, string password)
-    {
-        var user = await dbContext.Users
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.PersonalInformation.Email == email);
-
-        if (user is null)
-        {
-            return ApplicationErrors.UserNotFound;
-        }
-
-        if (!string.Equals(user.PersonalInformation.Password, password, StringComparison.Ordinal))
-        {
-            return Error.Unauthorized(code: "Auth.InvalidCredentials", description: "Invalid email or password.");
-        }
-
-        return MapUserDto(user);
-    }
-
-    public async Task<Result<UserDto>> GetUserByIdAsync(string userId)
-    {
-        if (!Guid.TryParse(userId, out var parsedUserId))
-        {
-            return ApplicationErrors.UserIdClaimInvalid;
-        }
-
-        var user = await dbContext.Users
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == parsedUserId);
-
-        if (user is null)
-        {
-            return ApplicationErrors.UserNotFound;
-        }
-
-        return MapUserDto(user);
-    }
-
-    public async Task<string> GetUserNameAsync(string userId)
-    {
-        if (!Guid.TryParse(userId, out var parsedUserId))
-        {
-            return string.Empty;
-        }
-
-        var name = await dbContext.Users
-            .AsNoTracking()
-            .Where(u => u.Id == parsedUserId)
-            .Select(u => u.PersonalInformation.Name)
-            .FirstOrDefaultAsync();
-
-        return name ?? string.Empty;
-    }
-
-    public async Task<Result<Success>> ValidateAndRevokeRefreshTokenAsync(
-        string userId,
-        string refreshToken,
-        CancellationToken ct)
-    {
-        if (!Guid.TryParse(userId, out var parsedUserId) || string.IsNullOrWhiteSpace(refreshToken))
-        {
-            return ApplicationErrors.InvalidRefreshToken;
-        }
-
-        var storedRefreshToken = await dbContext.RefreshTokens
-            .FirstOrDefaultAsync(rt => rt.Token == refreshToken && rt.UserId == parsedUserId, ct);
-
-        if (storedRefreshToken is null || !storedRefreshToken.IsActive)
-        {
-            return ApplicationErrors.InvalidRefreshToken;
-        }
-
-        var revokeResult = storedRefreshToken.Revoke(DateTimeOffset.UtcNow);
-        if (revokeResult.IsError)
-        {
-            return revokeResult.Errors;
-        }
-
-        await dbContext.SaveChangesAsync(ct);
-        return Result.Success;
-    }
-
     private static IList<Claim> BuildClaims(UserDto user)
     {
         var additionalClaims = user.Claims
-            .Where(c => c.Type is not (NameIdentifier or Name or Role))
+            .Where(c => c.Type is not (ClaimTypes.NameIdentifier or ClaimTypes.Name or ClaimTypes.Role))
             .ToList();
 
         var claims = new List<Claim>(additionalClaims.Count + 3)
         {
-            new(NameIdentifier, user.UserId),
-            new(Name, user.Name),
+            new(ClaimTypes.NameIdentifier, user.UserId),
+            new(ClaimTypes.Name, user.Name),
             new(ClaimTypes.Role, user.Role),
         };
 
@@ -238,21 +141,5 @@ public sealed class AuthService(AppDbContext dbContext, IOptions<JwtSettings> jw
     {
         var randomBytes = RandomNumberGenerator.GetBytes(64);
         return Convert.ToBase64String(randomBytes);
-    }
-
-    private static UserDto MapUserDto(User user)
-    {
-        var claims = new List<Claim>
-        {
-            new Claim(NameIdentifier, user.Id.ToString()),
-            new Claim(Name, user.PersonalInformation.Name),
-            new Claim(ClaimTypes.Role, user.UserRole.ToString()),
-        };
-
-        return new UserDto(
-            user.Id.ToString(),
-            user.PersonalInformation.Name,
-            user.UserRole.ToString(),
-            claims);
     }
 }

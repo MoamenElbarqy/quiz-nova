@@ -23,9 +23,8 @@ public class InstructorMapperTests
         Assert.Equal(instructor.Id, dto.InstructorId);
         Assert.Equal(instructor.PersonalInformation.Name, dto.Name);
         Assert.Equal(instructor.PersonalInformation.Email, dto.Email);
-        Assert.Equal(instructor.PersonalInformation.Password, dto.Password);
         Assert.Equal(instructor.PersonalInformation.PhoneNumber, dto.PhoneNumber);
         Assert.Equal(coursesCount, dto.CoursesCount);
         Assert.Equal(quizzesCount, dto.QuizzesCount);
-}
+    }
 }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using QuizNova.Infrastructure.Data;
@@ -11,9 +12,11 @@ using QuizNova.Infrastructure.Data;
 namespace QuizNova.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260521141741_RemoveDomainPassword")]
+    partial class RemoveDomainPassword
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -356,12 +359,11 @@ namespace QuizNova.Infrastructure.Data.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<int>("UserRole")
-                        .HasColumnType("integer")
-                        .HasColumnName("Role");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
 
                     b.UseTptMappingStrategy();
                 });
@@ -513,7 +515,7 @@ namespace QuizNova.Infrastructure.Data.Migrations
                 {
                     b.HasBaseType("QuizNova.Domain.Entities.Users.User");
 
-                    b.ToTable("Admins");
+                    b.ToTable("Admins", (string)null);
                 });
 
             modelBuilder.Entity("QuizNova.Domain.Entities.Users.Instructors.Instructor", b =>
@@ -748,43 +750,6 @@ namespace QuizNova.Infrastructure.Data.Migrations
                     b.Navigation("Instructor");
                 });
 
-            modelBuilder.Entity("QuizNova.Domain.Entities.Users.User", b =>
-                {
-                    b.OwnsOne("QuizNova.Domain.Entities.Users.UserPersonalInformation.PersonalInformation", "PersonalInformation", b1 =>
-                        {
-                            b1.Property<Guid>("UserId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("Email")
-                                .IsRequired()
-                                .HasMaxLength(256)
-                                .HasColumnType("character varying(256)")
-                                .HasColumnName("Email");
-
-                            b1.Property<string>("Name")
-                                .IsRequired()
-                                .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("Name");
-
-                            b1.Property<string>("PhoneNumber")
-                                .IsRequired()
-                                .HasMaxLength(20)
-                                .HasColumnType("character varying(20)")
-                                .HasColumnName("PhoneNumber");
-
-                            b1.HasKey("UserId");
-
-                            b1.ToTable("Users");
-
-                            b1.WithOwner()
-                                .HasForeignKey("UserId");
-                        });
-
-                    b.Navigation("PersonalInformation")
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("QuizNova.Infrastructure.Identity.UserRefreshToken", b =>
                 {
                     b.HasOne("QuizNova.Infrastructure.Identity.AppUser", "User")
@@ -849,12 +814,89 @@ namespace QuizNova.Infrastructure.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("QuizNova.Domain.Entities.Users.Admins.Admin", b =>
+                {
+                    b.HasOne("QuizNova.Domain.Entities.Users.User", null)
+                        .WithOne()
+                        .HasForeignKey("QuizNova.Domain.Entities.Users.Admins.Admin", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("QuizNova.Domain.Entities.Users.UserPersonalInformation.PersonalInformation", "PersonalInformation", b1 =>
+                        {
+                            b1.Property<Guid>("AdminId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Email")
+                                .IsRequired()
+                                .HasMaxLength(256)
+                                .HasColumnType("character varying(256)")
+                                .HasColumnName("Email");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("Name");
+
+                            b1.Property<string>("PhoneNumber")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)")
+                                .HasColumnName("PhoneNumber");
+
+                            b1.HasKey("AdminId");
+
+                            b1.ToTable("Admins");
+
+                            b1.WithOwner()
+                                .HasForeignKey("AdminId");
+                        });
+
+                    b.Navigation("PersonalInformation")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("QuizNova.Domain.Entities.Users.Instructors.Instructor", b =>
                 {
                     b.HasOne("QuizNova.Domain.Entities.Users.User", null)
                         .WithOne()
                         .HasForeignKey("QuizNova.Domain.Entities.Users.Instructors.Instructor", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("QuizNova.Domain.Entities.Users.UserPersonalInformation.PersonalInformation", "PersonalInformation", b1 =>
+                        {
+                            b1.Property<Guid>("InstructorId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Email")
+                                .IsRequired()
+                                .HasMaxLength(256)
+                                .HasColumnType("character varying(256)")
+                                .HasColumnName("Email");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("Name");
+
+                            b1.Property<string>("PhoneNumber")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)")
+                                .HasColumnName("PhoneNumber");
+
+                            b1.HasKey("InstructorId");
+
+                            b1.ToTable("Instructors");
+
+                            b1.WithOwner()
+                                .HasForeignKey("InstructorId");
+                        });
+
+                    b.Navigation("PersonalInformation")
                         .IsRequired();
                 });
 
@@ -864,6 +906,40 @@ namespace QuizNova.Infrastructure.Data.Migrations
                         .WithOne()
                         .HasForeignKey("QuizNova.Domain.Entities.Users.Student.Student", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("QuizNova.Domain.Entities.Users.UserPersonalInformation.PersonalInformation", "PersonalInformation", b1 =>
+                        {
+                            b1.Property<Guid>("StudentId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Email")
+                                .IsRequired()
+                                .HasMaxLength(256)
+                                .HasColumnType("character varying(256)")
+                                .HasColumnName("Email");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("Name");
+
+                            b1.Property<string>("PhoneNumber")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)")
+                                .HasColumnName("PhoneNumber");
+
+                            b1.HasKey("StudentId");
+
+                            b1.ToTable("Students");
+
+                            b1.WithOwner()
+                                .HasForeignKey("StudentId");
+                        });
+
+                    b.Navigation("PersonalInformation")
                         .IsRequired();
                 });
 

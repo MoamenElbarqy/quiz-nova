@@ -11,7 +11,6 @@ public static class AdminMapper
             admin.Id,
             admin.PersonalInformation.Name,
             admin.PersonalInformation.Email,
-            admin.PersonalInformation.Password,
             admin.PersonalInformation.PhoneNumber);
     }
 }

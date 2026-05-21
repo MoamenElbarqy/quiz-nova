@@ -3,6 +3,7 @@ using System.Text;
 using Community.Microsoft.Extensions.Caching.PostgreSql;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -11,7 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Infrastructure.Caching;
 using QuizNova.Infrastructure.Data;
-using QuizNova.Infrastructure.Services;
+using QuizNova.Infrastructure.Identity;
 using QuizNova.Infrastructure.Settings;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -26,7 +27,8 @@ public static class DependencyInjection
         services.AddJwtAuthentication(configuration);
         services.ConfigureDataBase(configuration);
         services.ConfigureCaching(configuration);
-        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IIdentityService, IdentityService>();
+        services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<DbInitializer>();
 
         return services;
@@ -74,6 +76,19 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
         services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
+
+        services.AddIdentityCore<AppUser>(options =>
+        {
+            options.Password.RequireDigit = false;
+            options.Password.RequireLowercase = false;
+            options.Password.RequireNonAlphanumeric = false;
+            options.Password.RequireUppercase = false;
+            options.Password.RequiredLength = 6;
+            
+            options.User.RequireUniqueEmail = true;
+        })
+        .AddRoles<IdentityRole>()
+        .AddEntityFrameworkStores<AppDbContext>();
 
         return services;
     }

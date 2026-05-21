@@ -9,6 +9,5 @@ public sealed record UpdateStudentCommand(
     Guid Id,
     string Name,
     string Email,
-    string Password,
     string PhoneNumber)
     : IRequest<Result<StudentDto>>;

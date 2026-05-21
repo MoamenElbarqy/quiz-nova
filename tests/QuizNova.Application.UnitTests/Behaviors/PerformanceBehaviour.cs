@@ -11,7 +11,7 @@ namespace QuizNova.Application.UnitTests.Behaviors;
 public class PerformanceBehaviour<TRequest, TResponse>(
     ILogger<TRequest> logger,
     IUser user,
-    IAuthService authService)
+    IIdentityService identityService)
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
@@ -38,7 +38,7 @@ public class PerformanceBehaviour<TRequest, TResponse>(
 
         if (!string.IsNullOrEmpty(userId))
         {
-            userName = await authService.GetUserNameAsync(userId);
+            userName = await identityService.GetUserNameAsync(userId);
         }
 
         logger.LogWarning(

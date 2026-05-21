@@ -12,30 +12,30 @@ public class InstructorTests
     public void Create_ShouldSuccess_WithValidData()
     {
         // Arrange
+        var id = Guid.NewGuid();
         var personalInfoResult = PersonalInformation.Create(
             "Valid Instructor Name",
             "instructor@example.com",
-            "SecurePassword123!",
             "1234567890");
 
         // Act
         var result = Instructor.Create(
+            id,
             personalInfoResult.Value,
-            [],
             [],
             []);
 
         // Assert
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
-        Assert.NotEqual(Guid.Empty, result.Value.Id);
+        Assert.Equal(id, result.Value.Id);
         Assert.Equal("Valid Instructor Name", result.Value.PersonalInformation.Name);
         Assert.Equal("instructor@example.com", result.Value.PersonalInformation.Email);
 
         var createdEvent = Assert.Single(result.Value.DomainEvents);
         var instructorCreatedEvent = Assert.IsType<InstructorCreatedEvent>(createdEvent);
         Assert.Equal(result.Value.Id, instructorCreatedEvent.Id);
-}
+    }
 
     [Fact]
     public void Update_ShouldSuccess_WithValidData()
@@ -58,7 +58,7 @@ public class InstructorTests
         var updatedEvent = Assert.Single(instructor.DomainEvents);
         var instructorUpdatedEvent = Assert.IsType<InstructorUpdatedEvent>(updatedEvent);
         Assert.Equal(instructor.Id, instructorUpdatedEvent.Id);
-}
+    }
 
     [Fact]
     public void Delete_ShouldSuccess()
@@ -76,5 +76,5 @@ public class InstructorTests
         var deletedEvent = Assert.Single(instructor.DomainEvents);
         var instructorDeletedEvent = Assert.IsType<InstructorDeletedEvent>(deletedEvent);
         Assert.Equal(instructor.Id, instructorDeletedEvent.Id);
-}
+    }
 }
