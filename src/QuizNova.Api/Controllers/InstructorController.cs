@@ -35,11 +35,11 @@ public sealed class InstructorController(ISender sender) : ApiController
     [EndpointSummary("Retrieves an instructor by id.")]
     [EndpointDescription("Fetches a single instructor using the provided instructor identifier.")]
     [EndpointName("GetInstructorById")]
-    [HttpGet("{instructorId:guid}")]
+    [HttpGet("{id:guid}")]
     [OutputCache(Tags = ["instructors"])]
-    public async Task<IActionResult> GetInstructorById([FromRoute] Guid instructorId)
+    public async Task<IActionResult> GetInstructorById([FromRoute] Guid id)
     {
-        var result = await sender.Send(new GetInstructorByIdQuery(instructorId));
+        var result = await sender.Send(new GetInstructorByIdQuery(id));
 
         return result.Match(
             Ok,
@@ -69,13 +69,13 @@ public sealed class InstructorController(ISender sender) : ApiController
     [EndpointSummary("Updates an existing instructor.")]
     [EndpointDescription("Updates profile and credential fields for the specified instructor.")]
     [EndpointName("UpdateInstructor")]
-    [HttpPut("{instructorId:guid}")]
+    [HttpPut("{id:guid}")]
     public async Task<IActionResult> UpdateInstructor(
-        [FromRoute] Guid instructorId,
+        [FromRoute] Guid id,
         [FromBody] UpdateInstructorRequest request)
     {
         var command = new UpdateInstructorCommand(
-            instructorId,
+            id,
             request.Name,
             request.Email,
             request.PhoneNumber);
@@ -90,10 +90,10 @@ public sealed class InstructorController(ISender sender) : ApiController
     [EndpointSummary("Deletes an instructor.")]
     [EndpointDescription("Removes the instructor account identified by the provided instructor identifier.")]
     [EndpointName("DeleteInstructor")]
-    [HttpDelete("{instructorId:guid}")]
-    public async Task<IActionResult> DeleteInstructor([FromRoute] Guid instructorId)
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteInstructor([FromRoute] Guid id)
     {
-        var result = await sender.Send(new DeleteInstructorCommand(instructorId));
+        var result = await sender.Send(new DeleteInstructorCommand(id));
 
         return result.Match(
             _ => NoContent(),

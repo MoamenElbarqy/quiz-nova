@@ -36,11 +36,11 @@ public sealed class AdminController(ISender sender) : ApiController
     [EndpointSummary("Retrieves an admin by id.")]
     [EndpointDescription("Fetches a single admin using the provided admin identifier.")]
     [EndpointName("GetAdminById")]
-    [HttpGet("{adminId:guid}")]
+    [HttpGet("{id:guid}")]
     [OutputCache(Tags = ["admins"])]
-    public async Task<IActionResult> GetAdminById([FromRoute] Guid adminId)
+    public async Task<IActionResult> GetAdminById([FromRoute] Guid id)
     {
-        var result = await sender.Send(new GetAdminByIdQuery(adminId));
+        var result = await sender.Send(new GetAdminByIdQuery(id));
 
         return result.Match(
             Ok,
@@ -70,11 +70,11 @@ public sealed class AdminController(ISender sender) : ApiController
     [EndpointSummary("Updates an existing admin.")]
     [EndpointDescription("Updates profile and credential fields for the specified admin.")]
     [EndpointName("UpdateAdmin")]
-    [HttpPut("{adminId:guid}")]
-    public async Task<IActionResult> UpdateAdmin([FromRoute] Guid adminId, [FromBody] UpdateAdminRequest request)
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> UpdateAdmin([FromRoute] Guid id, [FromBody] UpdateAdminRequest request)
     {
         var command = new UpdateAdminCommand(
-            adminId,
+            id,
             request.Name,
             request.Email,
             request.PhoneNumber);
@@ -89,10 +89,10 @@ public sealed class AdminController(ISender sender) : ApiController
     [EndpointSummary("Deletes an admin.")]
     [EndpointDescription("Removes the admin account identified by the provided admin identifier.")]
     [EndpointName("DeleteAdmin")]
-    [HttpDelete("{adminId:guid}")]
-    public async Task<IActionResult> DeleteAdmin([FromRoute] Guid adminId)
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteAdmin([FromRoute] Guid id)
     {
-        var result = await sender.Send(new DeleteAdminCommand(adminId));
+        var result = await sender.Send(new DeleteAdminCommand(id));
 
         return result.Match(
             _ => NoContent(),

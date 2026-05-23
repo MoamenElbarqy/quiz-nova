@@ -37,10 +37,10 @@ public sealed class StudentController(ISender sender) : ApiController
     [EndpointDescription("Fetches a single student using the provided student identifier.")]
     [EndpointName("GetStudentById")]
     [OutputCache(Tags = ["students"])]
-    [HttpGet("{studentId:guid}")]
-    public async Task<IActionResult> GetStudentById([FromRoute] Guid studentId)
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetStudentById([FromRoute] Guid id)
     {
-        var result = await sender.Send(new GetStudentByIdQuery(studentId));
+        var result = await sender.Send(new GetStudentByIdQuery(id));
 
         return result.Match(
             Ok,
@@ -51,10 +51,10 @@ public sealed class StudentController(ISender sender) : ApiController
     [EndpointDescription("Returns quizzes associated with the specified student identifier.")]
     [EndpointName("GetStudentQuizzes")]
     [OutputCache(Tags = ["students", "quizzes"])]
-    [HttpGet("{studentId:guid}/quizzes")]
-    public async Task<IActionResult> GetStudentQuizzes([FromRoute] Guid studentId)
+    [HttpGet("{id:guid}/quizzes")]
+    public async Task<IActionResult> GetStudentQuizzes([FromRoute] Guid id)
     {
-        var result = await sender.Send(new GetStudentQuizzesQuery(studentId));
+        var result = await sender.Send(new GetStudentQuizzesQuery(id));
 
         return result.Match(
             Ok,
@@ -84,11 +84,11 @@ public sealed class StudentController(ISender sender) : ApiController
     [EndpointSummary("Updates an existing student.")]
     [EndpointDescription("Updates profile and credential fields for the specified student.")]
     [EndpointName("UpdateStudent")]
-    [HttpPut("{studentId:guid}")]
-    public async Task<IActionResult> UpdateStudent([FromRoute] Guid studentId, [FromBody] UpdateStudentRequest request)
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> UpdateStudent([FromRoute] Guid id, [FromBody] UpdateStudentRequest request)
     {
         var command = new UpdateStudentCommand(
-            studentId,
+            id,
             request.Name,
             request.Email,
             request.PhoneNumber);
@@ -103,10 +103,10 @@ public sealed class StudentController(ISender sender) : ApiController
     [EndpointSummary("Deletes a student.")]
     [EndpointDescription("Removes the student account identified by the provided student identifier.")]
     [EndpointName("DeleteStudent")]
-    [HttpDelete("{studentId:guid}")]
-    public async Task<IActionResult> DeleteStudent([FromRoute] Guid studentId)
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteStudent([FromRoute] Guid id)
     {
-        var result = await sender.Send(new DeleteStudentCommand(studentId));
+        var result = await sender.Send(new DeleteStudentCommand(id));
 
         return result.Match(
             _ => NoContent(),
