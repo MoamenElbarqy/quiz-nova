@@ -21,7 +21,7 @@ public class Mcq : AutoGradedQuestion<Guid>
         Guid id,
         Guid quizId,
         string questionText,
-        Guid correctChoiceId,
+        Guid? correctChoiceId,
         int displayOrder,
         int marks,
         List<Choice> choices)
@@ -33,7 +33,7 @@ public class Mcq : AutoGradedQuestion<Guid>
 
     public int NumberOfChoices => Choices.Count();
 
-    public Guid CorrectChoiceId { get; private set; }
+    public Guid? CorrectChoiceId { get; private set; }
 
     public Choice? CorrectChoice { get; init; }
 

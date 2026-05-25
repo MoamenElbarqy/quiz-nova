@@ -45,12 +45,29 @@ public class EssayAnswer : ManuallyGradedAnswers
             return commonValidationError.TopError;
         }
 
+        var trimmedResponse = studentResponse.Trim();
+
+        if (string.IsNullOrWhiteSpace(trimmedResponse))
+        {
+            return EssayAnswerErrors.ResponseRequired;
+        }
+
+        if (trimmedResponse.Length < 3)
+        {
+            return EssayAnswerErrors.ResponseTooShort;
+        }
+
+        if (trimmedResponse.Length > 1000)
+        {
+            return EssayAnswerErrors.ResponseTooLong;
+        }
+
         return new EssayAnswer(
             id,
             studentId,
             questionId,
             quizAttemptId,
-            studentResponse,
+            trimmedResponse,
             score);
     }
 }

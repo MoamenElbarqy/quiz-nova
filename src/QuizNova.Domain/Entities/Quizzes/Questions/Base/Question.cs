@@ -1,6 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
+
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 
 namespace QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
@@ -83,4 +85,25 @@ public abstract class Question : Entity
 
         return Result.Validated;
     }
+}
+
+public abstract class Question<TAnswer> : Question
+{
+    [SetsRequiredMembers]
+    protected Question()
+    {
+    }
+
+    [SetsRequiredMembers]
+    protected Question(
+        Guid id,
+        Guid quizId,
+        string questionText,
+        int displayOrder,
+        int marks)
+        : base(id, quizId, questionText, displayOrder, marks)
+    {
+    }
+
+    public abstract Result<QuestionAnswer> Solve(TAnswer answer, Guid studentId, Guid quizAttemptId);
 }

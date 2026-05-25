@@ -8,12 +8,14 @@ using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.McqAnswer;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.TrueFalseAnswer;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers.EssayAnswer;
 using QuizNova.Domain.Entities.Quizzes.Enums;
 using QuizNova.Domain.Entities.Quizzes.Events;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
+using QuizNova.Domain.Entities.Quizzes.Questions.ManuallyGradedQuestions;
 using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Domain.Entities.Quizzes;
@@ -123,7 +125,7 @@ public class Quiz : Entity
 
         var displayOrders = questions.Select(q => q.DisplayOrder).ToHashSet();
 
-        for (int i = 1; i <= questions.Count; i++)
+        for (int i = 0; i < questions.Count; i++)
         {
             if (!displayOrders.Contains(i))
             {
@@ -285,7 +287,8 @@ public class Quiz : Entity
         int marks,
         Guid? correctChoiceId = null,
         bool? tfCorrectChoice = null,
-        List<Choice>? choices = null)
+        List<Choice>? choices = null,
+        string? answerReference = null)
     {
         if (Course?.Status == CourseStatus.Completed)
         {
@@ -310,6 +313,8 @@ public class Quiz : Entity
                 mcq.Update(questionText, displayOrder, marks, correctChoiceId.Value, choices),
             Tf tf when tfCorrectChoice.HasValue =>
                 tf.Update(questionText, displayOrder, marks, tfCorrectChoice.Value),
+            Essay essay =>
+                essay.Update(questionText, displayOrder, marks, answerReference),
             _ => Error.Validation(
                 "Quiz.Question.UpdateTypeMismatch",
                 "The update data does not match the question type."),
@@ -434,6 +439,7 @@ public class Quiz : Entity
         {
             McqAnswer mcqAnswer => ValidateMcqAnswer(question, mcqAnswer),
             TfAnswer tfAnswer => ValidateTfAnswer(question, tfAnswer),
+            EssayAnswer essayAnswer => ValidateEssayAnswer(question, essayAnswer),
             _ => Error.Unexpected(
                 "QuizAttempt.Answer.Unsupported",
                 $"Unsupported answer type '{answer.GetType().Name}'."),
@@ -460,6 +466,16 @@ public class Quiz : Entity
         if (question is not Tf)
         {
             return QuizAttemptErrors.QuestionTypeMismatch(answer.QuestionId, "tf");
+        }
+
+        return Result.Validated;
+    }
+
+    private static Result<Validated> ValidateEssayAnswer(Question question, EssayAnswer answer)
+    {
+        if (question is not Essay)
+        {
+            return QuizAttemptErrors.QuestionTypeMismatch(answer.QuestionId, "essay");
         }
 
         return Result.Validated;

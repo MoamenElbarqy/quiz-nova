@@ -1,10 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
+
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
 namespace QuizNova.Domain.Entities.Quizzes.Questions.ManuallyGradedQuestions;
 
-public abstract class ManuallyGradedQuestion : Question
+public abstract class ManuallyGradedQuestion<TAnswer> : Question<TAnswer>
 {
     public int? Score { get; private set; }
 
