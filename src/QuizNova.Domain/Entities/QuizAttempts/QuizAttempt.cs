@@ -3,6 +3,7 @@ using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
+using QuizNova.Domain.Entities.QuizAttempts.Enums;
 using QuizNova.Domain.Entities.QuizAttempts.Events;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Users.Student;
@@ -23,6 +24,7 @@ public class QuizAttempt : Entity
         Guid quizId,
         DateTime startedAt,
         DateTime submittedAt,
+        QuizAttemptStatus status,
         List<QuestionAnswer> studentAnswers)
         : base(id)
     {
@@ -30,6 +32,7 @@ public class QuizAttempt : Entity
         QuizId = quizId;
         StartedAt = startedAt;
         SubmittedAt = submittedAt;
+        Status = status;
         _studentAnswers = studentAnswers;
     }
 
@@ -40,6 +43,8 @@ public class QuizAttempt : Entity
     public DateTime StartedAt { get; private set; }
 
     public DateTime SubmittedAt { get; private set; }
+
+    public QuizAttemptStatus Status { get; private set; }
 
     public Student? Student { get; init; }
 
@@ -83,7 +88,11 @@ public class QuizAttempt : Entity
             return QuizAttemptErrors.SubmittedAtInvalid;
         }
 
-        var quizAttempt = new QuizAttempt(id, studentId, quizId, startedAt, submittedAt, studentAnswers);
+        var status = studentAnswers.Any(a => a is ManuallyGradedAnswers { IsGraded: false })
+            ? QuizAttemptStatus.Pending
+            : QuizAttemptStatus.Completed;
+
+        var quizAttempt = new QuizAttempt(id, studentId, quizId, startedAt, submittedAt, status, studentAnswers);
         quizAttempt.AddDomainEvent(new QuizAttemptSubmittedEvent(id));
         return quizAttempt;
     }

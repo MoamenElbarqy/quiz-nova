@@ -1,10 +1,15 @@
+using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers.Events;
 
 namespace QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
 
 public abstract class ManuallyGradedAnswers : QuestionAnswer
 {
     public int? Score { get; private set; }
+    public string? Feedback { get; private set; }
+    public DateTimeOffset? GradedAt { get; private set; }
+    public bool IsGraded => Score.HasValue;
 
     protected ManuallyGradedAnswers(
         Guid id,
@@ -21,8 +26,43 @@ public abstract class ManuallyGradedAnswers : QuestionAnswer
     {
     }
 
-    public void UpdateMarks(int? score)
+    public Result<Updated> Grade(int score, string? feedback = null)
     {
+        if (score < 0)
+        {
+            return ManuallyGradedAnswerErrors.NegativeScore;
+        }
+
+        var maxMarks = Question!.Marks;
+
+        if (score > maxMarks)
+        {
+            return ManuallyGradedAnswerErrors.ScoreExceedsMaxMarks(maxMarks);
+        }
+
+        if (feedback is not null)
+        {
+            var trimmedFeedback = feedback.Trim();
+
+            if (trimmedFeedback.Length < 3)
+            {
+                return ManuallyGradedAnswerErrors.FeedbackTooShort;
+            }
+
+            if (trimmedFeedback.Length > 200)
+            {
+                return ManuallyGradedAnswerErrors.FeedbackTooLong;
+            }
+
+            Feedback = trimmedFeedback;
+        }
+
         Score = score;
+        GradedAt = DateTimeOffset.UtcNow;
+
+        AddDomainEvent(new QuestionGradedEvent(Id));
+
+        return Result.Updated;
     }
 }
+

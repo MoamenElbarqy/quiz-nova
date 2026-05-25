@@ -58,3 +58,21 @@ public abstract class QuestionAnswer : Entity
         return Result.Validated;
     }
 }
+
+public abstract class QuestionAnswer<TAnswer> : QuestionAnswer
+{
+    public new Question<TAnswer>? Question { get; init; }
+
+    protected QuestionAnswer(
+        Guid id,
+        Guid studentId,
+        Guid questionId,
+        Guid quizAttemptId)
+        : base(id, studentId, questionId, quizAttemptId)
+    {
+    }
+
+    protected QuestionAnswer()
+    {
+    }
+}
