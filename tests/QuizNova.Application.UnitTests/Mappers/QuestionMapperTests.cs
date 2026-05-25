@@ -30,7 +30,7 @@ public class QuestionMapperTests
         Assert.Equal(tfQuestion.QuestionText, tfDto.QuestionText);
         Assert.Equal(tfQuestion.Marks, tfDto.Marks);
         Assert.Equal(tfQuestion.CorrectChoice, tfDto.CorrectChoice);
-}
+    }
 
     [Fact]
     public void ToQuestionDto_WithMcqQuestion_ShouldMapCorrectly()
@@ -73,5 +73,5 @@ public class QuestionMapperTests
         Assert.Equal(choice1.Id, mcqDto.Choices.ElementAt(1).Id);
         Assert.Equal(choice1.Text, mcqDto.Choices.ElementAt(1).Text);
         Assert.Equal(choice1.DisplayOrder, mcqDto.Choices.ElementAt(1).DisplayOrder);
-}
+    }
 }

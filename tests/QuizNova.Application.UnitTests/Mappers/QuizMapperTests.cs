@@ -13,9 +13,9 @@ public class QuizMapperTests
     {
         // Arrange
         var quizId = Guid.NewGuid();
-        var q1 = QuestionFactory.CreateTfQuestion(quizId: quizId, displayOrder: 1, marks: 5).Value;
-        var q2 = QuestionFactory.CreateTfQuestion(quizId: quizId, displayOrder: 2, marks: 15).Value;
-        var q3 = QuestionFactory.CreateTfQuestion(quizId: quizId, displayOrder: 3, marks: 10).Value;
+        var q1 = QuestionFactory.CreateTfQuestion(quizId: quizId, displayOrder: 0, marks: 5).Value;
+        var q2 = QuestionFactory.CreateTfQuestion(quizId: quizId, displayOrder: 1, marks: 15).Value;
+        var q3 = QuestionFactory.CreateTfQuestion(quizId: quizId, displayOrder: 2, marks: 10).Value;
 
         var quiz = QuizFactory.CreateQuiz(
             id: quizId,

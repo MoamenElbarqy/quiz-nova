@@ -27,5 +27,5 @@ public class StudentQuizMapperTests
 
         // Graceful fallback since navigation property is null
         Assert.Equal(string.Empty, dto.CourseName);
-}
+    }
 }

@@ -20,9 +20,9 @@ public class QuizTests
         var starts = DateTimeOffset.UtcNow.AddHours(1);
         var ends = DateTimeOffset.UtcNow.AddHours(3);
 
-        var q1 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 1).Value;
-        var q2 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 2).Value;
-        var q3 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 3).Value;
+        var q1 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 0).Value;
+        var q2 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 1).Value;
+        var q3 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 2).Value;
         List<Question> questions = [q1, q2, q3];
 
         // Act
@@ -38,7 +38,7 @@ public class QuizTests
         var quizEvent = Assert.Single(result.Value.DomainEvents);
         var quizCreatedEvent = Assert.IsType<QuizCreatedEvent>(quizEvent);
         Assert.Equal(id, quizCreatedEvent.Id);
-}
+    }
 
     [Fact]
     public void Create_ShouldFail_WithEmptyCourseId()
@@ -49,7 +49,7 @@ public class QuizTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.CourseIdRequired, result.TopError);
-}
+    }
 
     [Fact]
     public void Create_ShouldFail_WithEmptyInstructorId()
@@ -60,7 +60,7 @@ public class QuizTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.InstructorIdRequired, result.TopError);
-}
+    }
 
     [Theory]
     [InlineData("")]
@@ -73,7 +73,7 @@ public class QuizTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.TitleRequired, result.TopError);
-}
+    }
 
     [Theory]
     [InlineData("ab")]
@@ -87,7 +87,7 @@ public class QuizTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.TitleTooShort, result.TopError);
-}
+    }
 
     [Fact]
     public void Create_ShouldTrimTitle()
@@ -98,7 +98,7 @@ public class QuizTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.Equal("Data Structures", result.Value.Title);
-}
+    }
 
     [Fact]
     public void Create_ShouldFail_WithStartsAtGreaterThanOrEqualEndsAt()
@@ -113,15 +113,15 @@ public class QuizTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.ScheduleInvalid, result.TopError);
-}
+    }
 
     [Fact]
     public void Create_ShouldFail_WithLessQuestionsThanThree()
     {
         // Arrange
         var id = Guid.NewGuid();
-        var q1 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 1).Value;
-        var q2 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 2).Value;
+        var q1 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 0).Value;
+        var q2 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 1).Value;
 
         // Act
         var result = QuizFactory.CreateQuiz(
@@ -131,16 +131,16 @@ public class QuizTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.QuestionsRequired, result.TopError);
-}
+    }
 
     [Fact]
     public void Create_ShouldFail_WithNonContiguousDisplayOrderSequence()
     {
         // Arrange
         var id = Guid.NewGuid();
-        var q1 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 1).Value;
-        var q2 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 2).Value;
-        var q3 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 4).Value; // 3 is missing!
+        var q1 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 0).Value;
+        var q2 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 1).Value;
+        var q3 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 3).Value; // 2 is missing!
 
         // Act
         var result = QuizFactory.CreateQuiz(id: id, questions: [q1, q2, q3]);
@@ -148,24 +148,24 @@ public class QuizTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.QuestionSequenceInvalid, result.TopError);
-}
+    }
 
     [Fact]
     public void Create_ShouldSuccess_WithNonSequentialContiguousDisplayOrderSequence()
     {
         // Arrange
         var id = Guid.NewGuid();
-        var q1 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 3).Value;
-        var q2 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 1).Value;
-        var q3 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 2)
-            .Value; // DisplayOrders are {3, 1, 2} which are contiguous 1 to 3!
+        var q1 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 2).Value;
+        var q2 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 0).Value;
+        var q3 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 1)
+            .Value; // DisplayOrders are {2, 0, 1} which are contiguous 0 to 2!
 
         // Act
         var result = QuizFactory.CreateQuiz(id: id, questions: [q1, q2, q3]);
 
         // Assert
         Assert.True(result.IsSuccess);
-}
+    }
 
     [Fact]
     public void Update_ShouldSuccess_WhenQuizScheduled()
@@ -179,7 +179,7 @@ public class QuizTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.Equal("Updated Title", quiz.Title);
-}
+    }
 
     [Fact]
     public void Update_ShouldTrimTitleAndValidateLength()
@@ -195,7 +195,7 @@ public class QuizTests
         var shortResult = quiz.Update("   ab   ", DateTimeOffset.UtcNow.AddHours(1), DateTimeOffset.UtcNow.AddHours(3));
         Assert.True(shortResult.IsError);
         Assert.Equal(QuizErrors.TitleTooShort, shortResult.TopError);
-}
+    }
 
     [Fact]
     public void Update_ShouldFail_WhenAssociatedCourseCompleted()
@@ -213,7 +213,7 @@ public class QuizTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.CourseCompleted, result.TopError);
-}
+    }
 
     [Fact]
     public void UpdateCourseId_ShouldSuccess_WhenQuizScheduledAndShouldClearQuestions()
@@ -226,7 +226,7 @@ public class QuizTests
 
         Assert.True(result.IsSuccess);
         Assert.Empty(quiz.Questions);
-}
+    }
 
     [Fact]
     public void UpdateCourseId_ShouldFail_WhenAssociatedCourseCompleted()
@@ -243,14 +243,14 @@ public class QuizTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.CourseCompleted, result.TopError);
-}
+    }
 
     [Fact]
     public void AddQuestion_ShouldSuccess_WhenQuizScheduled()
     {
         // Arrange
         var quiz = QuizFactory.CreateQuiz().Value;
-        var newQuestion = QuestionFactory.CreateTfQuestion(quizId: quiz.Id, displayOrder: 4).Value;
+        var newQuestion = QuestionFactory.CreateTfQuestion(quizId: quiz.Id, displayOrder: 3).Value;
 
         // Act
         var result = quiz.AddQuestion(newQuestion);
@@ -258,14 +258,14 @@ public class QuizTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.Contains(quiz.Questions, q => q.Id == newQuestion.Id);
-}
+    }
 
     [Fact]
     public void AddQuestion_ShouldFail_WhenQuestionBelongsToDifferentQuiz()
     {
         // Arrange
         var quiz = QuizFactory.CreateQuiz().Value;
-        var diffQuizQuestion = QuestionFactory.CreateTfQuestion(quizId: Guid.NewGuid(), displayOrder: 4).Value;
+        var diffQuizQuestion = QuestionFactory.CreateTfQuestion(quizId: Guid.NewGuid(), displayOrder: 3).Value;
 
         // Act
         var result = quiz.AddQuestion(diffQuizQuestion);
@@ -273,7 +273,7 @@ public class QuizTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.QuestionBelongsToDifferentQuiz(diffQuizQuestion.Id).Code, result.TopError.Code);
-}
+    }
 
     [Fact]
     public void AddQuestion_ShouldFail_WhenQuestionAlreadyExists()
@@ -288,7 +288,7 @@ public class QuizTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.QuestionAlreadyExists(existingQuestion.Id).Code, result.TopError.Code);
-}
+    }
 
     [Fact]
     public void AddQuestion_ShouldFail_WhenAssociatedCourseCompleted()
@@ -298,7 +298,7 @@ public class QuizTests
         course.MarkAsCompeleted();
         var quiz = QuizFactory.CreateQuiz().Value;
         typeof(Quiz).GetProperty("Course")!.SetValue(quiz, course);
-        var q = QuestionFactory.CreateTfQuestion(quizId: quiz.Id, displayOrder: 4).Value;
+        var q = QuestionFactory.CreateTfQuestion(quizId: quiz.Id, displayOrder: 3).Value;
 
         // Act
         var result = quiz.AddQuestion(q);
@@ -306,14 +306,14 @@ public class QuizTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.CourseCompleted, result.TopError);
-}
+    }
 
     [Fact]
     public void DeleteQuestion_ShouldSuccess_WhenQuizScheduledAndHasMoreThanThreeQuestions()
     {
         // Assert
         var quiz = QuizFactory.CreateQuiz().Value;
-        var newQuestion = QuestionFactory.CreateTfQuestion(quizId: quiz.Id, displayOrder: 4).Value;
+        var newQuestion = QuestionFactory.CreateTfQuestion(quizId: quiz.Id, displayOrder: 3).Value;
         quiz.AddQuestion(newQuestion);
         Assert.Equal(4, quiz.Questions.Count());
 
@@ -321,7 +321,7 @@ public class QuizTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(3, quiz.Questions.Count());
-}
+    }
 
     [Fact]
     public void DeleteQuestion_ShouldFail_WhenQuestionsCountReachesThree()
@@ -335,14 +335,14 @@ public class QuizTests
 
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.MinimumQuestionsReached, result.TopError);
-}
+    }
 
     [Fact]
     public void DeleteQuestion_ShouldFail_WhenQuestionNotFound()
     {
         // Arrange
         var quiz = QuizFactory.CreateQuiz().Value;
-        var notFoundQuestion = QuestionFactory.CreateTfQuestion(quizId: quiz.Id, displayOrder: 4).Value;
+        var notFoundQuestion = QuestionFactory.CreateTfQuestion(quizId: quiz.Id, displayOrder: 3).Value;
 
         // Act
         var result = quiz.DeleteQuestion(notFoundQuestion);
@@ -350,7 +350,7 @@ public class QuizTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.QuestionNotFound, result.TopError);
-}
+    }
 
     [Fact]
     public void DeleteQuestion_ShouldFail_WhenAssociatedCourseCompleted()
@@ -368,7 +368,7 @@ public class QuizTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.CourseCompleted, result.TopError);
-}
+    }
 
     [Fact]
     public void UpdateQuestion_ShouldFail_WhenAssociatedCourseCompleted()
@@ -389,5 +389,5 @@ public class QuizTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.CourseCompleted, result.TopError);
-}
+    }
 }

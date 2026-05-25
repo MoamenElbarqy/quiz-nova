@@ -33,7 +33,7 @@ public class UnhandledExceptionBehaviourTests
 
         // Assert
         Assert.Equal("OK", result);
-}
+    }
 
     [Fact]
     public async Task Handle_WhenExceptionThrown_LogsErrorAndRethrows()
@@ -58,7 +58,7 @@ public class UnhandledExceptionBehaviourTests
             Arg.Is<object>(o => o.ToString()!.Contains("Unhandled Exception")),
             exception,
             Arg.Any<Func<object, Exception?, string>>());
-}
+    }
 
     public class DummyRequest;
 }

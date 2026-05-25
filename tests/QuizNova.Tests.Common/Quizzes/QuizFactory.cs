@@ -24,21 +24,21 @@ public static class QuizFactory
                 quizId,
                 "Question 1?",
                 true,
-                1,
+                0,
                 10).Value;
             var q2 = Tf.Create(
                 Guid.NewGuid(),
                 quizId,
                 "Question 2?",
                 false,
-                2,
+                1,
                 10).Value;
             var q3 = Tf.Create(
                 Guid.NewGuid(),
                 quizId,
                 "Question 3?",
                 true,
-                3,
+                2,
                 10).Value;
             questions = [q1, q2, q3];
         }

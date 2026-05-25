@@ -1,3 +1,4 @@
+using QuizNova.Application.Features.QuizAttempts.DTOs;
 using QuizNova.Application.Features.QuizAttempts.Mappers;
 using QuizNova.Tests.Common.QuizAttempts;
 using QuizNova.Tests.Common.QuizAttempts.Answers;
@@ -58,23 +59,22 @@ public class QuizAttemptMapperTests
         Assert.Equal(0, dto.TotalQuestions);
         Assert.Equal(3, dto.AnsweredQuestions);
         Assert.Equal(2, dto.CorrectAnswers); // TF1 and TF2 are correct
-        Assert.Equal(0, dto.Score); // Score calculation relies on autoGradedAnswer.Question which is null
+        Assert.Equal(0,
+            dto.Score); // Score calculation relies on autoGradedAnswer and manually graded is null in this test!
         Assert.Empty(dto.Questions);
 
         // Check mapped answers
         Assert.NotNull(dto.Answers);
         Assert.Equal(3, dto.Answers.Count);
 
-        var mappedTfAnswer1 = dto.Answers.FirstOrDefault(a => a.QuestionId == tfAnswer1.QuestionId);
+        var mappedTfAnswer1 = dto.Answers.FirstOrDefault(a => a.QuestionId == tfAnswer1.QuestionId) as TfAnswerDto;
         Assert.NotNull(mappedTfAnswer1);
-        Assert.Equal("tf", mappedTfAnswer1.AnswerType);
-        Assert.True(mappedTfAnswer1.IsCorrect);
-        Assert.Equal(string.Empty, mappedTfAnswer1.QuestionText);
+        Assert.Equal("tf", mappedTfAnswer1.AutoAnswerType);
+        Assert.Equal(string.Empty, mappedTfAnswer1.QuestionText); // question is null
 
-        var mappedMcqAnswer = dto.Answers.FirstOrDefault(a => a.QuestionId == mcqAnswer.QuestionId);
+        var mappedMcqAnswer = dto.Answers.FirstOrDefault(a => a.QuestionId == mcqAnswer.QuestionId) as McqAnswerDto;
         Assert.NotNull(mappedMcqAnswer);
-        Assert.Equal("mcq", mappedMcqAnswer.AnswerType);
-        Assert.False(mappedMcqAnswer.IsCorrect);
-        Assert.Equal(string.Empty, mappedMcqAnswer.QuestionText);
-}
+        Assert.Equal("mcq", mappedMcqAnswer.AutoAnswerType);
+        Assert.Equal(string.Empty, mappedMcqAnswer.QuestionText); // question is null
+    }
 }

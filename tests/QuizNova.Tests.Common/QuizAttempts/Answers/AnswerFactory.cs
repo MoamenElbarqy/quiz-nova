@@ -1,6 +1,7 @@
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.McqAnswer;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.TrueFalseAnswer;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers.EssayAnswer;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 using QuizNova.Tests.Common.Quizzes.Questions;
@@ -56,5 +57,22 @@ public static class AnswerFactory
             quizAttemptId ?? Guid.NewGuid(),
             studentChoice,
             isCorrect);
+    }
+
+    public static Result<EssayAnswer> CreateEssayAnswer(
+        Guid? id = null,
+        Guid? studentId = null,
+        Guid? questionId = null,
+        Guid? quizAttemptId = null,
+        string studentResponse = "Sample essay response",
+        int? score = null)
+    {
+        return EssayAnswer.Create(
+            id ?? Guid.NewGuid(),
+            studentId ?? Guid.NewGuid(),
+            questionId ?? Guid.NewGuid(),
+            quizAttemptId ?? Guid.NewGuid(),
+            studentResponse,
+            score);
     }
 }
