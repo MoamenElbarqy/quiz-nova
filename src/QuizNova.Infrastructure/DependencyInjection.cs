@@ -24,7 +24,7 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.ConfigureSettings(configuration);
-        services.AddJwtAuthentication(configuration);
+        services.AddJwtAuthentication();
         services.ConfigureDataBase(configuration);
         services.ConfigureCaching(configuration);
         services.AddScoped<IIdentityService, IdentityService>();
@@ -73,22 +73,26 @@ public static class DependencyInjection
             throw new InvalidOperationException("The connection string 'DefaultConnection' is not configured.");
         }
 
-        services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+        services.AddDbContext<AppDbContext>(options => options
+            .UseNpgsql(connectionString)
+            .ConfigureWarnings(warnings =>
+                warnings.Ignore(EntityFrameworkCore.Diagnostics.RelationalEventId
+                    .PendingModelChangesWarning)));
 
         services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
 
         services.AddIdentityCore<AppUser>(options =>
-        {
-            options.Password.RequireDigit = false;
-            options.Password.RequireLowercase = false;
-            options.Password.RequireNonAlphanumeric = false;
-            options.Password.RequireUppercase = false;
-            options.Password.RequiredLength = 6;
-            
-            options.User.RequireUniqueEmail = true;
-        })
-        .AddRoles<IdentityRole>()
-        .AddEntityFrameworkStores<AppDbContext>();
+            {
+                options.Password.RequireDigit = false;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequiredLength = 8;
+
+                options.User.RequireUniqueEmail = true;
+            })
+            .AddRoles<IdentityRole>()
+            .AddEntityFrameworkStores<AppDbContext>();
 
         return services;
     }
@@ -105,8 +109,7 @@ public static class DependencyInjection
     }
 
     private static IServiceCollection AddJwtAuthentication(
-        this IServiceCollection services,
-        IConfiguration configuration)
+        this IServiceCollection services)
     {
         services.AddAuthentication(options =>
         {
