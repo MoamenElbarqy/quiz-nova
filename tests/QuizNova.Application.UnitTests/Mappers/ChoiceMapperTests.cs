@@ -22,5 +22,5 @@ public class ChoiceMapperTests
         Assert.Equal(choice.QuestionId, dto.QuestionId);
         Assert.Equal(choice.Text, dto.Text);
         Assert.Equal(choice.DisplayOrder, dto.DisplayOrder);
-}
+    }
 }

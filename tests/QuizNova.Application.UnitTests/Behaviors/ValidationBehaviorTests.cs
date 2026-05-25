@@ -48,7 +48,7 @@ public class ValidationBehaviorTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.Equal(courseResponse.Value, result.Value);
-}
+    }
 
     [Fact]
     public async Task InvokeValidationBehavior_WhenValidatorResultIsNotValid_ShouldReturnListOfErrors()
@@ -71,7 +71,7 @@ public class ValidationBehaviorTests
         Assert.True(result.IsError);
         Assert.Equal("property1", result.TopError.Code);
         Assert.Equal("property1 is invalid", result.TopError.Description);
-}
+    }
 
     [Fact]
     public async Task InvokeValidationBehavior_WhenNoValidator_ShouldInvokeNextBehavior()
@@ -91,5 +91,5 @@ public class ValidationBehaviorTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.Equal(courseResponse.Value, result.Value);
-}
+    }
 }

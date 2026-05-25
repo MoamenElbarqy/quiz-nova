@@ -24,5 +24,5 @@ public class EnrollmentMapperTests
         Assert.Equal(string.Empty, dto.CourseName);
         Assert.Equal(string.Empty, dto.InstructorName);
         Assert.Equal(0, dto.QuizzesCount);
-}
+    }
 }
