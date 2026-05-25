@@ -18,7 +18,7 @@ public static class QuestionMapper
                 QuestionText = mcq.QuestionText,
                 Marks = mcq.Marks,
                 NumberOfChoices = mcq.NumberOfChoices,
-                CorrectChoiceId = mcq.CorrectChoiceId,
+                CorrectChoiceId = mcq.CorrectChoiceId ?? Guid.Empty,
                 Choices = mcq.Choices
                     .OrderBy(choice => choice.DisplayOrder)
                     .Select(choice => new ChoiceDto

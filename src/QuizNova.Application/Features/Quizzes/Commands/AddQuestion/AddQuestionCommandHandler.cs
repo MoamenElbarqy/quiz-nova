@@ -13,6 +13,7 @@ using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
+using QuizNova.Domain.Entities.Quizzes.Questions.ManuallyGradedQuestions;
 
 namespace QuizNova.Application.Features.Quizzes.Commands.AddQuestion;
 
@@ -45,6 +46,7 @@ public sealed class AddQuestionCommandHandler(
         {
             CreateTfCommand tf => CreateTf(tf, displayOrder, request.QuizId),
             CreateMcqCommand mcq => CreateMcq(mcq, displayOrder, request.QuizId),
+            CreateEssayCommand essay => CreateEssay(essay, displayOrder, request.QuizId),
             _ => Error.Unexpected(
                 "Quiz.Question.Unsupported",
                 $"Unsupported question type '{questionCommand.GetType().Name}'."),
@@ -142,5 +144,19 @@ public sealed class AddQuestionCommandHandler(
             choices);
 
         return createQuestionResult.IsError ? createQuestionResult.TopError : createQuestionResult.Value;
+    }
+
+    private static Result<Question> CreateEssay(CreateEssayCommand command, int displayOrder, Guid quizId)
+    {
+        var questionId = Guid.NewGuid();
+        var result = Essay.Create(
+            questionId,
+            quizId,
+            command.QuestionText,
+            command.AnswerReference,
+            displayOrder,
+            command.Marks);
+
+        return result.IsError ? result.TopError : result.Value;
     }
 }

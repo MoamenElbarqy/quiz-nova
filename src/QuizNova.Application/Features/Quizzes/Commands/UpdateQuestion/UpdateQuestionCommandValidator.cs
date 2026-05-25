@@ -51,3 +51,16 @@ public sealed class UpdateTfCommandValidator : AbstractValidator<UpdateTfCommand
         Include(new UpdateQuestionCommandValidator());
     }
 }
+
+public sealed class UpdateEssayCommandValidator : AbstractValidator<UpdateEssayCommand>
+{
+    public UpdateEssayCommandValidator()
+    {
+        Include(new UpdateQuestionCommandValidator());
+
+        RuleFor(x => x.AnswerReference)
+            .MinimumLength(3).WithMessage("Answer reference must be at least 3 characters long.")
+            .MaximumLength(1000).WithMessage("Answer reference must not exceed 1000 characters.")
+            .When(x => !string.IsNullOrWhiteSpace(x.AnswerReference));
+    }
+}

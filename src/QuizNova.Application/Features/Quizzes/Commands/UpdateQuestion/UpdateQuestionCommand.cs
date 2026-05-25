@@ -10,6 +10,7 @@ namespace QuizNova.Application.Features.Quizzes.Commands.UpdateQuestion;
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(UpdateMcqCommand), "mcq")]
 [JsonDerivedType(typeof(UpdateTfCommand), "tf")]
+[JsonDerivedType(typeof(UpdateEssayCommand), "essay")]
 public abstract record UpdateQuestionCommand(
     Guid QuizId,
     Guid QuestionId,
@@ -35,4 +36,13 @@ public sealed record UpdateTfCommand(
     int DisplayOrder,
     int Marks,
     bool CorrectChoice)
+    : UpdateQuestionCommand(QuizId, QuestionId, QuestionText, DisplayOrder, Marks);
+
+public sealed record UpdateEssayCommand(
+    Guid QuizId,
+    Guid QuestionId,
+    string QuestionText,
+    int DisplayOrder,
+    int Marks,
+    string? AnswerReference)
     : UpdateQuestionCommand(QuizId, QuestionId, QuestionText, DisplayOrder, Marks);

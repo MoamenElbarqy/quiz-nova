@@ -1,11 +1,6 @@
 using QuizNova.Application.Features.QuizAttempts.DTOs;
 using QuizNova.Application.Features.Quizzes.Mappers;
 using QuizNova.Domain.Entities.QuizAttempts;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.McqAnswer;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.TrueFalseAnswer;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
 namespace QuizNova.Application.Features.QuizAttempts.Mappers;
@@ -26,10 +21,10 @@ public static class QuizAttemptMapper
             .ToList() ?? [];
 
         var answerDtos = studentAnswers
-            .Select(answer => MapAnswer(answer, questionsById))
+            .Select(answer => answer.ToDto(questionsById))
             .ToList();
 
-        var correctAnswers = answerDtos.Count(answer => answer.IsCorrect);
+        var correctAnswers = answerDtos.OfType<AutoGradedAnswerDto>().Count(answer => answer.IsCorrect);
 
         return new QuizAttemptDto(
             quizAttempt.Id,
@@ -41,50 +36,8 @@ public static class QuizAttemptMapper
             answeredQuestions,
             correctAnswers,
             quizAttempt.Score,
+            quizAttempt.Status.ToString(),
             questionDtos,
             answerDtos);
-    }
-
-    private static QuestionAnswerDto MapAnswer(
-        QuestionAnswer answer,
-        IReadOnlyDictionary<Guid, Question> questionsById)
-    {
-        questionsById.TryGetValue(answer.QuestionId, out var question);
-
-        var questionText = question?.QuestionText ?? string.Empty;
-
-        return answer switch
-        {
-            AutoGradedAnswer autoGradedAnswer => autoGradedAnswer switch
-            {
-                McqAnswer mcqAnswer => new McqAnswerDto(
-                    mcqAnswer.Id,
-                    mcqAnswer.QuestionId,
-                    questionText,
-                    "mcq",
-                    autoGradedAnswer.IsCorrect,
-                    mcqAnswer.SelectedChoiceId),
-
-                TfAnswer tfAnswer => new TfAnswerDto(
-                    tfAnswer.Id,
-                    tfAnswer.QuestionId,
-                    questionText,
-                    "tf",
-                    autoGradedAnswer.IsCorrect,
-                    tfAnswer.StudentChoice),
-
-                _ => throw new InvalidOperationException($"Unknown auto-graded answer type: {answer.GetType().Name}")
-            },
-
-            ManuallyGradedAnswers manuallyGradedAnswer => new ManuallyGradedAnswerDto(
-                manuallyGradedAnswer.Id,
-                manuallyGradedAnswer.QuestionId,
-                questionText,
-                "manual",
-                question is not null && manuallyGradedAnswer.Score.HasValue && manuallyGradedAnswer.Score.Value == question.Marks,
-                manuallyGradedAnswer.Score),
-
-            _ => throw new InvalidOperationException($"Unknown answer type: {answer.GetType().Name}")
-        };
     }
 }

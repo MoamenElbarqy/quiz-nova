@@ -14,7 +14,8 @@ public sealed class UpdateQuestionCommandHandler(
     IAppDbContext dbContext,
     ILogger<UpdateQuestionCommandHandler> logger)
     : IRequestHandler<UpdateMcqCommand, Result<Updated>>,
-      IRequestHandler<UpdateTfCommand, Result<Updated>>
+      IRequestHandler<UpdateTfCommand, Result<Updated>>,
+      IRequestHandler<UpdateEssayCommand, Result<Updated>>
 {
     public async Task<Result<Updated>> Handle(UpdateMcqCommand request, CancellationToken ct)
     {
@@ -22,6 +23,11 @@ public sealed class UpdateQuestionCommandHandler(
     }
 
     public async Task<Result<Updated>> Handle(UpdateTfCommand request, CancellationToken ct)
+    {
+        return await HandleCore(request, ct);
+    }
+
+    public async Task<Result<Updated>> Handle(UpdateEssayCommand request, CancellationToken ct)
     {
         return await HandleCore(request, ct);
     }
@@ -46,6 +52,7 @@ public sealed class UpdateQuestionCommandHandler(
         Guid? correctChoiceId = null;
         bool? tfCorrectChoice = null;
         List<Choice>? choices = null;
+        string? answerReference = null;
 
         switch (request)
         {
@@ -80,6 +87,10 @@ public sealed class UpdateQuestionCommandHandler(
             case UpdateTfCommand tfCmd:
                 tfCorrectChoice = tfCmd.CorrectChoice;
                 break;
+
+            case UpdateEssayCommand essayCmd:
+                answerReference = essayCmd.AnswerReference;
+                break;
         }
 
         var updateResult = quiz.UpdateQuestion(
@@ -89,7 +100,8 @@ public sealed class UpdateQuestionCommandHandler(
             request.Marks,
             correctChoiceId,
             tfCorrectChoice,
-            choices);
+            choices,
+            answerReference);
 
         if (updateResult.IsError)
         {

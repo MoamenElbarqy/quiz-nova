@@ -9,39 +9,42 @@ public abstract record QuestionAnswerDto(
     Guid AnswerId,
     Guid QuestionId,
     string QuestionText,
-    string AnswerType,
-    bool IsCorrect);
+    string AnswerType);
 
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "autoAnswerType")]
+[JsonDerivedType(typeof(McqAnswerDto), "mcq")]
+[JsonDerivedType(typeof(TfAnswerDto), "tf")]
 public abstract record AutoGradedAnswerDto(
     Guid AnswerId,
     Guid QuestionId,
     string QuestionText,
     string AnswerType,
-    bool IsCorrect) : QuestionAnswerDto(AnswerId, QuestionId, QuestionText, AnswerType, IsCorrect);
+    string AutoAnswerType,
+    bool IsCorrect) : QuestionAnswerDto(AnswerId, QuestionId, QuestionText, AnswerType);
 
-[JsonPolymorphic(TypeDiscriminatorPropertyName = "answerType")]
-[JsonDerivedType(typeof(McqAnswerDto), "mcq")]
-[JsonDerivedType(typeof(TfAnswerDto), "tf")]
 public sealed record McqAnswerDto(
     Guid AnswerId,
     Guid QuestionId,
     string QuestionText,
     string AnswerType,
+    string AutoAnswerType,
     bool IsCorrect,
-    Guid SelectedChoiceId) : AutoGradedAnswerDto(AnswerId, QuestionId, QuestionText, AnswerType, IsCorrect);
+    Guid SelectedChoiceId) : AutoGradedAnswerDto(AnswerId, QuestionId, QuestionText, AnswerType, AutoAnswerType, IsCorrect);
 
 public sealed record TfAnswerDto(
     Guid AnswerId,
     Guid QuestionId,
     string QuestionText,
     string AnswerType,
+    string AutoAnswerType,
     bool IsCorrect,
-    bool StudentChoice) : AutoGradedAnswerDto(AnswerId, QuestionId, QuestionText, AnswerType, IsCorrect);
+    bool StudentChoice) : AutoGradedAnswerDto(AnswerId, QuestionId, QuestionText, AnswerType, AutoAnswerType, IsCorrect);
 
 public sealed record ManuallyGradedAnswerDto(
     Guid AnswerId,
     Guid QuestionId,
     string QuestionText,
     string AnswerType,
-    bool IsCorrect,
-    int? Score) : QuestionAnswerDto(AnswerId, QuestionId, QuestionText, AnswerType, IsCorrect);
+    int? Score,
+    string StudentResponse,
+    string? Feedback) : QuestionAnswerDto(AnswerId, QuestionId, QuestionText, AnswerType);

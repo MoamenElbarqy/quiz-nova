@@ -24,3 +24,8 @@ public sealed record SubmitTfAnswerCommand(
     Guid QuestionId,
     bool StudentChoice)
     : SubmitQuestionAnswerCommand(QuestionId);
+
+public sealed record SubmitEssayAnswerCommand(
+    Guid QuestionId,
+    string StudentResponse)
+    : SubmitQuestionAnswerCommand(QuestionId);
