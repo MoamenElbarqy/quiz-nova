@@ -11,5 +11,5 @@ public sealed record GetAdminByIdQuery(Guid Id)
 
     public string[] Tags => ["admins"];
 
-    public TimeSpan Expiration => throw new NotImplementedException();
+    public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 }
