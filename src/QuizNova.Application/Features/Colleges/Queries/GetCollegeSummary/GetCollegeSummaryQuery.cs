@@ -4,7 +4,7 @@ using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Application.Features.Colleges.Queries.GetCollegeSummary;
 
-public sealed record GetCollegeSummaryQuery() : ICachedQuery<Result<CollegeSummaryDto>>
+public sealed record GetCollegeSummaryQuery : ICachedQuery<Result<CollegeSummaryDto>>
 {
     public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 
