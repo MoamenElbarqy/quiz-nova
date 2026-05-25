@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Enrollments;
 using QuizNova.Domain.Entities.QuizAttempts;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
@@ -31,6 +32,8 @@ public interface IAppDbContext
     public DbSet<Student> Students { get; }
 
     public DbSet<Admin> Admins { get; }
+
+    public DbSet<ManuallyGradedAnswers> ManuallyGradedAnswers { get; }
 
     public DbSet<Enrollment> Enrollments { get; }
 

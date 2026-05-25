@@ -165,6 +165,11 @@ public static class ApplicationErrors
             code: "QuizAttempt.NotFound",
             description: $"Quiz attempt with ID '{attemptId}' was not found.");
 
+    public static Error AnswerNotFound(Guid answerId) =>
+        Error.NotFound(
+            code: "Answer.NotFound",
+            description: $"Answer with ID '{answerId}' was not found.");
+
     public static Error CourseNotFound(Guid courseId) =>
         Error.NotFound(
             code: "Course.NotFound",

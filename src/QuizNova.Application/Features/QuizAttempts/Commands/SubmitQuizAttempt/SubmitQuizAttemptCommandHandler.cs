@@ -12,6 +12,7 @@ using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
+using QuizNova.Domain.Entities.Quizzes.Questions.ManuallyGradedQuestions;
 
 namespace QuizNova.Application.Features.QuizAttempts.Commands.SubmitQuizAttempt;
 
@@ -114,12 +115,17 @@ public sealed class SubmitQuizAttemptCommandHandler(
                     mcqQuestion.Solve(mcqAnswer.SelectedChoiceId, studentId, quizAttemptId),
                 (Tf tfQuestion, SubmitTfAnswerCommand tfAnswer) =>
                     tfQuestion.Solve(tfAnswer.StudentChoice, studentId, quizAttemptId),
+                (Essay essayQuestion, SubmitEssayAnswerCommand essayAnswer) =>
+                    essayQuestion.Solve(essayAnswer.StudentResponse, studentId, quizAttemptId),
                 (Mcq, _) => Error.Unexpected(
                     "QuizAttempt.Answer.AnswerTypeMismatch",
                     $"Question {answer.QuestionId} is an MCQ question but the submitted answer is not an MCQ answer."),
                 (Tf, _) => Error.Unexpected(
                     "QuizAttempt.Answer.AnswerTypeMismatch",
                     $"Question {answer.QuestionId} is a True/False question but the submitted answer is not a True/False answer."),
+                (Essay, _) => Error.Unexpected(
+                    "QuizAttempt.Answer.AnswerTypeMismatch",
+                    $"Question {answer.QuestionId} is an Essay question but the submitted answer is not an Essay answer."),
                 _ => Error.Unexpected(
                     "QuizAttempt.Answer.Unsupported",
                     $"Question {answer.QuestionId} has an unsupported question type."),

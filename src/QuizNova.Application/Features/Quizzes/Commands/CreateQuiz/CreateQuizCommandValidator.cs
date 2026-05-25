@@ -33,6 +33,7 @@ public sealed class CreateQuizCommandValidator : AbstractValidator<CreateQuizCom
             {
                 CreateMcqCommand mcq => new CreateMcqCommandValidator().Validate(mcq),
                 CreateTfCommand tf => new CreateTfCommandValidator().Validate(tf),
+                CreateEssayCommand essay => new CreateEssayCommandValidator().Validate(essay),
                 _ => null,
             };
 
@@ -88,6 +89,19 @@ public sealed class CreateTfCommandValidator : AbstractValidator<CreateTfCommand
     public CreateTfCommandValidator()
     {
         Include(new CreateQuestionCommandValidator());
+    }
+}
+
+public sealed class CreateEssayCommandValidator : AbstractValidator<CreateEssayCommand>
+{
+    public CreateEssayCommandValidator()
+    {
+        Include(new CreateQuestionCommandValidator());
+
+        RuleFor(x => x.AnswerReference)
+            .MinimumLength(3).WithMessage("Answer reference must be at least 3 characters long.")
+            .MaximumLength(1000).WithMessage("Answer reference must not exceed 1000 characters.")
+            .When(x => !string.IsNullOrWhiteSpace(x.AnswerReference));
     }
 }
 

@@ -12,7 +12,27 @@ public sealed class AddQuestionCommandValidator : AbstractValidator<AddQuestionC
             .NotEmpty().WithMessage("Quiz ID is required.");
 
         RuleFor(x => x.Question)
-            .NotNull().WithMessage("Question is required.")
-            .SetValidator(new CreateQuestionCommandValidator());
+            .NotNull().WithMessage("Question is required.");
+
+        RuleFor(x => x.Question).Custom((question, ctx) =>
+        {
+            var validationResult = question switch
+            {
+                CreateMcqCommand mcq => new CreateMcqCommandValidator().Validate(mcq),
+                CreateTfCommand tf => new CreateTfCommandValidator().Validate(tf),
+                CreateEssayCommand essay => new CreateEssayCommandValidator().Validate(essay),
+                _ => null,
+            };
+
+            if (validationResult is null)
+            {
+                return;
+            }
+
+            foreach (var failure in validationResult.Errors)
+            {
+                ctx.AddFailure(failure);
+            }
+        });
     }
 }
