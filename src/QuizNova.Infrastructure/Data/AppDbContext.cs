@@ -1,4 +1,5 @@
 using MediatR;
+
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,7 @@ using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers.EssayAnswer;
 using QuizNova.Domain.Entities.Quizzes;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Users;
@@ -57,7 +59,41 @@ public class AppDbContext(
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         await DispatchDomainEventsAsync(ct);
-        return await base.SaveChangesAsync(ct);
+
+        var addedMcqEntries = ChangeTracker.Entries<Mcq>()
+            .Where(e => e.State == EntityState.Added)
+            .ToList();
+
+        if (addedMcqEntries.Count == 0)
+        {
+            return await base.SaveChangesAsync(ct);
+        }
+
+        var mcqInfos = addedMcqEntries.Select(entry => new
+        {
+            Entry = entry,
+            entry.Entity.CorrectChoiceId,
+            CorrectChoice = entry.Reference(q => q.CorrectChoice).CurrentValue,
+        }).ToList();
+
+        foreach (var info in mcqInfos)
+        {
+            info.Entry.Property(q => q.CorrectChoiceId).CurrentValue = null;
+            info.Entry.Reference(q => q.CorrectChoice).CurrentValue = null;
+        }
+
+        var result = await base.SaveChangesAsync(ct);
+
+        foreach (var info in mcqInfos)
+        {
+            info.Entry.Property(q => q.CorrectChoiceId).CurrentValue = info.CorrectChoiceId;
+            info.Entry.Reference(q => q.CorrectChoice).CurrentValue = info.CorrectChoice;
+            info.Entry.State = EntityState.Modified;
+        }
+
+        await base.SaveChangesAsync(ct);
+
+        return result;
     }
 
     protected override void OnModelCreating(ModelBuilder builder)

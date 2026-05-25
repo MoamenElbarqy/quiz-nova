@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using QuizNova.Infrastructure.Data;
@@ -11,9 +12,11 @@ using QuizNova.Infrastructure.Data;
 namespace QuizNova.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260522224732_AddFeedbackAndGradedAtToManuallyGradedAnswers")]
+    partial class AddFeedbackAndGradedAtToManuallyGradedAnswers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -490,7 +493,7 @@ namespace QuizNova.Infrastructure.Data.Migrations
                 {
                     b.HasBaseType("QuizNova.Domain.Entities.Quizzes.Questions.Base.Question");
 
-                    b.Property<Guid?>("CorrectChoiceId")
+                    b.Property<Guid>("CorrectChoiceId")
                         .HasColumnType("uuid");
 
                     b.HasIndex("CorrectChoiceId");
@@ -828,7 +831,8 @@ namespace QuizNova.Infrastructure.Data.Migrations
                     b.HasOne("QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices.Choice", "CorrectChoice")
                         .WithMany()
                         .HasForeignKey("CorrectChoiceId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("QuizNova.Domain.Entities.Quizzes.Questions.Base.Question", null)
                         .WithOne()

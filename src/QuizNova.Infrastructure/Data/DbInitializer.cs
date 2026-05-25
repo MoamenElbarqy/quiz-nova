@@ -3,9 +3,6 @@ using Microsoft.EntityFrameworkCore;
 
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
-using QuizNova.Domain.Entities.Enrollments;
-using QuizNova.Domain.Entities.QuizAttempts;
-using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Users.Admins;
 using QuizNova.Domain.Entities.Users.Instructors;
 using QuizNova.Domain.Entities.Users.Student;
@@ -156,8 +153,8 @@ public sealed class DbInitializer(
                     "Backend Fundamentals",
                     minimumPassingMarks: 50,
                     maximumMarks: 100,
-                    quizzes: new List<Quiz>(),
-                    enrollments: new List<Enrollment>()),
+                    quizzes: [],
+                    enrollments: []),
                 "course one"),
             EnsureSuccess(
                 Course.Create(
@@ -165,8 +162,8 @@ public sealed class DbInitializer(
                     "Frontend Fundamentals",
                     minimumPassingMarks: 50,
                     maximumMarks: 100,
-                    quizzes: new List<Quiz>(),
-                    enrollments: new List<Enrollment>()),
+                    quizzes: [],
+                    enrollments: []),
                 "course two"),
         ];
     }
@@ -190,8 +187,8 @@ public sealed class DbInitializer(
             Student.Create(
                 studentId,
                 personalInfo,
-                new List<Enrollment>(),
-                new List<QuizAttempt>()),
+                [],
+                []),
             name);
 
         await dbContext.Students.AddAsync(student, ct);

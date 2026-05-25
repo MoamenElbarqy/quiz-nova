@@ -20,6 +20,7 @@ public sealed class McqConfiguration : IEntityTypeConfiguration<Mcq>
         builder.HasOne(q => q.CorrectChoice)
             .WithMany()
             .HasForeignKey(q => q.CorrectChoiceId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -5,9 +5,9 @@ using QuizNova.Domain.Entities.Quizzes.Questions.ManuallyGradedQuestions;
 
 namespace QuizNova.Infrastructure.Data.Configurations;
 
-public sealed class ManuallyGradedQuestionConfiguration : IEntityTypeConfiguration<ManuallyGradedQuestion>
+public sealed class ManuallyGradedQuestionConfiguration : IEntityTypeConfiguration<ManuallyGradedQuestion<string>>
 {
-    public void Configure(EntityTypeBuilder<ManuallyGradedQuestion> builder)
+    public void Configure(EntityTypeBuilder<ManuallyGradedQuestion<string>> builder)
     {
         builder.ToTable("ManuallyGradedQuestions");
 
