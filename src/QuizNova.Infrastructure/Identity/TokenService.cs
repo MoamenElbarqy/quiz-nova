@@ -2,8 +2,10 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Auth.DTOs;
@@ -57,7 +59,7 @@ public sealed class TokenService(AppDbContext dbContext, IOptions<JwtSettings> j
         {
             Id = Guid.NewGuid(),
             Token = refreshTokenValue,
-            UserId = user.UserId,
+            UserId = user.Id,
             ExpiresOnUtc = refreshTokenExpiresOnUtc,
         };
 
@@ -122,19 +124,12 @@ public sealed class TokenService(AppDbContext dbContext, IOptions<JwtSettings> j
 
     private static IList<Claim> BuildClaims(UserDto user)
     {
-        var additionalClaims = user.Claims
-            .Where(c => c.Type is not (ClaimTypes.NameIdentifier or ClaimTypes.Name or ClaimTypes.Role))
-            .ToList();
-
-        var claims = new List<Claim>(additionalClaims.Count + 3)
+        return new List<Claim>(3)
         {
-            new(ClaimTypes.NameIdentifier, user.UserId),
+            new(ClaimTypes.NameIdentifier, user.Id),
             new(ClaimTypes.Name, user.Name),
             new(ClaimTypes.Role, user.Role),
         };
-
-        claims.AddRange(additionalClaims);
-        return claims;
     }
 
     private static string GenerateSecureRefreshToken()
