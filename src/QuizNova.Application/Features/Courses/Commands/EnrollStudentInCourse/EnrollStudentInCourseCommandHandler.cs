@@ -46,6 +46,8 @@ public sealed class EnrollStudentInCourseCommandHandler(
             return enrollmentResult.TopError;
         }
 
+        await dbContext.Enrollments.AddAsync(enrollmentResult.Value, ct);
+
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("Successfully enrolled student {StudentId} in course {CourseId}", request.StudentId,
