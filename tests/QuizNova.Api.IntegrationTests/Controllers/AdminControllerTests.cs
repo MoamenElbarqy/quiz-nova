@@ -59,7 +59,8 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
     public async Task GetAllAdmins_WithValidAdmin_ReturnsAdmins()
     {
         // Arrange
-        using var client = await CreateAuthenticatedClientAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        using var client = factory.CreateAppHttpClient();
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
 
         // Act
         var response = await client.GetAsync("/admins");
@@ -69,7 +70,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
 
         var paginatedAdmins = await response.Content.ReadFromJsonAsync<PaginatedList<AdminDto>>();
         paginatedAdmins.Should().NotBeNull();
-        paginatedAdmins!.Items.Should().NotBeEmpty();
+        paginatedAdmins.Items.Should().NotBeEmpty();
         paginatedAdmins.Items.Should().Contain(a => a.Email == TestUsers.Admin.User.Email);
     }
 
@@ -134,6 +135,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
         // Arrange
         using var client = factory.CreateAppHttpClient();
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+
         var request = new CreateAdminRequest(
             "New Admin",
             "newadmin@quiznova.local",
@@ -263,5 +265,4 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
-
 }
