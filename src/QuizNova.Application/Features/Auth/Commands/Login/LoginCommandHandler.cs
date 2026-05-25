@@ -1,5 +1,3 @@
-using System.Security.Claims;
-
 using MediatR;
 
 using Microsoft.Extensions.Logging;
@@ -33,12 +31,8 @@ public sealed class LoginCommandHandler(
             return tokenResult.Errors;
         }
 
-        var user = userResult.Value;
-        var userName = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value ?? user.Name;
-        var userRole = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? user.Role;
-
         return new AuthDto(
             tokenResult.Value,
-            new UserDto(user.UserId, userName, userRole, user.Claims.ToList()));
+            userResult.Value);
     }
 }

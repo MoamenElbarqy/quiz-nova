@@ -51,7 +51,7 @@ public class AuthController(ISender sender) : ApiController
         var refreshToken = Request.Cookies[RefreshTokenCookieName];
         if (string.IsNullOrWhiteSpace(refreshToken))
         {
-            return Problem([ApplicationErrors.InvalidRefreshToken]);
+            return Problem([ApplicationErrors.MissingRefreshToken]);
         }
 
         var refreshResult = await sender.Send(new RefreshTokenCommand(refreshToken, request.ExpiredAccessToken));

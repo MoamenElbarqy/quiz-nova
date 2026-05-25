@@ -4,15 +4,23 @@ namespace QuizNova.Application.Common.Errors;
 
 public static class ApplicationErrors
 {
-    public static readonly Error InvalidRefreshToken = Error.Unauthorized(
-        code: "Auth.RefreshToken.Invalid",
-        description: "Refresh token is invalid or has expired.");
+    public static readonly Error MissingRefreshToken = Error.Validation(
+        code: "Auth.RefreshToken.Missing",
+        description: "Refresh token is missing from the request.");
 
-    public static readonly Error ExpiredAccessTokenInvalid = Error.Conflict(
+    public static readonly Error InvalidRefreshToken = Error.NotFound(
+        code: "Auth.RefreshToken.Invalid",
+        description: "Refresh token is invalid or does not exist.");
+
+    public static readonly Error ExpiredOrRevokedRefreshToken = Error.Forbidden(
+        code: "Auth.RefreshToken.ExpiredOrRevoked",
+        description: "Refresh token has expired or has been revoked.");
+
+    public static readonly Error ExpiredAccessTokenInvalid = Error.Validation(
         code: "Auth.ExpiredAccessToken.Invalid",
         description: "Expired access token is not valid.");
 
-    public static readonly Error UserIdClaimInvalid = Error.Conflict(
+    public static readonly Error UserIdClaimInvalid = Error.Validation(
         code: "Auth.UserIdClaim.Invalid",
         description: "Invalid userId claim.");
 

@@ -1,6 +1,6 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Auth.DTOs;
@@ -33,14 +33,7 @@ public sealed class IdentityService(
 
         var name = await GetUserNameAsync(appUser.Id);
 
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, appUser.Id),
-            new(ClaimTypes.Name, name),
-            new(ClaimTypes.Role, role),
-        };
-
-        return new UserDto(appUser.Id, name, role, claims);
+        return new UserDto(appUser.Id, name, role);
     }
 
     public async Task<Result<string>> RegisterUserAsync(
@@ -92,14 +85,7 @@ public sealed class IdentityService(
 
         var name = await GetUserNameAsync(appUser.Id);
 
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, appUser.Id),
-            new(ClaimTypes.Name, name),
-            new(ClaimTypes.Role, role),
-        };
-
-        return new UserDto(appUser.Id, name, role, claims);
+        return new UserDto(appUser.Id, name, role);
     }
 
     public async Task<string> GetUserNameAsync(string userId)
@@ -137,9 +123,14 @@ public sealed class IdentityService(
         var storedRefreshToken = await dbContext.UserRefreshTokens
             .FirstOrDefaultAsync(rt => rt.Token == refreshToken && rt.UserId == userId, ct);
 
-        if (storedRefreshToken is null || !storedRefreshToken.IsActive)
+        if (storedRefreshToken is null)
         {
             return ApplicationErrors.InvalidRefreshToken;
+        }
+
+        if (!storedRefreshToken.IsActive)
+        {
+            return ApplicationErrors.ExpiredOrRevokedRefreshToken;
         }
 
         storedRefreshToken.RevokedOnUtc = DateTimeOffset.UtcNow;
