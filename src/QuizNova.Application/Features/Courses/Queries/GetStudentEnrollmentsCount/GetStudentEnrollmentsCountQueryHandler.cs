@@ -8,14 +8,14 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Domain.Common.Results;
 
-namespace QuizNova.Application.Features.Courses.Queries.GetEnrollmentsCount;
+namespace QuizNova.Application.Features.Courses.Queries.GetStudentEnrollmentsCount;
 
-public sealed class GetEnrollmentsCountQueryHandler(
+public sealed class GetStudentEnrollmentsCountQueryHandler(
     IAppDbContext dbContext,
-    ILogger<GetEnrollmentsCountQueryHandler> logger)
-    : IRequestHandler<GetEnrollmentsCountQuery, Result<CoursesCountDto>>
+    ILogger<GetStudentEnrollmentsCountQueryHandler> logger)
+    : IRequestHandler<GetStudentEnrollmentsCountQuery, Result<CoursesCountDto>>
 {
-    public async Task<Result<CoursesCountDto>> Handle(GetEnrollmentsCountQuery request, CancellationToken ct)
+    public async Task<Result<CoursesCountDto>> Handle(GetStudentEnrollmentsCountQuery request, CancellationToken ct)
     {
         logger.LogInformation("Retrieving enrolled courses count for student with ID: {StudentId}", request.StudentId);
 
@@ -31,7 +31,8 @@ public sealed class GetEnrollmentsCountQueryHandler(
         var courseCount = await dbContext.Enrollments
             .CountAsync(enrollment => enrollment.StudentId == request.StudentId, ct);
 
-        logger.LogInformation("Successfully retrieved enrolled courses count for student {StudentId}: {Count}", request.StudentId, courseCount);
+        logger.LogInformation("Successfully retrieved enrolled courses count for student {StudentId}: {Count}",
+            request.StudentId, courseCount);
 
         return new CoursesCountDto(courseCount);
     }

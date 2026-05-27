@@ -2,9 +2,9 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Domain.Common.Results;
 
-namespace QuizNova.Application.Features.Courses.Queries.GetEnrollmentsCount;
+namespace QuizNova.Application.Features.Courses.Queries.GetStudentEnrollmentsCount;
 
-public sealed record GetEnrollmentsCountQuery(Guid StudentId)
+public sealed record GetStudentEnrollmentsCountQuery(Guid StudentId)
     : ICachedQuery<Result<CoursesCountDto>>
 {
     public string CacheKey => $"courses:student:{StudentId}:count";
