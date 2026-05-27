@@ -74,6 +74,25 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
         paginatedAdmins.Items.Should().Contain(a => a.Email == TestUsers.Admin.User.Email);
     }
 
+    [Theory]
+    [InlineData(0, 10)]
+    [InlineData(-5, 10)]
+    [InlineData(1, 0)]
+    [InlineData(1, -10)]
+    [InlineData(1, 101)]
+    public async Task GetAllAdmins_WithInvalidQuery_ReturnsBadRequest(int pageNumber, int pageSize)
+    {
+        // Arrange
+        using var client = factory.CreateAppHttpClient();
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+
+        // Act
+        var response = await client.GetAsync($"/admins?PageNumber={pageNumber}&PageSize={pageSize}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
     [Fact]
     public async Task GetAdminById_WithValidId_ReturnsAdmin()
     {

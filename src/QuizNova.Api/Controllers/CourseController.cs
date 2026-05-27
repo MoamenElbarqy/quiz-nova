@@ -14,13 +14,16 @@ using QuizNova.Application.Features.Courses.Commands.UpdateCourseInstructor;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Application.Features.Courses.Queries.GetAllCourses;
 using QuizNova.Application.Features.Courses.Queries.GetCourseById;
-using QuizNova.Application.Features.Courses.Queries.GetEnrollmentsCount;
 using QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesCount;
+using QuizNova.Application.Features.Courses.Queries.GetStudentEnrollmentsCount;
+using QuizNova.Domain.Entities.Identity;
 
 namespace QuizNova.Api.Controllers;
 
 [ApiController]
 [Authorize]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
 public sealed class CourseController(ISender sender) : ApiController
 {
     [EndpointSummary("Retrieves courses.")]
@@ -28,6 +31,9 @@ public sealed class CourseController(ISender sender) : ApiController
     [EndpointName("GetCourses")]
     [HttpGet("courses")]
     [OutputCache(Tags = ["courses"])]
+    [Authorize(Roles = nameof(UserRole.Admin))]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<PaginatedList<CourseDto>>> GetCourses([FromQuery] GetAllCoursesQuery query)
     {
         var result = await sender.Send(query);
@@ -39,6 +45,7 @@ public sealed class CourseController(ISender sender) : ApiController
     [EndpointName("GetCoursesCount")]
     [HttpGet("courses/count")]
     [OutputCache(Tags = ["courses"])]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<CoursesCountDto>> GetCoursesCount(
         [FromQuery] Guid? instructorId = null,
         [FromQuery] Guid? studentId = null)
@@ -51,7 +58,7 @@ public sealed class CourseController(ISender sender) : ApiController
 
         if (studentId.HasValue)
         {
-            var result = await sender.Send(new GetEnrollmentsCountQuery(studentId.Value));
+            var result = await sender.Send(new GetStudentEnrollmentsCountQuery(studentId.Value));
             return result.Match(Ok, Problem);
         }
 
@@ -60,7 +67,7 @@ public sealed class CourseController(ISender sender) : ApiController
 
     [HttpGet("courses/{id:guid}")]
     [OutputCache(Tags = ["courses"])]
-    [ProducesResponseType(typeof(CourseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Retrieves a course by its unique identifier.")]
     [EndpointDescription("Fetches the details of a specific course using its ID.")]
@@ -72,7 +79,8 @@ public sealed class CourseController(ISender sender) : ApiController
     }
 
     [HttpPost("courses")]
-    [ProducesResponseType(typeof(CourseDto), StatusCodes.Status200OK)]
+    [Authorize(Roles = nameof(UserRole.Instructor))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [EndpointSummary("Creates a course.")]
     [EndpointDescription("Creates a course with an optional instructor assignment.")]
@@ -90,7 +98,9 @@ public sealed class CourseController(ISender sender) : ApiController
     }
 
     [HttpPatch("courses/{courseId:guid}/instructor")]
-    [ProducesResponseType(typeof(CourseDto), StatusCodes.Status200OK)]
+    [Authorize(Roles = nameof(UserRole.Admin))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Updates a course instructor.")]
     [EndpointDescription("Assigns or clears the instructor for a course.")]
@@ -104,7 +114,10 @@ public sealed class CourseController(ISender sender) : ApiController
     }
 
     [HttpPost("courses/{courseId:guid}/students/{studentId:guid}")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Enrolls a student in a course.")]
     [EndpointDescription("Creates a course enrollment for the specified student.")]
@@ -119,7 +132,10 @@ public sealed class CourseController(ISender sender) : ApiController
     }
 
     [HttpDelete("courses/{courseId:guid}/students/{studentId:guid}")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Removes a student from a course.")]
     [EndpointDescription("Deletes a course enrollment for the specified student.")]
@@ -131,7 +147,10 @@ public sealed class CourseController(ISender sender) : ApiController
     }
 
     [HttpDelete("courses/{id:guid}")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Deletes a course by its unique identifier.")]
     [EndpointDescription("Removes a course from the database using its ID.")]

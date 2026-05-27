@@ -28,6 +28,11 @@ public abstract class ManuallyGradedAnswers : QuestionAnswer
 
     public Result<Updated> Grade(int score, string? feedback = null)
     {
+        if (IsGraded)
+        {
+            return ManuallyGradedAnswerErrors.AlreadyGraded;
+        }
+
         if (score < 0)
         {
             return ManuallyGradedAnswerErrors.NegativeScore;
@@ -65,4 +70,3 @@ public abstract class ManuallyGradedAnswers : QuestionAnswer
         return Result.Updated;
     }
 }
-

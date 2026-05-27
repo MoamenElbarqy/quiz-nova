@@ -4,6 +4,9 @@ namespace QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
 
 public static class ManuallyGradedAnswerErrors
 {
+    public static readonly Error AlreadyGraded =
+        Error.Conflict("ManuallyGradedAnswer.AlreadyGraded", "This answer has already been graded.");
+
     public static readonly Error NegativeScore =
         Error.Validation("ManuallyGradedAnswer.Score.Negative", "Score cannot be negative.");
 
