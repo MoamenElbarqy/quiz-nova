@@ -13,6 +13,8 @@ namespace QuizNova.Api.Controllers;
 [ApiController]
 [Route("colleges")]
 [Authorize(Roles = nameof(UserRole.Admin))]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
 public sealed class CollegeController(ISender sender) : ApiController
 {
     [HttpGet]
@@ -20,9 +22,8 @@ public sealed class CollegeController(ISender sender) : ApiController
     [EndpointDescription("Returns aggregate college information intended for administrative dashboards.")]
     [EndpointName("GetCollegeSummary")]
     [OutputCache(Tags = ["colleges"])]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(CollegeSummaryDto))]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(CollegeSummaryDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetSummary()
     {
         var result = await sender.Send(new GetCollegeSummaryQuery());

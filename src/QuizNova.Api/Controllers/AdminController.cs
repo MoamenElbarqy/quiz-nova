@@ -19,6 +19,8 @@ namespace QuizNova.Api.Controllers;
 [ApiController]
 [Route("admins")]
 [Authorize(Roles = nameof(UserRole.Admin))]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
 public sealed class AdminController(ISender sender) : ApiController
 {
     [EndpointSummary("Retrieves all admins.")]
@@ -28,9 +30,7 @@ public sealed class AdminController(ISender sender) : ApiController
     [OutputCache(Tags = ["admins"])]
     [ProducesResponseType(typeof(PaginatedList<AdminDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAllAdmins([FromQuery] GetAllAdminsQuery query)
     {
         var result = await sender.Send(query);
@@ -47,10 +47,8 @@ public sealed class AdminController(ISender sender) : ApiController
     [OutputCache(Tags = ["admins"])]
     [ProducesResponseType(typeof(AdminDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAdminById([FromRoute] Guid id)
     {
         var result = await sender.Send(new GetAdminByIdQuery(id));
@@ -66,10 +64,8 @@ public sealed class AdminController(ISender sender) : ApiController
     [HttpPost]
     [ProducesResponseType(typeof(AdminDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminRequest request)
     {
         var command = new CreateAdminCommand(
@@ -92,11 +88,9 @@ public sealed class AdminController(ISender sender) : ApiController
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(AdminDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateAdmin([FromRoute] Guid id, [FromBody] UpdateAdminRequest request)
     {
         var command = new UpdateAdminCommand(
@@ -118,10 +112,8 @@ public sealed class AdminController(ISender sender) : ApiController
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> DeleteAdmin([FromRoute] Guid id)
     {
         var result = await sender.Send(new DeleteAdminCommand(id));
