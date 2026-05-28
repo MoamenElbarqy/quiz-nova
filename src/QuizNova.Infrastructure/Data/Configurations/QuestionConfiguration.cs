@@ -21,5 +21,10 @@ public sealed class QuestionConfiguration : IEntityTypeConfiguration<Question>
 
         builder.Property(q => q.DisplayOrder)
             .IsRequired();
+
+        builder.HasOne(q => q.Quiz)
+            .WithMany(q => q.Questions)
+            .HasForeignKey(q => q.QuizId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
