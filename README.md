@@ -2,50 +2,84 @@
 
 # 🚀 QuizNova
 
-**Quiz Management System**
+**Full-Stack Quiz Management System**
 
 Built with **.NET 10** · **Angular 21** · **PostgreSQL**
-
-[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-Click_Here-00C896?style=for-the-badge)](https://your-live-demo-url.com)
 
 [![.NET](https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet)](https://dotnet.microsoft.com/)
 [![Angular](https://img.shields.io/badge/Angular-21-DD0031?style=flat-square&logo=angular)](https://angular.dev/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/your-username/QuizNova/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/your-username/QuizNova/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/MoamenElbarqy/quiz-nova/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/MoamenElbarqy/quiz-nova/actions)
 
 </div>
 
 ---
 
-## 📸 Application Screenshots
+## 📑 Table of Contents
 
-### API Documentation — Swagger & Scalar
+- [📸 Screenshots](#-screenshots)
+- [🏗️ Architecture Overview](#️-architecture-overview)
+- [✨ Key Features](#-key-features)
+- [⚙️ Technical Deep Dives](#️-technical-deep-dives)
+  - [🧩 Polymorphic Question & Answer System](#-polymorphic-question--answer-system)
+  - [⚡ Caching Pipeline & Event-Driven Invalidation](#-caching-pipeline--event-driven-invalidation)
+  - [Eliminating Data Clumps with Value Objects](#eliminating-data-clumps-with-value-objects)
+  - [Overcoming Angular Dynamic Component Limitations](#overcoming-angular-dynamic-component-limitations)
+- [🖥️ Frontend Architecture](#️-frontend-architecture)
+- [🔍 Code Quality & Consistency](#-code-quality--consistency)
+- [🛠️ Tech Stack](#️-tech-stack)
+- [🧪 Testing Strategy](#-testing-strategy)
+- [🚦 Getting Started](#-getting-started)
+- [🔄 CI/CD Pipeline](#-cicd-pipeline)
+- [📁 Project Structure](#-project-structure)
+
+---
+
+## 📸 Screenshots
+
+### 🗄️ Relational Schema
+
+<div align="center">
+  <img src="docs/images/relational-schema.png" alt="QuizNova Relational Schema" width="70%"/>
+  <p><em>Full database relational schema — Colleges, Courses, Users, Quizzes, Questions, Attempts &amp; Answers</em></p>
+</div>
+
+---
+
+### 🔌 REST API — Swagger Endpoint Explorer
 
 <table>
   <tr>
     <td width="50%">
-      <img src="docs/images/swagger-overview.png" alt="Swagger API Overview" width="100%"/>
-      <p align="center"><em>Swagger — API Overview</em></p>
+      <img src="docs/images/swagger/swagger-admin-auth-college.png" alt="Swagger — Admin, Auth & College endpoints" width="100%"/>
+      <p align="center"><em>Admin · Auth · College endpoints</em></p>
     </td>
     <td width="50%">
-      <img src="docs/images/swagger-endpoints.png" alt="Swagger Endpoints" width="100%"/>
-      <p align="center"><em>Swagger — Endpoint Details</em></p>
+      <img src="docs/images/swagger/swagger-course-grading.png" alt="Swagger — Course & Grading endpoints" width="100%"/>
+      <p align="center"><em>Course · Grading endpoints</em></p>
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <img src="docs/images/scalar-overview.png" alt="Scalar API Reference" width="100%"/>
-      <p align="center"><em>Scalar — API Reference</em></p>
+      <img src="docs/images/swagger/swagger-instructor-attempts.png" alt="Swagger — Instructor & QuizAttempt endpoints" width="100%"/>
+      <p align="center"><em>Instructor · QuizAttempt endpoints</em></p>
     </td>
     <td width="50%">
-      <img src="docs/images/scalar-endpoints.png" alt="Scalar Endpoint Details" width="100%"/>
-      <p align="center"><em>Scalar — Endpoint Details</em></p>
+      <img src="docs/images/swagger/swagger-quiz-student.png" alt="Swagger — Quiz & Student endpoints" width="100%"/>
+      <p align="center"><em>Quiz · Student endpoints</em></p>
     </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="docs/images/swagger/swagger-quiz-student-2.png" alt="Swagger — Quiz & Student endpoints (continued)" width="100%"/>
+      <p align="center"><em>Quiz · Student endpoints (cont.)</em></p>
+    </td>
+    <td width="50%"></td>
   </tr>
 </table>
 
-### Frontend — Application Pages
+### 🖥️ Application Pages
 
 <table>
   <tr>
@@ -74,7 +108,7 @@ Built with **.NET 10** · **Angular 21** · **PostgreSQL**
 
 ## 🏗️ Architecture Overview
 
-QuizNova is built on a **Modular Monolith** foundation following strict **Clean Architecture** principles. Every layer has a single responsibility and dependencies always point inward.
+QuizNova is built on **Clean Architecture** — every layer has a single responsibility and all dependencies point inward, keeping the domain pure and independently testable.
 
 ```
 ┌────────────────────────────────────────────────────────┐
@@ -83,68 +117,41 @@ QuizNova is built on a **Modular Monolith** foundation following strict **Clean 
 ├────────────────────────────────────────────────────────┤
 │                    Application                         │
 │       Commands / Queries (CQRS)  ·  MediatR            │
-│       FluentValidation  ·  Mapping                     │
+│   FluentValidation  ·  Pipeline Behaviours             │
+│   Caching  ·  Logging  ·  Exception Handling           │
 ├────────────────────────────────────────────────────────┤
 │                      Domain                            │
 │     Enriched Entities  ·  Value Objects                │
 │     Result Pattern  ·  Domain Events                   │
 ├────────────────────────────────────────────────────────┤
 │                   Infrastructure                       │
-│       EF Core  ·  PostgreSQL  ·  JWT Auth              │
-│       OpenTelemetry  ·  Serilog  ·  Seq                │
+│   EF Core  ·  PostgreSQL  ·  ASP.NET Core Identity     │
+│   Hybrid Cache  ·  JWT Auth  ·  Refresh Tokens         │
+│   OpenTelemetry  ·  Serilog  ·  Seq                    │
 └────────────────────────────────────────────────────────┘
 ```
 
-### Clean Architecture + CQRS + MediatR
-
-All application logic flows through the **MediatR** pipeline. Commands and Queries are separated (CQRS) to ensure clear intent and enable independent optimization of read and write paths.
-
-```mermaid
-flowchart LR
-    A["HTTP Request"] --> B["Controller"]
-    B --> C["MediatR"]
-    C --> D["Command / Query Handler"]
-    D --> E["Domain"]
-    E --> F["Result&lt;T&gt;"]
-
-    style A fill:#3b82f6,color:#fff,stroke:none
-    style B fill:#6366f1,color:#fff,stroke:none
-    style C fill:#8b5cf6,color:#fff,stroke:none
-    style D fill:#a855f7,color:#fff,stroke:none
-    style E fill:#d946ef,color:#fff,stroke:none
-    style F fill:#10b981,color:#fff,stroke:none
-```
-
-- **Commands** mutate state and return semantic results (`Result<Created>`, `Result<Updated>`, `Result<Deleted>`).
-- **Queries** are side-effect-free reads optimized for performance.
-- **Pipeline behaviors** handle cross-cutting concerns (validation, logging) transparently.
+All application logic flows through the **MediatR** pipeline (CQRS). **Commands** mutate state and return semantic results (`Result<Created>`, `Result<Updated>`). **Queries** are side-effect-free reads that may be cached. **Pipeline Behaviours** handle cross-cutting concerns transparently.
 
 ### Result Pattern — Exception-Free Error Handling
 
-The domain layer uses a custom **`Result<T>`** monad instead of exceptions for control flow. Every domain operation returns a `Result` that is either a success value or a list of strongly-typed `Error` objects.
+The domain uses a custom **`Result<T>`** monad — no exceptions for control flow. Every operation returns either a value or a list of strongly-typed `Error` objects categorised by `ErrorKind` (Validation, NotFound, Conflict, Forbidden).
 
 ```csharp
-// Domain returns a Result — no exceptions thrown
 public static Result<Quiz> Create(Guid id, ...) {
     if (string.IsNullOrWhiteSpace(title))
         return QuizErrors.TitleRequired;    // implicit conversion to Result<Quiz>
 
     return new Quiz(id, ...);               // implicit conversion to Result<Quiz>
 }
-
-// Consumer uses Match or checks IsSuccess
-result.Match(
-    onValue: quiz => Results.Created(quiz),
-    onError: errors => Results.BadRequest(errors)
-);
 ```
 
 ### Enriched Domain Model
 
-Entities are **not anemic data bags**. They own their own validation, invariants, and business rules. State mutations happen exclusively through behavior-rich methods on the entities themselves.
+Entities are **not anemic data bags** — they own validation, invariants, and business rules. Factory methods (`Create`) enforce all invariants at construction time — **no invalid objects can exist**.
 
 ```csharp
-// Quiz owns its business rules — cannot modify a quiz that already started
+// Quiz owns its own business rules — cannot modify after it has started
 public Result<Updated> Update(string title, DateTimeOffset startsAtUtc, DateTimeOffset endsAtUtc) {
     if (Status != QuizStatus.Scheduled)
         return QuizErrors.CannotUpdateStartedOrCompletedQuiz;
@@ -152,110 +159,232 @@ public Result<Updated> Update(string title, DateTimeOffset startsAtUtc, DateTime
 }
 ```
 
-- `Quiz` validates its schedule, enforces minimum question counts, and manages its lifecycle status.
-- `Question` validates marks, display order, and text through the abstract base.
-- Factory methods (`Create`) enforce all invariants at construction time — **no invalid objects can exist**.
+### Domain Events
+
+Significant domain transitions raise **Domain Events** that decouple side-effects from the core business operation:
+
+| Event | Raised When | Handler |
+|---|---|---|
+| `QuizCreatedEvent` | A new quiz is created | `QuizCreatedCacheInvalidationHandler` |
+| `QuizAttemptSubmittedEvent` | A student submits an attempt | `QuizAttemptSubmittedCacheInvalidationHandler` |
+| — | A question is graded | `QuestionGradedCacheInvalidationHandler` |
+
+### 🗣️ Ubiquitous Language
+
+> [!TIP]
+> Full domain term dictionary: **[Ubiquitous Language Guide](docs/ubiquitous-language.md)**
 
 ---
 
-## ⚙️ Technical Details
+## ✨ Key Features
 
-### Eliminating Data Clumps (Code Smell Refactoring)
+### 🔐 Role-Based Access Control
 
-To ensure a clean, maintainable, and expressive domain model, we actively identify and refactor code smells such as **Data Clumps**—groups of variables (e.g., name, email, and phone number) that are frequently passed around together. By encapsulating these primitives into cohesive Value Objects or dedicated classes, we reduce method signature bloat, prevent primitive obsession, and improve overall architecture.
+Three distinct roles, each with strictly scoped permissions:
 
-**Before (Primitive Obsession & Data Clump):**
+- **Admins** — Manage colleges, instructors, students, courses, and audit all quiz attempts system-wide.
+- **Instructors** — Full quiz lifecycle: draft, publish, edit metadata, manage questions, view analytics, and manually grade essay responses.
+- **Students** — Browse enrolled courses, attempt quizzes, track results, and review all answers after submission.
 
-```csharp
-public static Result<User> Create(
-    Guid id,
-    string name,
-    string email,
-    string password,
-    string phoneNumber,
-    Role role)
-```
+### 📝 Advanced Quiz Engine
 
-**After (Decoupled into Cohesive Objects):**
+- **Three question types** — MCQ (multiple choice with choices), True/False, and **Essay** (free-text, manually graded).
+- **Polymorphic question hierarchy** — Two-level type system: `AutoGradedQuestion<TAnswer>` (MCQ, True/False) for instant scoring, and `ManuallyGradedQuestion` (Essay) for instructor-reviewed responses.
+- **Automated grading via `CorrectionCondition`** — Each auto-graded type defines a generic predicate `Func<TAnswer, bool>` encapsulating its own correctness logic — extensible without touching any existing code.
+- **Manual grading workflow** — Instructors see a **Pending Grades** dashboard, navigate to each student's essay, and assign a `Score` validated against the question's `Marks` ceiling.
+- **Attempt lifecycle** — Tracks start time, submission time, and enforces duration limits. Submission raises a domain event that triggers cache invalidation.
+- **Quiz status machine** — `Scheduled → Available Now → Completed`, computed from `StartsAtUtc` / `EndsAtUtc`.
 
-```csharp
-protected User(
-    Guid id,
-    PersonalInformation personalInformation,
-    UserRole userRole,
-    List<RefreshToken> refreshTokens)
-    : base(id)
-{
-    PersonalInformation = personalInformation;
-    UserRole = userRole;
-    _refreshTokens = refreshTokens;
-}
-```
+### 🎓 Enrollment System
 
-This approach centralizes the validation rules for personal details within the `PersonalInformation` object, eliminating duplicate logic across the application and ensuring that the `User` entity remains focused purely on core domain rules.
+Students are enrolled in **Courses** (which belong to a **College**). A course has one assigned instructor. Quizzes are linked to courses — students only see quizzes for their enrolled courses.
+
+| Operation | Who |
+|---|---|
+| Create / delete course | Admin |
+| Assign instructor to course | Admin |
+| Enroll / remove student from course | Admin |
+| Create quizzes for course | Instructor |
+
+### 📊 Observability Stack
+
+- **Centralized structured logging** — Enriched with request context, shipped to **Seq**.
+- **Distributed tracing** — Instrumented with **OpenTelemetry**.
+- **Metrics pipeline** — Scraped by **Prometheus**, visualized in **Grafana**.
+- **Global Exception Handler** — Catches unhandled exceptions at the API layer and returns RFC 9457 Problem Details.
 
 ---
 
-## 🧩 Polymorphic Question System
+## ⚙️ Technical Deep Dives
 
-Questions use a **Table-Per-Hierarchy (TPH) inheritance** strategy, making the system easily extensible to new question types without modifying existing code.
+### 🧩 Polymorphic Question & Answer System
 
+The domain models questions and answers through a **two-level polymorphic hierarchy**, adhering strictly to the **Liskov Substitution Principle (LSP)**.
+
+#### Question Hierarchy
+
+```text
+                    ┌──────────────────┐
+                    │    Question      │  ← abstract base
+                    │  • QuestionText  │
+                    │  • DisplayOrder  │
+                    │  • Marks         │
+                    └────────┬─────────┘
+                             │
+              ┌──────────────┴──────────────┐
+              │                             │
+  ┌───────────┴────────────┐   ┌────────────┴───────────┐
+  │  AutoGradedQuestion    │   │  ManuallyGradedQuestion │
+  │  <TAnswer> (abstract)  │   │       (abstract)        │
+  │  • CorrectionCondition │   │  • Score (nullable)     │
+  │    Func<TAnswer, bool> │   │  • SetScore(int)        │
+  │  • Solve(TAnswer, ...) │   └────────────┬────────────┘
+  └────────────┬───────────┘                │
+    ┌──────────┴──────────┐          ┌──────┴──────┐
+ ┌──┴──────┐       ┌──────┴──────┐  │    Essay    │
+ │   Mcq   │       │     Tf      │  │  • MaxWords │
+ │ Choices │       │CorrectChoice│  └─────────────┘
+ │CorrectId│       │  (bool)     │
+ └─────────┘       └─────────────┘
 ```
-                    ┌──────────────┐
-                    │   Question   │  ← abstract base
-                    │  (abstract)  │
-                    └──────┬───────┘
-                           │
-               ┌───────────┼───────────┐
-               │                       │
-        ┌──────┴──────┐         ┌──────┴───────┐
-        │     MCQ     │         │  True/False  │
-        │             │         │              │
-        │ • Choices[] │         │ • CorrectAns │
-        │ • CorrectId │         │   (bool)     │
-        └─────────────┘         └──────────────┘
-               │
-               │  future
-        ┌──────┴──────────┐
-        │  Fill-in-Blank  │
-        │  Matching       │
-        │  Ordering       │
-        │  ...            │
-        └─────────────────┘
+
+#### Answer Hierarchy
+
+```text
+                    ┌──────────────────┐
+                    │  QuestionAnswer  │  ← abstract base
+                    │  • StudentId     │
+                    │  • QuestionId    │
+                    │  • QuizAttemptId │
+                    └────────┬─────────┘
+                             │
+              ┌──────────────┴──────────────┐
+              │                             │
+  ┌───────────┴────────────┐   ┌────────────┴─────────────┐
+  │   AutoGradedAnswer     │   │  ManuallyGradedAnswers   │
+  │  • IsCorrect (bool)    │   │  • Score (nullable int)  │
+  └────────────┬───────────┘   │  • UpdateMarks(int?)     │
+    ┌──────────┴──────────┐    └──────────────────────────┘
+ ┌──┴──────┐       ┌──────┴───────
+ ─┐
+ │McqAnswer│       │  TfAnswer     │
+ │SelectedChoiceId │ StudentChoice │
+ └─────────┘       └───────────────┘
 ```
 
-**Currently supported:**
+#### LSP in Practice
 
-| Type             | Description                                                |
-| ---------------- | ---------------------------------------------------------- |
-| **MCQ**          | Multiple-choice with N choices and a single correct answer |
-| **True / False** | Binary-choice question                                     |
-
-**Adding a new question type** only requires:
-
-1. Create a new class inheriting from `Question`.
-2. Add its EF Core discriminator mapping.
-3. Add its answer type inheriting from `QuestionAnswer`.
-
-No existing code needs to change — the **Open/Closed Principle** is respected through polymorphic dispatch:
+The quiz attempt handler dispatches through the abstract `Question` type and always gets back a valid `QuestionAnswer` — **zero knowledge of the concrete type required**:
 
 ```csharp
 return question switch {
-    Mcq mcq     => mcq.Update(questionText, displayOrder, marks, correctChoiceId, choices),
-    Tf  tf      => tf.Update(questionText, displayOrder, marks, tfCorrectChoice),
-    _           => Error.Validation("Quiz.Question.UpdateTypeMismatch", "..."),
+    Mcq mcq => mcq.Solve(mcqAnswer, studentId, attemptId),
+    Tf  tf  => tf.Solve(tfAnswer,  studentId, attemptId),
+    _       => Error.Validation("Quiz.Question.TypeMismatch", "..."),
 };
 ```
 
+#### Unified Grading via `CorrectionCondition`
+
+Each auto-graded type owns its own generic correctness predicate — **the grading pipeline never changes when new types are added (OCP respected end-to-end)**:
+
+```csharp
+// MCQ — correct if selected choice matches the answer key
+public override Func<Guid, bool> CorrectionCondition
+    => studentChoiceId => studentChoiceId == CorrectChoiceId;
+
+// True/False — correct if student's boolean matches
+public override Func<bool, bool> CorrectionCondition
+    => studentChoice => studentChoice == CorrectChoice;
+```
+
+Adding a new auto-graded type only requires: inherit `AutoGradedQuestion<TAnswer>`, implement `CorrectionCondition` + `Solve()`, and add an EF Core discriminator mapping.
+
+#### Manual Grading — Essay Questions
+
+`Essay` holds a nullable `Score` (pending review). Instructors set it after evaluating the student's response, validated against the question's `Marks` ceiling:
+
+```csharp
+public Result<Updated> SetScore(int score)
+{
+    if (score < 0)    return ManuallyGradedQuestionError.NegativeScore;
+    if (score > Marks) return ManuallyGradedQuestionError.ScoreExceedsMarks;
+    Score = score;
+    return Result.Updated;
+}
+```
+
+`ManuallyGradedAnswers` mirrors this on the answer side via `UpdateMarks()`.
+
 ---
 
-## ⚡ Frontend Architecture
+### ⚡ Caching Pipeline & Event-Driven Invalidation
+
+QuizNova uses a **Hybrid Cache** backed by PostgreSQL distributed cache (`Community.Microsoft.Extensions.Caching.PostgreSql`) — giving you both in-process (L1) and distributed (L2) caching without Redis.
+
+#### Cache-Aside Pattern via MediatR Behaviour
+
+Any query can opt-in to caching by implementing `ICachedQuery`:
+
+```csharp
+// Query opts-in by implementing ICachedQuery
+public record GetAllQuizzesQuery : IQuery<...>, ICachedQuery
+{
+    public string CacheKey => "quizzes:all";
+    public TimeSpan? Expiration => TimeSpan.FromMinutes(5);
+}
+```
+
+The `CachingBehavior<TRequest, TResponse>` pipeline behaviour intercepts the request, checks the cache, and short-circuits the handler if a cached value exists — transparent to the handler itself.
+
+#### Event-Driven Cache Invalidation
+
+When state changes, domain events trigger `ICacheInvalidator` to remove stale entries:
+
+```text
+CreateQuiz command
+    → QuizCreatedEvent raised in domain
+        → QuizCreatedCacheInvalidationHandler
+            → ICacheInvalidator.InvalidateAsync("quizzes:all")
+```
+
+This keeps the cache **always consistent** without polling or TTL-only expiry.
+
+---
+
+### Eliminating Data Clumps with Value Objects
+
+Primitive-heavy signatures are refactored into cohesive **Value Objects**, eliminating duplicate validation and reducing method bloat:
+
+```csharp
+// Before — Primitive Obsession
+public static Result<User> Create(Guid id, string name, string email, string password, string phoneNumber, Role role)
+
+// After — Decoupled into cohesive objects
+protected User(Guid id, PersonalInformation personalInformation, UserRole userRole, List<RefreshToken> refreshTokens)
+```
+
+`PersonalInformation` encapsulates `Name`, `Email`, `PhoneNumber` with its own validation. `UserRole` encapsulates role assignment. `RefreshToken` is a self-contained value object with its own expiry logic.
+
+---
+
+### Overcoming Angular Dynamic Component Limitations
+
+`ngComponentOutlet` was ideal for OCP-friendly dynamic question rendering, but Angular [does not support output bindings](https://github.com/angular/angular/issues/15360) through it. When the **Edit Quiz** feature required `(formReady)` and `(blurEvent)` outputs from dynamically rendered question forms, we replaced the outlet with an explicit `@switch` block to directly bind outputs while keeping the **NgRx Signal Store** integration intact — solving the problem without sacrificing reactivity.
+
+---
+
+## 🖥️ Frontend Architecture
+
+### Atomic Component Philosophy
+
+Each feature is broken into small, single-responsibility components (e.g., `mcq-attempt.ts`, `quiz-attempt-header.ts`, `questions-navigator.ts`). Passing data through deep `@Input()/@Output()` chains across dozens of atomics is impractical — **this design directly drives the NgRx Signal Store as the shared state layer**.
 
 ### NgRx Signal Store
 
-The frontend uses **NgRx Signal Store** for reactive, fine-grained state management built on Angular Signals — no RxJS-heavy boilerplate.
+Reactive, fine-grained state management built on Angular Signals — no RxJS boilerplate.
 
-```
+```text
 ┌─────────────────────────────────────────────────┐
 │                  Component                      │
 │     Reads signals  ·  Dispatches store methods  │
@@ -269,14 +398,20 @@ The frontend uses **NgRx Signal Store** for reactive, fine-grained state managem
 └─────────────────────────────────────────────────┘
 ```
 
-- **Custom store features** like `withRequestStatus()` provide reusable state patterns (`idle → pending → fulfilled | error`) across all stores.
-- Stores expose **computed signals** for derived state, keeping templates declarative and performant.
+Custom `withRequestStatus()` provides a reusable `idle → pending → fulfilled | error` lifecycle across all stores. Every feature that makes async calls inherits this pattern for free.
+
+### Stores by Feature
+
+| Store | Feature |
+|---|---|
+| `create-quiz.store.ts` | Multi-step quiz creation with live question management |
+| `edit-quiz.store.ts` | Optimistic question updates, metadata editing |
+| `quiz-attempt.store.ts` | Question navigation, answer buffering, submission |
+| `review-quiz.store.ts` | Post-attempt answer review with correctness display |
 
 ### Optimistic UI Updates
 
-Mutations (create, update, delete) apply changes to the local store **immediately** before the server responds. If the server request fails, the store rolls back to the previous state — delivering a snappy, instant-feeling user experience.
-
-```
+```text
 User Action → Update Store Immediately → Send HTTP Request
                                               │
                               ┌───────────────┴────────────────┐
@@ -285,89 +420,55 @@ User Action → Update Store Immediately → Send HTTP Request
                        (keep state)                   (rollback + notify)
 ```
 
+### Route Guards & Auth Interceptor
+
+- **`role.guard.ts`** — Protects routes by checking the user's role from the stored JWT. Redirects unauthenticated users to login; redirects wrong-role users to their own dashboard.
+- **`auth.interceptor.ts`** — Automatically attaches the Bearer token to every outgoing request. Handles 401 responses by attempting a token refresh via `RefreshToken` before retrying.
+
+### Services Layer
+
+| Service | Responsibility |
+|---|---|
+| `quiz.service.ts` | Quiz CRUD, question management |
+| `quiz-attempt.service.ts` | Start attempt, submit answers, grade manually |
+| `courses.service.ts` | Course & enrollment operations |
+| `admin.service.ts` / `instructor.service.ts` / `student.service.ts` | User management per role |
+| `college.service.ts` | College listing |
+| `question-component-mapper.service.ts` | Maps question type discriminator → concrete Angular component |
+
 ---
 
 ## 🔍 Code Quality & Consistency
 
-Every line of code — backend and frontend — is governed by automated analyzers and linters that run both locally and in CI. Style violations are **build errors**, not warnings.
+Style violations are **build errors**, not warnings — enforced locally and in CI.
 
-### Backend — StyleCop Analyzers + EditorConfig
+### Backend — StyleCop + EditorConfig
 
-**StyleCop Analyzers** are installed globally via `Directory.Build.props` and apply to every C# project automatically:
-
-```xml
-<!-- Directory.Build.props — applied to ALL projects -->
-<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-
-<PackageReference Include="StyleCop.Analyzers">
-  <PrivateAssets>all</PrivateAssets>
-</PackageReference>
-```
-
-- `TreatWarningsAsErrors` = **true** — any style violation fails the build.
-- `.editorconfig` fine-tunes rules (e.g. `SA1309` off to allow `_privateField` naming, `SA1101` off to drop mandatory `this.` prefix).
-- `dotnet_sort_system_directives_first` and `dotnet_separate_import_directive_groups` enforce consistent import ordering.
+- `TreatWarningsAsErrors = true` — any StyleCop violation fails the build.
+- `.editorconfig` fine-tunes rules (`SA1309` off for `_privateField` naming, `SA1101` off for `this.` prefix).
+- Consistent import ordering enforced via `dotnet_sort_system_directives_first`.
+- **Central Package Management** (`Directory.Packages.props`) — all NuGet version pins live in one file; no per-project version drift.
 
 ### Frontend — Stylelint + Property Ordering
 
-CSS is linted with **Stylelint** using `stylelint-config-standard` and the `stylelint-order` plugin. A strict **property declaration order** is enforced:
+Strict CSS property declaration order enforced across every rule:
 
-```
+```text
 position → display/flex/grid → sizing → margin → padding → border → background → typography → transitions → misc
-```
-
-This means every CSS rule across the entire codebase follows the same visual structure:
-
-```css
-/* Every CSS rule reads the same way — top to bottom */
-.card {
-  position: relative; /* 1. Positioning  */
-  display: flex; /* 2. Layout       */
-  width: 100%; /* 3. Sizing       */
-  margin-block: 1rem; /* 4. Spacing      */
-  padding: 1.5rem; /* 5. Padding      */
-  border-radius: 12px; /* 6. Borders      */
-  background: var(--surface); /* 7. Background   */
-  color: var(--text); /* 8. Typography   */
-  transition: transform 0.2s; /* 9. Transitions  */
-}
 ```
 
 ### Frontend — Unified Path Aliases
 
-Imports use **TypeScript path aliases** defined in `tsconfig.json` for clean, consistent, and refactor-safe imports:
-
-```json
-{
-  "paths": {
-    "@shared/*": ["src/app/shared/*"],
-    "@Core/*": ["src/app/core/*"],
-    "@Features/*": ["src/app/features/*"],
-    "@Environments/*": ["src/environments/*"],
-    "@StoreFeatures/*": ["src/store-features/*"]
-  }
-}
-```
-
-This eliminates fragile relative paths like `../../../shared/services/` and makes imports immediately readable:
-
 ```typescript
-// ✅ Clean & consistent
+// ✅ Clean & consistent — no ../../.. chains
 import { CoursesService } from "@shared/services/courses.service";
-import { NavigationButtons } from "@shared/components/navigation-buttons/navigation-buttons";
 import { withRequestStatus } from "@StoreFeatures/with-request-status.feature";
-
-// ❌ Fragile & unreadable
-import { CoursesService } from "../../../shared/services/courses.service";
 ```
 
 ### Frontend — Strict TypeScript
 
-The compiler is configured with maximum strictness — no room for implicit `any`, unused variables, or unchecked side effects:
-
-```
-strict: true · noImplicitReturns · noUnusedLocals · noUnusedParameters
+```text
+strict · noImplicitReturns · noUnusedLocals · noUnusedParameters
 noUncheckedSideEffectImports · strictTemplates · strictInjectionParameters
 ```
 
@@ -377,61 +478,78 @@ noUncheckedSideEffectImports · strictTemplates · strictInjectionParameters
 
 ### Backend
 
-| Technology                   | Purpose                        |
-| ---------------------------- | ------------------------------ |
-| **.NET 10** (C#)             | Web API framework              |
-| **Entity Framework Core 10** | ORM & migrations               |
-| **PostgreSQL 18**            | Relational database            |
-| **MediatR**                  | CQRS pipeline & mediator       |
-| **FluentValidation**         | Request validation             |
-| **JWT + Refresh Tokens**     | Authentication & authorization |
-| **OpenTelemetry**            | Distributed tracing            |
-| **Serilog + Seq**            | Structured logging             |
-| **Prometheus + Grafana**     | Metrics & dashboards           |
-| **Swagger + Scalar**         | API documentation              |
+| Technology | Purpose |
+|---|---|
+| **.NET 10** (C#) | Web API framework |
+| **Entity Framework Core 10** | ORM & migrations |
+| **PostgreSQL 18** | Relational database |
+| **ASP.NET Core Identity** | User management & password hashing |
+| **MediatR** | CQRS pipeline & mediator |
+| **FluentValidation** | Request validation |
+| **JWT + Refresh Tokens** | Authentication & authorization |
+| **Hybrid Cache + PostgreSQL Cache** | Two-level distributed caching (L1 in-process + L2 PostgreSQL) |
+| **OpenTelemetry** | Distributed tracing |
+| **Serilog + Seq** | Structured logging |
+| **Prometheus + Grafana** | Metrics & dashboards |
+| **Swagger + Scalar** | API documentation |
 
 ### Frontend
 
-| Technology            | Purpose                            |
-| --------------------- | ---------------------------------- |
-| **Angular 21**        | SPA framework (Signals-based)      |
-| **NgRx Signal Store** | Reactive state management          |
-| **PrimeNG 21**        | UI component library               |
-| **Vanilla CSS**       | Custom styling with CSS variables  |
-| **Stylelint**         | CSS linting with property ordering |
+| Technology | Purpose |
+|---|---|
+| **Angular 21** | SPA framework (Signals-based) |
+| **NgRx Signal Store** | Reactive state management |
+| **PrimeNG 21** | UI component library |
+| **Vanilla CSS** | Custom styling with CSS variables |
+| **Stylelint** | CSS linting with property ordering |
 
 ### Infrastructure
 
-| Technology                  | Purpose                       |
-| --------------------------- | ----------------------------- |
+| Technology | Purpose |
+|---|---|
 | **Docker & Docker Compose** | Multi-container orchestration |
-| **GitHub Actions**          | CI/CD pipeline                |
-| **StyleCop Analyzers**      | C# code style enforcement     |
-| **Seq**                     | Log aggregation & search      |
-| **Prometheus**              | Metrics collection            |
-| **Grafana**                 | Monitoring dashboards         |
+| **GitHub Actions** | CI pipeline + Backend deploy pipeline |
+| **GitHub Container Registry (GHCR)** | Docker image hosting |
+| **StyleCop Analyzers** | C# code style enforcement |
+| **Seq** | Log aggregation & search |
+| **Prometheus** | Metrics collection |
+| **Grafana** | Monitoring dashboards |
 
 ---
 
-## ✨ Key Features
+## 🧪 Testing Strategy
 
-### 🔐 Role-Based Access Control
+QuizNova has a **four-layer test pyramid** covering the domain, application, API surface, and infrastructure end-to-end:
 
-- **Admins** — Manage colleges, instructors, students, courses, and system-wide audits.
-- **Instructors** — Full quiz lifecycle: draft, publish, edit, and view analytics.
-- **Students** — Attempt quizzes, track results, review answers.
+```text
+                    ┌───────────────────────────┐
+                    │   Integration Tests        │  ← HTTP-level, real DB (TestContainers)
+                    │ QuizNova.Api.IntegrationTests│
+                    ├───────────────────────────┤
+                    │  Subcutaneous Tests        │  ← MediatR pipeline, real handlers
+                    │QuizNova.Application.       │
+                    │   SubcutaneousTests        │
+                    ├───────────────────────────┤
+                    │  Application Unit Tests    │  ← Behaviours, Mappers
+                    │QuizNova.Application.       │
+                    │    UnitTests               │
+                    ├───────────────────────────┤
+                    │   Domain Unit Tests        │  ← Pure domain logic, no IO
+                    │ QuizNova.Domain.UnitTests  │
+                    └───────────────────────────┘
+```
 
-### 📝 Advanced Quiz Engine
+| Project | What it tests |
+|---|---|
+| `QuizNova.Domain.UnitTests` | Quiz business rules, MCQ grading, attempt lifecycle, user creation |
+| `QuizNova.Application.UnitTests` | Pipeline behaviours (validation, logging), mapping correctness |
+| `QuizNova.Application.SubcutaneousTests` | Full MediatR command/query pipelines with real handlers |
+| `QuizNova.Api.IntegrationTests` | HTTP endpoints for Auth, Admin, College, Course, and Grading controllers |
 
-- **Polymorphic questions** — MCQ and True/False out of the box, with an extensible architecture for future types.
-- **Automated grading** — Real-time scoring with immediate feedback.
-- **Attempt lifecycle** — Tracks start time, submission time, and enforces time limits.
-- **Quiz status management** — Scheduled → Available Now → Completed, computed from dates.
+Tests run automatically on every push/PR via the CI pipeline.
 
-### 📊 Observability Stack
-
-- **Centralized logging** — Structured logs enriched with context, shipped to **Seq**.
-- **Metrics pipeline** — Instrumented with **OpenTelemetry**, scraped by **Prometheus**, visualized in **Grafana**.
+> [!NOTE]
+> The `QuizNova.Tests.Common` project provides shared test fixtures, builders, and database seeding utilities used across all test projects.
 
 ---
 
@@ -439,58 +557,81 @@ noUncheckedSideEffectImports · strictTemplates · strictInjectionParameters
 
 ### Prerequisites
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (recommended)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (recommended — brings up the entire stack)
 
 ### ⚡ Quick Start (Docker)
 
-Spin up the entire stack with a single command:
-
 ```bash
-git clone https://github.com/your-username/QuizNova.git
-cd QuizNova/QuizNova-main
+git clone https://github.com/MoamenElbarqy/quiz-nova.git
+cd quiz-nova
 docker compose up -d
 ```
 
-**Access the services:**
-
-| Service        | URL                                                              |
-| -------------- | ---------------------------------------------------------------- |
-| 🌐 Web App     | [`http://localhost:4200`](http://localhost:4200)                 |
+| Service | URL |
+|---|---|
+| 🌐 Web App | [`http://localhost:4200`](http://localhost:4200) |
 | 📘 Swagger API | [`http://localhost:8080/swagger`](http://localhost:8080/swagger) |
-| 📙 Scalar API  | [`http://localhost:8080/scalar`](http://localhost:8080/scalar)   |
-| 📋 Seq Logs    | [`http://localhost:5341`](http://localhost:5341)                 |
-| 📊 Prometheus  | [`http://localhost:9090`](http://localhost:9090)                 |
-| 📈 Grafana     | [`http://localhost:3000`](http://localhost:3000)                 |
+| 📙 Scalar API | [`http://localhost:8080/scalar`](http://localhost:8080/scalar) |
+| 📋 Seq Logs | [`http://localhost:5341`](http://localhost:5341) |
+| 📊 Prometheus | [`http://localhost:9090`](http://localhost:9090) |
+| 📈 Grafana | [`http://localhost:3000`](http://localhost:3000) |
+
+### 🔧 Running Locally (Without Docker)
+
+**Backend**
+
+```bash
+# Set connection string in appsettings.Development.json or user secrets
+dotnet restore
+dotnet run --project src/QuizNova.Api
+```
+
+**Frontend**
+
+```bash
+cd src/QuizNova.Client
+npm install
+npm run dev
+```
+
+---
 
 ## 🔄 CI/CD Pipeline
 
-The project uses **GitHub Actions** to run automated checks on every push and pull request to `main`.
+QuizNova has two GitHub Actions workflows:
 
-```
-┌───────────────────────────────────────────────────────────────────┐
-│                    GitHub Actions — CI                            │
-├──────────────────────────┬────────────────────────────────────────┤
-│      Backend Job         │           Frontend Job                 │
-│                          │                                        │
-│  1. Setup .NET 10        │  1. Setup Node.js 22                   │
-│  2. dotnet restore       │  2. npm ci                             │
-│  3. dotnet build         │  3. npm run lint:css (Stylelint)       │
-│     (Release mode)       │  4. npm run build                      │
-│     + StyleCop enforced  │                                        │
-│     + TreatWarnings      │                                        │
-│       AsErrors           │                                        │
-└──────────────────────────┴────────────────────────────────────────┘
+### CI — `ci.yml`
+
+Runs on every push / PR to `main`. Both jobs run **in parallel** for fast feedback:
+
+```text
+┌─────────────────────────┐     ┌──────────────────────────────┐
+│   Backend Build & Test  │     │      Frontend Build           │
+│                         │     │                               │
+│  dotnet restore         │     │  npm ci                       │
+│  dotnet build (Release) │     │  npm run lint:css (Stylelint) │
+│  dotnet test            │     │  npm run build                │
+│  TreatWarningsAsErrors  │     │                               │
+└─────────────────────────┘     └──────────────────────────────┘
 ```
 
-- **Backend build** compiles in `Release` mode with `TreatWarningsAsErrors` — any StyleCop or compiler warning fails the pipeline.
-- **Frontend build** runs **Stylelint** for CSS property ordering before compiling the Angular app.
-- Both jobs run in **parallel** for fast feedback.
+A StyleCop violation or a failing test breaks the build.
+
+### Deploy — `deploy-backend.yml`
+
+Triggers on push to `main` **only when backend source files change** (path filtering). Builds the API Docker image and pushes it to **GitHub Container Registry (GHCR)**:
+
+```text
+Checkout → Log in to GHCR → Build Docker Image → Push ghcr.io/<repo>-api:latest
+```
+
+This means frontend-only changes do not trigger an unnecessary Docker rebuild.
 
 ---
 
 ## 📁 Project Structure
 
-```
+```text
 QuizNova/
 ├── src/
 │   ├── QuizNova.Api/              # Presentation — Controllers, DTOs, Middleware
@@ -523,6 +664,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 <div align="center">
 
-_Developed with ❤️ by Moamen_
+Developed with ❤️ by Moamen
 
 </div>
