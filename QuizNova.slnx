@@ -27,6 +27,6 @@
     <Project Path="tests/QuizNova.Domain.UnitTests/QuizNova.Domain.UnitTests.csproj" />
     <Project Path="tests/QuizNova.Tests.Common/QuizNova.Tests.Common.csproj" />
     <Project Path="tests/QuizNova.Api.IntegrationTests/QuizNova.Api.IntegrationTests.csproj" />
-    <Project Path="tests/QuizNova.Api.SubcutaneousTests/QuizNova.Api.SubcutaneousTests.csproj" />
+    <Project Path="tests/QuizNova.Application.SubcutaneousTests/QuizNova.Application.SubcutaneousTests.csproj" />
   </Folder>
 </Solution>
