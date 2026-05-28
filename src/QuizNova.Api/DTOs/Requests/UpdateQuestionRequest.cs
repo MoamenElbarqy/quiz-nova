@@ -5,6 +5,7 @@ namespace QuizNova.Api.DTOs.Requests;
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(UpdateMcqRequest), "mcq")]
 [JsonDerivedType(typeof(UpdateTfRequest), "tf")]
+[JsonDerivedType(typeof(UpdateEssayRequest), "essay")]
 public abstract record UpdateQuestionRequest(
     string QuestionText,
     int DisplayOrder,
@@ -23,4 +24,11 @@ public sealed record UpdateTfRequest(
     int DisplayOrder,
     int Marks,
     bool CorrectChoice)
+    : UpdateQuestionRequest(QuestionText, DisplayOrder, Marks);
+
+public sealed record UpdateEssayRequest(
+    string QuestionText,
+    int DisplayOrder,
+    int Marks,
+    string? AnswerReference)
     : UpdateQuestionRequest(QuestionText, DisplayOrder, Marks);

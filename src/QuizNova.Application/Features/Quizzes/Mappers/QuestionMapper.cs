@@ -2,6 +2,7 @@ using QuizNova.Application.Features.Quizzes.DTOs;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
+using QuizNova.Domain.Entities.Quizzes.Questions.ManuallyGradedQuestions;
 
 namespace QuizNova.Application.Features.Quizzes.Mappers;
 
@@ -38,6 +39,15 @@ public static class QuestionMapper
                 QuestionText = tf.QuestionText,
                 Marks = tf.Marks,
                 CorrectChoice = tf.CorrectChoice,
+            },
+
+            Essay essay => new EssayDto
+            {
+                Id = essay.Id,
+                QuizId = essay.QuizId,
+                QuestionText = essay.QuestionText,
+                Marks = essay.Marks,
+                AnswerReference = essay.AnswerReference,
             },
 
             _ => throw new InvalidOperationException(

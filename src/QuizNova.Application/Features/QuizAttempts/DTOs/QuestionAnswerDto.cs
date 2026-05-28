@@ -4,22 +4,24 @@ namespace QuizNova.Application.Features.QuizAttempts.DTOs;
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "answerType")]
 [JsonDerivedType(typeof(AutoGradedAnswerDto), "auto")]
+[JsonDerivedType(typeof(McqAnswerDto), "mcq")]
+[JsonDerivedType(typeof(TfAnswerDto), "tf")]
 [JsonDerivedType(typeof(ManuallyGradedAnswerDto), "manual")]
 public abstract record QuestionAnswerDto(
     Guid AnswerId,
     Guid QuestionId,
     string QuestionText,
-    string AnswerType);
+    [property: JsonIgnore] string AnswerType);
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "autoAnswerType")]
 [JsonDerivedType(typeof(McqAnswerDto), "mcq")]
 [JsonDerivedType(typeof(TfAnswerDto), "tf")]
-public abstract record AutoGradedAnswerDto(
+public record AutoGradedAnswerDto(
     Guid AnswerId,
     Guid QuestionId,
     string QuestionText,
     string AnswerType,
-    string AutoAnswerType,
+    [property: JsonIgnore] string AutoAnswerType,
     bool IsCorrect) : QuestionAnswerDto(AnswerId, QuestionId, QuestionText, AnswerType);
 
 public sealed record McqAnswerDto(
@@ -29,7 +31,8 @@ public sealed record McqAnswerDto(
     string AnswerType,
     string AutoAnswerType,
     bool IsCorrect,
-    Guid SelectedChoiceId) : AutoGradedAnswerDto(AnswerId, QuestionId, QuestionText, AnswerType, AutoAnswerType, IsCorrect);
+    Guid SelectedChoiceId)
+    : AutoGradedAnswerDto(AnswerId, QuestionId, QuestionText, AnswerType, AutoAnswerType, IsCorrect);
 
 public sealed record TfAnswerDto(
     Guid AnswerId,
@@ -38,7 +41,8 @@ public sealed record TfAnswerDto(
     string AnswerType,
     string AutoAnswerType,
     bool IsCorrect,
-    bool StudentChoice) : AutoGradedAnswerDto(AnswerId, QuestionId, QuestionText, AnswerType, AutoAnswerType, IsCorrect);
+    bool StudentChoice)
+    : AutoGradedAnswerDto(AnswerId, QuestionId, QuestionText, AnswerType, AutoAnswerType, IsCorrect);
 
 public sealed record ManuallyGradedAnswerDto(
     Guid AnswerId,
