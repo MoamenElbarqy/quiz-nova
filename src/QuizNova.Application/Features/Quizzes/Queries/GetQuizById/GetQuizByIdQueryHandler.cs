@@ -8,7 +8,6 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Quizzes.DTOs;
 using QuizNova.Application.Features.Quizzes.Mappers;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 
 namespace QuizNova.Application.Features.Quizzes.Queries.GetQuizById;
 
@@ -22,11 +21,16 @@ public sealed class GetQuizByIdQueryHandler(
         logger.LogInformation("Retrieving quiz details for ID: {QuizId}", request.QuizId);
 
         var quiz = await dbContext.Quizzes
-            .AsNoTracking()
             .Include(q => q.Questions)
-            .Include(q => q.Questions.OfType<Mcq>())
-            .ThenInclude(q => q.Choices)
             .FirstOrDefaultAsync(q => q.Id == request.QuizId, ct);
+
+        if (quiz is not null)
+        {
+            var questionIds = quiz.Questions.Select(question => question.Id).ToArray();
+            await dbContext.Choices
+                .Where(choice => questionIds.AsEnumerable().Contains(choice.QuestionId))
+                .LoadAsync(ct);
+        }
 
         if (quiz is null)
         {
