@@ -5,18 +5,23 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 
 using QuizNova.Api.DTOs.Requests;
-using QuizNova.Application.Features.Quizzes.Queries.GetStudentQuizzes;
+using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Students.Commands.CreateStudent;
 using QuizNova.Application.Features.Students.Commands.DeleteStudent;
 using QuizNova.Application.Features.Students.Commands.UpdateStudent;
+using QuizNova.Application.Features.Students.DTOs;
 using QuizNova.Application.Features.Students.Queries.GetAllStudents;
 using QuizNova.Application.Features.Students.Queries.GetStudentById;
+using QuizNova.Domain.Entities.Identity;
 
 namespace QuizNova.Api.Controllers;
 
 [ApiController]
 [Route("students")]
-[Authorize]
+[Authorize(Roles = nameof(UserRole.Admin))]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
 public sealed class StudentController(ISender sender) : ApiController
 {
     [EndpointSummary("Retrieves all students.")]
@@ -24,7 +29,8 @@ public sealed class StudentController(ISender sender) : ApiController
     [EndpointName("GetAllStudents")]
     [OutputCache(Tags = ["students"])]
     [HttpGet]
-    public async Task<IActionResult> GetAllStudents([FromQuery] GetAllStudentsQuery query)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PaginatedList<StudentDto>>> GetAllStudents([FromQuery] GetAllStudentsQuery query)
     {
         var result = await sender.Send(query);
 
@@ -38,23 +44,11 @@ public sealed class StudentController(ISender sender) : ApiController
     [EndpointName("GetStudentById")]
     [OutputCache(Tags = ["students"])]
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetStudentById([FromRoute] Guid id)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<StudentDto>> GetStudentById([FromRoute] Guid id)
     {
         var result = await sender.Send(new GetStudentByIdQuery(id));
-
-        return result.Match(
-            Ok,
-            Problem);
-    }
-
-    [EndpointSummary("Retrieves quizzes assigned to a student.")]
-    [EndpointDescription("Returns quizzes associated with the specified student identifier.")]
-    [EndpointName("GetStudentQuizzes")]
-    [OutputCache(Tags = ["students", "quizzes"])]
-    [HttpGet("{id:guid}/quizzes")]
-    public async Task<IActionResult> GetStudentQuizzes([FromRoute] Guid id)
-    {
-        var result = await sender.Send(new GetStudentQuizzesQuery(id));
 
         return result.Match(
             Ok,
@@ -65,7 +59,9 @@ public sealed class StudentController(ISender sender) : ApiController
     [EndpointDescription("Creates a student account from the submitted request payload.")]
     [EndpointName("CreateStudent")]
     [HttpPost]
-    public async Task<IActionResult> CreateStudent([FromBody] CreateStudentRequest request)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<StudentDto>> CreateStudent([FromBody] CreateStudentRequest request)
     {
         var command = new CreateStudentCommand(
             request.Name,
@@ -85,7 +81,10 @@ public sealed class StudentController(ISender sender) : ApiController
     [EndpointDescription("Updates profile and credential fields for the specified student.")]
     [EndpointName("UpdateStudent")]
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> UpdateStudent([FromRoute] Guid id, [FromBody] UpdateStudentRequest request)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<StudentDto>> UpdateStudent([FromRoute] Guid id, [FromBody] UpdateStudentRequest request)
     {
         var command = new UpdateStudentCommand(
             id,
@@ -104,6 +103,9 @@ public sealed class StudentController(ISender sender) : ApiController
     [EndpointDescription("Removes the student account identified by the provided student identifier.")]
     [EndpointName("DeleteStudent")]
     [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteStudent([FromRoute] Guid id)
     {
         var result = await sender.Send(new DeleteStudentCommand(id));

@@ -12,6 +12,7 @@ using QuizNova.Application.Features.QuizAttempts.Queries.GetAllQuizzesAttempts;
 using QuizNova.Application.Features.QuizAttempts.Queries.GetQuizAttemptById;
 using QuizNova.Application.Features.QuizAttempts.Queries.GetStudentQuizAttempts;
 using QuizNova.Application.Features.QuizAttempts.Queries.GetStudentQuizAttemptsCount;
+using QuizNova.Domain.Entities.Identity;
 
 namespace QuizNova.Api.Controllers;
 
@@ -29,7 +30,7 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [ProducesResponseType(typeof(QuizAttemptDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetQuizAttemptById(
+    public async Task<ActionResult<QuizAttemptDto>> GetQuizAttemptById(
         [FromRoute] Guid studentId,
         [FromRoute] Guid id)
     {
@@ -45,10 +46,12 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [EndpointName("GetQuizAttemptByIdForGrading")]
     [HttpGet("quiz-attempts/{id:guid}")]
     [OutputCache(Tags = ["quiz-attempts"])]
+    [Authorize(Roles = nameof(UserRole.Instructor))]
     [ProducesResponseType(typeof(QuizAttemptDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetQuizAttemptByIdForGrading([FromRoute] Guid id)
+    public async Task<ActionResult<QuizAttemptDto>> GetQuizAttemptByIdForGrading([FromRoute] Guid id)
     {
         var result = await sender.Send(new GetQuizAttemptByIdQuery(id));
 
@@ -61,9 +64,11 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [EndpointDescription("Creates and grades a submitted quiz attempt for the specified student.")]
     [EndpointName("SubmitQuizAttempt")]
     [HttpPost("students/{studentId:guid}/quiz-attempts")]
+    [Authorize(Roles = nameof(UserRole.Student))]
     [ProducesResponseType(typeof(QuizAttemptDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> SubmitQuizAttempt(
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<QuizAttemptDto>> SubmitQuizAttempt(
         [FromRoute] Guid studentId,
         [FromBody] SubmitQuizAttemptRequest request)
     {
@@ -83,6 +88,9 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
                         SubmitTfAnswerRequest tfAnswer => new SubmitTfAnswerCommand(
                             tfAnswer.QuestionId,
                             tfAnswer.StudentChoice),
+                        SubmitEssayAnswerRequest essayAnswer => new SubmitEssayAnswerCommand(
+                            essayAnswer.QuestionId,
+                            essayAnswer.StudentResponse),
                         _ => throw new InvalidOperationException("Unknown answer type"),
                     };
                 })
@@ -100,9 +108,11 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [EndpointName("GetStudentQuizAttempts")]
     [OutputCache(Tags = ["quiz-attempts"])]
     [HttpGet("students/{studentId:guid}/quiz-attempts")]
+    [Authorize(Roles = nameof(UserRole.Student))]
     [ProducesResponseType(typeof(IReadOnlyList<QuizAttemptDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GetStudentQuizAttempts([FromRoute] Guid studentId)
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<IReadOnlyList<QuizAttemptDto>>> GetStudentQuizAttempts([FromRoute] Guid studentId)
     {
         var result = await sender.Send(new GetStudentQuizAttemptsQuery(studentId));
 
@@ -116,9 +126,11 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [EndpointName("GetStudentQuizAttemptsCount")]
     [OutputCache(Tags = ["quiz-attempts"])]
     [HttpGet("students/{studentId:guid}/quiz-attempts/count")]
-    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+    [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Student)}")]
+    [ProducesResponseType(typeof(QuizAttemptsCountDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GetStudentQuizAttemptsCount([FromRoute] Guid studentId)
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<QuizAttemptsCountDto>> GetStudentQuizAttemptsCount([FromRoute] Guid studentId)
     {
         var result = await sender.Send(new GetStudentQuizAttemptsCountQuery(studentId));
 
@@ -132,9 +144,11 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [EndpointName("GetAllQuizzesAttempts")]
     [OutputCache(Tags = ["quiz-attempts"])]
     [HttpGet("quiz-attempts")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     [ProducesResponseType(typeof(PaginatedList<QuizAttemptDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GetAllQuizzesAttempts([FromQuery] GetAllQuizzesAttemptsQuery query)
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<PaginatedList<QuizAttemptDto>>> GetAllQuizzesAttempts([FromQuery] GetAllQuizzesAttemptsQuery query)
     {
         var result = await sender.Send(query);
 

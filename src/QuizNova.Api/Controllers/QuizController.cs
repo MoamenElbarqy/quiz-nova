@@ -5,21 +5,27 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 
 using QuizNova.Api.DTOs.Requests;
+using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Quizzes.Commands.AddQuestion;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.Features.Quizzes.Commands.DeleteQuestion;
 using QuizNova.Application.Features.Quizzes.Commands.UpdateQuestion;
 using QuizNova.Application.Features.Quizzes.Commands.UpdateQuizCourseId;
 using QuizNova.Application.Features.Quizzes.Commands.UpdateQuizMetadata;
+using QuizNova.Application.Features.Quizzes.DTOs;
 using QuizNova.Application.Features.Quizzes.Queries.GetAllQuizzes;
 using QuizNova.Application.Features.Quizzes.Queries.GetInstructorQuizzesCount;
 using QuizNova.Application.Features.Quizzes.Queries.GetQuizById;
+using QuizNova.Application.Features.Quizzes.Queries.GetStudentQuizzes;
+using QuizNova.Domain.Entities.Identity;
 
 namespace QuizNova.Api.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("quizzes")]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
 public sealed class QuizController(ISender sender) : ApiController
 {
     [EndpointSummary("Retrieves quizzes.")]
@@ -27,7 +33,11 @@ public sealed class QuizController(ISender sender) : ApiController
     [EndpointName("GetAllQuizzes")]
     [OutputCache(Tags = ["quizzes"])]
     [HttpGet]
-    public async Task<IActionResult> GetAllQuizzes([FromQuery] GetAllQuizzesQuery query)
+    [Authorize(Roles = nameof(UserRole.Admin))]
+    [ProducesResponseType(typeof(PaginatedList<QuizDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<PaginatedList<QuizDto>>> GetAllQuizzes([FromQuery] GetAllQuizzesQuery query)
     {
         var result = await sender.Send(query);
 
@@ -41,7 +51,11 @@ public sealed class QuizController(ISender sender) : ApiController
     [EndpointName("GetInstructorQuizzesCount")]
     [OutputCache(Tags = ["quizzes"])]
     [HttpGet("count")]
-    public async Task<IActionResult> GetInstructorQuizzesCount([FromQuery] Guid instructorId)
+    [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Instructor)}")]
+    [ProducesResponseType(typeof(QuizzesCountDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<QuizzesCountDto>> GetInstructorQuizzesCount([FromQuery] Guid instructorId)
     {
         var result = await sender.Send(new GetInstructorQuizzesCountQuery(instructorId));
 
@@ -55,7 +69,10 @@ public sealed class QuizController(ISender sender) : ApiController
     [EndpointName("GetQuizById")]
     [OutputCache(Tags = ["quizzes"])]
     [HttpGet("{quizId:guid}")]
-    public async Task<IActionResult> GetQuizById([FromRoute] Guid quizId)
+    [ProducesResponseType(typeof(QuizDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<QuizDto>> GetQuizById([FromRoute] Guid quizId)
     {
         var result = await sender.Send(new GetQuizByIdQuery(quizId));
 
@@ -68,7 +85,11 @@ public sealed class QuizController(ISender sender) : ApiController
     [EndpointDescription("Creates a quiz and its question set from the submitted request payload.")]
     [EndpointName("CreateQuiz")]
     [HttpPost]
-    public async Task<IActionResult> CreateQuiz([FromBody] CreateQuizRequest request)
+    [Authorize(Roles = nameof(UserRole.Instructor))]
+    [ProducesResponseType(typeof(QuizDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<QuizDto>> CreateQuiz([FromBody] CreateQuizRequest request)
     {
         var createQuizResult = await sender.Send(new CreateQuizCommand(
             request.Title,
@@ -94,13 +115,17 @@ public sealed class QuizController(ISender sender) : ApiController
                             tfq.QuestionText,
                             tfq.Marks,
                             tfq.CorrectChoice),
+                        CreateEssayRequest essay => new CreateEssayCommand(
+                            essay.QuestionText,
+                            essay.Marks,
+                            essay.AnswerReference),
                         _ => throw new InvalidOperationException("Unknown question type")
                     };
                 })
                 .ToList()));
 
         return createQuizResult.Match(
-            quizDto => Ok(quizDto),
+            Ok,
             Problem);
     }
 
@@ -108,7 +133,12 @@ public sealed class QuizController(ISender sender) : ApiController
     [EndpointDescription("Updates the title, start time, and end time of an existing quiz.")]
     [EndpointName("UpdateQuizMetadata")]
     [HttpPut("{quizId:guid}/metadata")]
-    public async Task<IActionResult> UpdateQuizMetadata(
+    [Authorize(Roles = nameof(UserRole.Instructor))]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> UpdateQuizMetadata(
         [FromRoute] Guid quizId,
         [FromBody] UpdateQuizMetadataRequest request)
     {
@@ -127,7 +157,12 @@ public sealed class QuizController(ISender sender) : ApiController
     [EndpointDescription("Adds a new MCQ or True/False question to the specified quiz.")]
     [EndpointName("AddQuestion")]
     [HttpPost("{quizId:guid}/questions")]
-    public async Task<IActionResult> AddQuestion(
+    [Authorize(Roles = nameof(UserRole.Instructor))]
+    [ProducesResponseType(typeof(QuestionDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<QuestionDto>> AddQuestion(
         [FromRoute] Guid quizId,
         [FromBody] CreateQuizQuestionRequest request)
     {
@@ -146,13 +181,17 @@ public sealed class QuizController(ISender sender) : ApiController
                 tfq.QuestionText,
                 tfq.Marks,
                 tfq.CorrectChoice),
+            CreateEssayRequest essay => new CreateEssayCommand(
+                essay.QuestionText,
+                essay.Marks,
+                essay.AnswerReference),
             _ => throw new InvalidOperationException("Unknown question type")
         };
 
         var result = await sender.Send(new AddQuestionCommand(quizId, questionCommand));
 
         return result.Match(
-            questionDto => CreatedAtRoute("GetQuizById", new { quizId }, questionDto),
+            Ok,
             Problem);
     }
 
@@ -160,7 +199,12 @@ public sealed class QuizController(ISender sender) : ApiController
     [EndpointDescription("Updates an existing MCQ or True/False question within the specified quiz.")]
     [EndpointName("UpdateQuestion")]
     [HttpPut("{quizId:guid}/questions/{questionId:guid}")]
-    public async Task<IActionResult> UpdateQuestion(
+    [Authorize(Roles = nameof(UserRole.Instructor))]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> UpdateQuestion(
         [FromRoute] Guid quizId,
         [FromRoute] Guid questionId,
         [FromBody] UpdateQuestionRequest request)
@@ -186,6 +230,13 @@ public sealed class QuizController(ISender sender) : ApiController
                 tf.DisplayOrder,
                 tf.Marks,
                 tf.CorrectChoice),
+            UpdateEssayRequest essay => new UpdateEssayCommand(
+                quizId,
+                questionId,
+                essay.QuestionText,
+                essay.DisplayOrder,
+                essay.Marks,
+                essay.AnswerReference),
             _ => throw new InvalidOperationException("Unknown question type")
         };
 
@@ -201,7 +252,12 @@ public sealed class QuizController(ISender sender) : ApiController
         "Changes the course associated with a quiz. This is a destructive operation that clears all existing questions.")]
     [EndpointName("UpdateQuizCourseId")]
     [HttpPut("{quizId:guid}/course")]
-    public async Task<IActionResult> UpdateQuizCourseId(
+    [Authorize(Roles = nameof(UserRole.Instructor))]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> UpdateQuizCourseId(
         [FromRoute] Guid quizId,
         [FromBody] UpdateQuizCourseIdRequest request)
     {
@@ -216,7 +272,12 @@ public sealed class QuizController(ISender sender) : ApiController
     [EndpointDescription("Removes a question from the specified quiz. The quiz must have more than 5 questions.")]
     [EndpointName("DeleteQuestion")]
     [HttpDelete("{quizId:guid}/questions/{questionId:guid}")]
-    public async Task<IActionResult> DeleteQuestion(
+    [Authorize(Roles = nameof(UserRole.Instructor))]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> DeleteQuestion(
         [FromRoute] Guid quizId,
         [FromRoute] Guid questionId)
     {
@@ -224,6 +285,25 @@ public sealed class QuizController(ISender sender) : ApiController
 
         return result.Match(
             _ => NoContent(),
+            Problem);
+    }
+
+    [EndpointSummary("Retrieves quizzes assigned to a student.")]
+    [EndpointDescription("Returns quizzes associatined with the specified student identifier.")]
+    [EndpointName("GetStudentQuizzes")]
+    [OutputCache(Tags = ["students", "quizzes"])]
+    [HttpGet("/students/{id:guid}/quizzes")]
+    [Authorize(Roles = nameof(UserRole.Student))]
+    [ProducesResponseType(typeof(StudentQuizzesDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<StudentQuizzesDto>> GetStudentQuizzes([FromRoute] Guid id)
+    {
+        var result = await sender.Send(new GetStudentQuizzesQuery(id));
+
+        return result.Match(
+            Ok,
             Problem);
     }
 }

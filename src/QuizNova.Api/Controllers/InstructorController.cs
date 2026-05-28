@@ -5,17 +5,23 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 
 using QuizNova.Api.DTOs.Requests;
+using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
 using QuizNova.Application.Features.Instructors.Commands.DeleteInstructor;
 using QuizNova.Application.Features.Instructors.Commands.UpdateInstructor;
+using QuizNova.Application.Features.Instructors.DTOs;
 using QuizNova.Application.Features.Instructors.Queries.GetAllInstructors;
 using QuizNova.Application.Features.Instructors.Queries.GetInstructorById;
+using QuizNova.Domain.Entities.Identity;
 
 namespace QuizNova.Api.Controllers;
 
 [ApiController]
 [Route("instructors")]
-[Authorize]
+[Authorize(Roles = nameof(UserRole.Admin))]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
 public sealed class InstructorController(ISender sender) : ApiController
 {
     [EndpointSummary("Retrieves all instructors.")]
@@ -23,7 +29,8 @@ public sealed class InstructorController(ISender sender) : ApiController
     [EndpointName("GetAllInstructors")]
     [HttpGet]
     [OutputCache(Tags = ["instructors"])]
-    public async Task<IActionResult> GetAllInstructors([FromQuery] GetAllInstructorsQuery query)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PaginatedList<InstructorDto>>> GetAllInstructors([FromQuery] GetAllInstructorsQuery query)
     {
         var result = await sender.Send(query);
 
@@ -37,7 +44,9 @@ public sealed class InstructorController(ISender sender) : ApiController
     [EndpointName("GetInstructorById")]
     [HttpGet("{id:guid}")]
     [OutputCache(Tags = ["instructors"])]
-    public async Task<IActionResult> GetInstructorById([FromRoute] Guid id)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<InstructorDto>> GetInstructorById([FromRoute] Guid id)
     {
         var result = await sender.Send(new GetInstructorByIdQuery(id));
 
@@ -50,7 +59,9 @@ public sealed class InstructorController(ISender sender) : ApiController
     [EndpointDescription("Creates an instructor account from the submitted request payload.")]
     [EndpointName("CreateInstructor")]
     [HttpPost]
-    public async Task<IActionResult> CreateInstructor([FromBody] CreateInstructorRequest request)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<InstructorDto>> CreateInstructor([FromBody] CreateInstructorRequest request)
     {
         var command = new CreateInstructorCommand(
             request.Name,
@@ -70,7 +81,10 @@ public sealed class InstructorController(ISender sender) : ApiController
     [EndpointDescription("Updates profile and credential fields for the specified instructor.")]
     [EndpointName("UpdateInstructor")]
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> UpdateInstructor(
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<InstructorDto>> UpdateInstructor(
         [FromRoute] Guid id,
         [FromBody] UpdateInstructorRequest request)
     {
@@ -91,6 +105,9 @@ public sealed class InstructorController(ISender sender) : ApiController
     [EndpointDescription("Removes the instructor account identified by the provided instructor identifier.")]
     [EndpointName("DeleteInstructor")]
     [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteInstructor([FromRoute] Guid id)
     {
         var result = await sender.Send(new DeleteInstructorCommand(id));
