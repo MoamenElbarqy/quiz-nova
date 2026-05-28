@@ -71,6 +71,8 @@ public sealed class AddQuestionCommandHandler(
             return addResult.TopError;
         }
 
+        dbContext.Questions.Add(createQuestionResult.Value);
+
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation(
