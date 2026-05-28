@@ -13,8 +13,11 @@ internal sealed class VersionInfoTransformer : IOpenApiDocumentTransformer
         // this is will be the version name due the way we calling the add open api service
         var version = context.DocumentName;
 
-        document.Info.Version = version;
-        document.Info.Title = $"QuizNova API {version}";
+        document.Info = new OpenApiInfo
+        {
+            Version = version,
+            Title = $"QuizNova API {version}",
+        };
 
         return Task.CompletedTask;
     }
