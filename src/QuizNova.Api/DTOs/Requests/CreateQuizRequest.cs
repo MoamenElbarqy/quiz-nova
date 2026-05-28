@@ -13,6 +13,7 @@ public sealed record CreateQuizRequest(
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(CreateMcqRequest), "mcq")]
 [JsonDerivedType(typeof(CreateTfRequest), "tf")]
+[JsonDerivedType(typeof(CreateEssayRequest), "essay")]
 public abstract record CreateQuizQuestionRequest(
     string QuestionText,
     int Marks);
@@ -29,6 +30,12 @@ public sealed record CreateTfRequest(
     string QuestionText,
     int Marks,
     bool CorrectChoice)
+    : CreateQuizQuestionRequest(QuestionText, Marks);
+
+public sealed record CreateEssayRequest(
+    string QuestionText,
+    int Marks,
+    string? AnswerReference)
     : CreateQuizQuestionRequest(QuestionText, Marks);
 
 public sealed record CreateChoiceRequest(
