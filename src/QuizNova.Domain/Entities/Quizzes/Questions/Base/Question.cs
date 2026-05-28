@@ -28,7 +28,7 @@ public abstract class Question : Entity
         Marks = marks;
     }
 
-    public Guid QuizId { get; }
+    public Guid QuizId { get; private set; }
 
     public required string QuestionText { get; set; }
 
