@@ -54,7 +54,13 @@ When changes are made to the `src/QuizNova.Client` directory, execute the follow
    npm run lint:css -- --fix
    ```
 
-3. **Production Build:**
+3. **Testing:**
+
+   ```bash
+   npm run test
+   ```
+
+4. **Production Build:**
 
    ```bash
    npm run build
