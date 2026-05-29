@@ -4,7 +4,7 @@ using System.Net.Http.Json;
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Application.Features.Auth.DTOs;
 
-namespace QuizNova.Api.SubcutaneousTests.Common;
+namespace QuizNova.Application.SubcutaneousTests.Common;
 
 public class AppHttpClient(HttpClient httpClient) : IDisposable
 {
