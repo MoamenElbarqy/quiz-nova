@@ -5,10 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 
 using QuizNova.Api.DTOs.Requests;
+using QuizNova.Api.Mappers;
 using QuizNova.Application.Common.Models;
-using QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
 using QuizNova.Application.Features.Instructors.Commands.DeleteInstructor;
-using QuizNova.Application.Features.Instructors.Commands.UpdateInstructor;
 using QuizNova.Application.Features.Instructors.DTOs;
 using QuizNova.Application.Features.Instructors.Queries.GetAllInstructors;
 using QuizNova.Application.Features.Instructors.Queries.GetInstructorById;
@@ -63,12 +62,7 @@ public sealed class InstructorController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<InstructorDto>> CreateInstructor([FromBody] CreateInstructorRequest request)
     {
-        var command = new CreateInstructorCommand(
-            request.Name,
-            request.Email,
-            request.Password,
-            request.PhoneNumber,
-            request.Role);
+        var command = request.ToCommand();
 
         var result = await sender.Send(command);
 
@@ -88,11 +82,7 @@ public sealed class InstructorController(ISender sender) : ApiController
         [FromRoute] Guid id,
         [FromBody] UpdateInstructorRequest request)
     {
-        var command = new UpdateInstructorCommand(
-            id,
-            request.Name,
-            request.Email,
-            request.PhoneNumber);
+        var command = request.ToCommand(id);
 
         var result = await sender.Send(command);
 

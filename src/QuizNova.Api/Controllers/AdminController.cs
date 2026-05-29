@@ -5,10 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 
 using QuizNova.Api.DTOs.Requests;
+using QuizNova.Api.Mappers;
 using QuizNova.Application.Common.Models;
-using QuizNova.Application.Features.Admins.Commands.CreateAdmin;
 using QuizNova.Application.Features.Admins.Commands.DeleteAdmin;
-using QuizNova.Application.Features.Admins.Commands.UpdateAdmin;
 using QuizNova.Application.Features.Admins.DTOs;
 using QuizNova.Application.Features.Admins.Queries.GetAdminById;
 using QuizNova.Application.Features.Admins.Queries.GetAllAdmins;
@@ -68,12 +67,7 @@ public sealed class AdminController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminRequest request)
     {
-        var command = new CreateAdminCommand(
-            request.Name,
-            request.Email,
-            request.Password,
-            request.PhoneNumber,
-            request.Role);
+        var command = request.ToCommand();
 
         var result = await sender.Send(command);
 
@@ -93,11 +87,7 @@ public sealed class AdminController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> UpdateAdmin([FromRoute] Guid id, [FromBody] UpdateAdminRequest request)
     {
-        var command = new UpdateAdminCommand(
-            id,
-            request.Name,
-            request.Email,
-            request.PhoneNumber);
+        var command = request.ToCommand(id);
 
         var result = await sender.Send(command);
 

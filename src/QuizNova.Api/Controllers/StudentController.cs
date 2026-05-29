@@ -5,10 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 
 using QuizNova.Api.DTOs.Requests;
+using QuizNova.Api.Mappers;
 using QuizNova.Application.Common.Models;
-using QuizNova.Application.Features.Students.Commands.CreateStudent;
 using QuizNova.Application.Features.Students.Commands.DeleteStudent;
-using QuizNova.Application.Features.Students.Commands.UpdateStudent;
 using QuizNova.Application.Features.Students.DTOs;
 using QuizNova.Application.Features.Students.Queries.GetAllStudents;
 using QuizNova.Application.Features.Students.Queries.GetStudentById;
@@ -63,12 +62,7 @@ public sealed class StudentController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<StudentDto>> CreateStudent([FromBody] CreateStudentRequest request)
     {
-        var command = new CreateStudentCommand(
-            request.Name,
-            request.Email,
-            request.Password,
-            request.PhoneNumber,
-            request.Role);
+        var command = request.ToCommand();
 
         var result = await sender.Send(command);
 
@@ -86,11 +80,7 @@ public sealed class StudentController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<StudentDto>> UpdateStudent([FromRoute] Guid id, [FromBody] UpdateStudentRequest request)
     {
-        var command = new UpdateStudentCommand(
-            id,
-            request.Name,
-            request.Email,
-            request.PhoneNumber);
+        var command = request.ToCommand(id);
 
         var result = await sender.Send(command);
 

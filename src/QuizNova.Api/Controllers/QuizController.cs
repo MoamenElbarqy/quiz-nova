@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 
 using QuizNova.Api.DTOs.Requests;
+using QuizNova.Api.Mappers;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Quizzes.Commands.AddQuestion;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
@@ -91,38 +92,9 @@ public sealed class QuizController(ISender sender) : ApiController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<QuizDto>> CreateQuiz([FromBody] CreateQuizRequest request)
     {
-        var createQuizResult = await sender.Send(new CreateQuizCommand(
-            request.Title,
-            request.CourseId,
-            request.InstructorId,
-            request.StartsAtUtc,
-            request.EndsAtUtc,
-            request.Questions
-                .Select<CreateQuizQuestionRequest, CreateQuestionCommand>(q =>
-                {
-                    return q switch
-                    {
-                        CreateMcqRequest mcq => new CreateMcqCommand(
-                            mcq.QuestionText,
-                            mcq.Marks,
-                            mcq.CorrectChoiceId,
-                            mcq.Choices.Select(c => new CreateChoiceCommand(
-                                    c.Id,
-                                    c.Text,
-                                    c.DisplayOrder))
-                                .ToList()),
-                        CreateTfRequest tfq => new CreateTfCommand(
-                            tfq.QuestionText,
-                            tfq.Marks,
-                            tfq.CorrectChoice),
-                        CreateEssayRequest essay => new CreateEssayCommand(
-                            essay.QuestionText,
-                            essay.Marks,
-                            essay.AnswerReference),
-                        _ => throw new InvalidOperationException("Unknown question type")
-                    };
-                })
-                .ToList()));
+        var command = request.ToCommand();
+
+        var createQuizResult = await sender.Send(command);
 
         return createQuizResult.Match(
             Ok,

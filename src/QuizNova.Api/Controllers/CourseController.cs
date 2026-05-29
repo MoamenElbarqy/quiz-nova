@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 
 using QuizNova.Api.DTOs.Requests;
+using QuizNova.Api.Mappers;
 using QuizNova.Application.Common.Models;
-using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Courses.Commands.DeleteCourseById;
 using QuizNova.Application.Features.Courses.Commands.EnrollStudentInCourse;
 using QuizNova.Application.Features.Courses.Commands.RemoveStudentFromCourse;
@@ -87,11 +87,7 @@ public sealed class CourseController(ISender sender) : ApiController
     [EndpointName("CreateCourse")]
     public async Task<ActionResult<CourseDto>> CreateCourse([FromBody] CreateCourseRequest request)
     {
-        var command = new CreateCourseCommand(
-            request.Name,
-            request.InstructorId,
-            request.MinimumPassingMarks,
-            request.MaximumMarks);
+        var command = request.ToCommand();
 
         var result = await sender.Send(command);
         return result.Match(Ok, Problem);
