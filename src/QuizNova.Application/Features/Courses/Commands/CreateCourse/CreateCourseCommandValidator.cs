@@ -8,7 +8,11 @@ public sealed class CreateCourseCommandValidator : AbstractValidator<CreateCours
     {
         RuleFor(command => command.Name)
             .NotEmpty()
-            .WithMessage("Course name is required.");
+            .WithMessage("Course name is required.")
+            .MinimumLength(3)
+            .WithMessage("Course name must be at least 3 characters.")
+            .MaximumLength(30)
+            .WithMessage("Course name must not exceed 30 characters.");
 
         RuleFor(command => command.InstructorId)
             .NotEqual(Guid.Empty)
