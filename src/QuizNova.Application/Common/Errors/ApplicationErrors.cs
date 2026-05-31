@@ -12,6 +12,10 @@ public static class ApplicationErrors
         code: "Auth.RefreshToken.Invalid",
         description: "Refresh token is invalid or does not exist.");
 
+    public static readonly Error InvalidRoleForLogin = Error.Validation(
+        code: "Auth.Role.Invalid",
+        description: "User does not have the specified role.");
+
     public static readonly Error ExpiredOrRevokedRefreshToken = Error.Forbidden(
         code: "Auth.RefreshToken.ExpiredOrRevoked",
         description: "Refresh token has expired or has been revoked.");
@@ -187,4 +191,9 @@ public static class ApplicationErrors
         Error.Conflict(
             code: "Enrollment.Enrollment.Id.AlreadyExists",
             description: $"Enrollment with ID '{enrollmentId}' already exists.");
+
+    public static Error EnrollmentNotFound(Guid enrollmentId) =>
+        Error.NotFound(
+            code: "Enrollment.NotFound",
+            description: $"Enrollment with ID '{enrollmentId}' was not found.");
 }

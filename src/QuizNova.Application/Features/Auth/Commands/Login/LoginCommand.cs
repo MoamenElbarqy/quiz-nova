@@ -5,4 +5,4 @@ using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Application.Features.Auth.Commands.Login;
 
-public sealed record LoginCommand(string Email, string Password) : IRequest<Result<AuthDto>>;
+public sealed record LoginCommand(string Email, string Password, string Role) : IRequest<Result<AuthDto>>;

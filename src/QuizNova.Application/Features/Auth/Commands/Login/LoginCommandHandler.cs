@@ -2,6 +2,7 @@ using MediatR;
 
 using Microsoft.Extensions.Logging;
 
+using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Auth.DTOs;
 using QuizNova.Domain.Common.Results;
@@ -21,6 +22,13 @@ public sealed class LoginCommandHandler(
         if (userResult.IsError)
         {
             return userResult.Errors;
+        }
+
+        if (!string.Equals(userResult.Value.Role, request.Role, StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogWarning("Login failed: User {Email} has role {ActualRole} but attempted to login as {RequestedRole}", 
+                request.Email, userResult.Value.Role, request.Role);
+            return ApplicationErrors.InvalidRoleForLogin;
         }
 
         var tokenResult = await tokenService.GenerateJwtTokenAsync(userResult.Value, ct);

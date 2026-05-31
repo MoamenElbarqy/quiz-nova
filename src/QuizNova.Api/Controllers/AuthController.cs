@@ -28,7 +28,7 @@ public class AuthController(ISender sender) : ApiController
     [AllowAnonymous]
     public async Task<ActionResult<AuthDto>> Login(LoginRequest request)
     {
-        var loginResult = await sender.Send(new LoginCommand(request.Email, request.Password));
+        var loginResult = await sender.Send(new LoginCommand(request.Email, request.Password, request.Role));
 
         return loginResult.Match(
             authResponse =>
