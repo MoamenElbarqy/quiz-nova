@@ -25,4 +25,8 @@
     <ProjectReference Include="..\..\src\QuizNova.Api\QuizNova.Api.csproj" />
     <ProjectReference Include="..\QuizNova.Tests.Common\QuizNova.Tests.Common.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\Courses\Commands\CreateCourse\" />
+  </ItemGroup>
 </Project>

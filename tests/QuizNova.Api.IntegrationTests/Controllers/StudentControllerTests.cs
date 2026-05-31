@@ -35,7 +35,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
 
         // Act
         var response = await client.GetAsync("/students");
@@ -49,7 +49,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
 
         // Act
         var response = await client.GetAsync("/students");
@@ -63,7 +63,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Act
         var response = await client.GetAsync("/students");
@@ -86,7 +86,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Act
         var response = await client.GetAsync($"/students?PageNumber={pageNumber}&PageSize={pageSize}");
@@ -100,7 +100,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var (studentId, _) = await GetSeededIdsAsync();
 
         // Act
@@ -111,7 +111,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
 
         var result = await response.Content.ReadFromJsonAsync<StudentDto>();
         result.Should().NotBeNull();
-        result.StudentId.Should().Be(studentId);
+        result.Id.Should().Be(studentId);
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var nonExistentId = Guid.NewGuid();
 
         // Act
@@ -134,7 +134,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Act
         var response = await client.GetAsync($"/students/{Guid.Empty}");
@@ -148,7 +148,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var request = new CreateStudentRequest("Unique Stud", "uniquestud@quiznova.local", "StudPass123!", "01199999998", "Student");
 
         // Act
@@ -168,7 +168,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var request = new CreateStudentRequest("Duplicate Email Stud", TestUsers.Student.User.Email!, "StudPass123!", "01199999999", "Student");
 
         // Act
@@ -183,7 +183,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var request = new CreateStudentRequest("Twice Stud", "twicestud@quiznova.local", "StudPass123!", "01188888888", "Student");
 
         // Act - First call
@@ -202,7 +202,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var (studentId, _) = await GetSeededIdsAsync();
         var request = new UpdateStudentRequest("Updated Student Name", "updatedstud@quiznova.local", "01166666666");
 
@@ -223,7 +223,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var nonExistentId = Guid.NewGuid();
         var request = new UpdateStudentRequest("Nonexistent Name", "nonexistent@stud.local", "01155555555");
 
@@ -239,7 +239,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Create a temp student so we don't break database state for other tests
         var request = new CreateStudentRequest("Temp Delete Stud", "tempdeletestud@quiznova.local", "StudPass123!", "01144444444", "Student");
@@ -248,13 +248,13 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
         var created = await createResponse.Content.ReadFromJsonAsync<StudentDto>();
 
         // Act
-        var response = await client.DeleteAsync($"/students/{created!.StudentId}");
+        var response = await client.DeleteAsync($"/students/{created!.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // Verify indeed deleted
-        var getResponse = await client.GetAsync($"/students/{created.StudentId}");
+        var getResponse = await client.GetAsync($"/students/{created.Id}");
         getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -263,7 +263,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var nonExistentId = Guid.NewGuid();
 
         // Act
@@ -278,7 +278,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         var request = new CreateStudentRequest("Temp Delete Stud Twice", "tempdeletestudtwice@quiznova.local", "StudPass123!", "01133333333", "Student");
         var createResponse = await client.PostAsJsonAsync("/students", request);
@@ -286,11 +286,11 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
         var created = await createResponse.Content.ReadFromJsonAsync<StudentDto>();
 
         // Act - First delete
-        var response1 = await client.DeleteAsync($"/students/{created!.StudentId}");
+        var response1 = await client.DeleteAsync($"/students/{created!.Id}");
         response1.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // Act - Second delete
-        var response2 = await client.DeleteAsync($"/students/{created.StudentId}");
+        var response2 = await client.DeleteAsync($"/students/{created.Id}");
 
         // Assert
         response2.StatusCode.Should().Be(HttpStatusCode.NotFound);

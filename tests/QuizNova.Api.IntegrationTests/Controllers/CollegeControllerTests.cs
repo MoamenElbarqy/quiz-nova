@@ -30,7 +30,7 @@ public class CollegeControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
 
         // Act
         var response = await client.GetAsync("/colleges");
@@ -44,7 +44,7 @@ public class CollegeControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
 
         // Act
         var response = await client.GetAsync("/colleges");
@@ -58,7 +58,7 @@ public class CollegeControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Act
         var response = await client.GetAsync("/colleges");

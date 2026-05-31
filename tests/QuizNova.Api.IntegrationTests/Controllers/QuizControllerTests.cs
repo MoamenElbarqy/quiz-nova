@@ -34,7 +34,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task GetAllQuizzes_WhenStudent_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
 
         var response = await client.GetAsync("/quizzes");
 
@@ -45,7 +45,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task GetAllQuizzes_WhenInstructor_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
 
         var response = await client.GetAsync("/quizzes");
 
@@ -56,7 +56,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task GetAllQuizzes_WhenAdmin_ReturnsOkAndPaginatedQuizzes()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         await SeedQuizAsync();
 
         var response = await client.GetAsync("/quizzes");
@@ -77,7 +77,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task GetAllQuizzes_WithInvalidPagination_ReturnsBadRequest(int pageNumber, int pageSize)
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         var response = await client.GetAsync($"/quizzes?PageNumber={pageNumber}&PageSize={pageSize}");
 
@@ -88,7 +88,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task GetInstructorQuizzesCount_WhenStudent_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var (_, instructorId, _) = await GetSeededIdsAsync();
 
         var response = await client.GetAsync($"/quizzes/count?instructorId={instructorId}");
@@ -100,7 +100,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task GetInstructorQuizzesCount_WhenInstructor_ReturnsQuizzesCountDto()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
         var (_, instructorId, _) = await GetSeededIdsAsync();
 
         var response = await client.GetAsync($"/quizzes/count?instructorId={instructorId}");
@@ -116,7 +116,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task GetInstructorQuizzesCount_WhenAdmin_ReturnsQuizzesCountDto()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var (_, instructorId, _) = await GetSeededIdsAsync();
 
         var response = await client.GetAsync($"/quizzes/count?instructorId={instructorId}");
@@ -132,7 +132,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task GetInstructorQuizzesCount_WithEmptyInstructorId_ReturnsBadRequest()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         var response = await client.GetAsync($"/quizzes/count?instructorId={Guid.Empty}");
 
@@ -143,7 +143,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task GetQuizById_WithValidId_ReturnsQuizDto()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var quizId = await SeedQuizAsync();
 
         var response = await client.GetAsync($"/quizzes/{quizId}");
@@ -159,7 +159,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task GetQuizById_WithNonExistentId_ReturnsNotFound()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
 
         var response = await client.GetAsync($"/quizzes/{Guid.NewGuid()}");
 
@@ -170,7 +170,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task GetQuizById_WithEmptyId_ReturnsBadRequest()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
 
         var response = await client.GetAsync($"/quizzes/{Guid.Empty}");
 
@@ -181,7 +181,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task CreateQuiz_WhenStudent_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var request = await CreateValidQuizRequestAsync();
 
         var response = await client.PostAsJsonAsync("/quizzes", request);
@@ -193,7 +193,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task CreateQuiz_WhenAdmin_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var request = await CreateValidQuizRequestAsync();
 
         var response = await client.PostAsJsonAsync("/quizzes", request);
@@ -205,7 +205,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task CreateQuiz_WhenInstructor_ReturnsQuizDto()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
         var request = await CreateValidQuizRequestAsync();
 
         var response = await client.PostAsJsonAsync("/quizzes", request);
@@ -221,7 +221,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task UpdateQuizMetadata_WhenStudent_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var quizId = await SeedQuizAsync();
         var request = new UpdateQuizMetadataRequest(
             "Updated Quiz",
@@ -237,7 +237,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task UpdateQuizMetadata_WhenInstructor_ReturnsNoContent()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
         var quizId = await SeedQuizAsync();
         var request = new UpdateQuizMetadataRequest(
             "Updated Quiz",
@@ -253,7 +253,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task AddQuestion_WhenInstructor_ReturnsCreatedQuestion()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
         var quizId = await SeedQuizAsync();
         var request = new CreateTfRequest("Additional true false question", 5, true);
 
@@ -269,7 +269,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task UpdateQuestion_WhenInstructor_ReturnsNoContent()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
         var (quizId, questionId) = await SeedQuizWithQuestionAsync();
         var request = new UpdateTfRequest("Updated true false question", 0, 10, false);
 
@@ -282,7 +282,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task UpdateQuizCourseId_WhenInstructor_ReturnsNoContent()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
         var quizId = await SeedQuizAsync();
         var (courseId, _, _) = await GetAlternateSeededIdsAsync();
         var request = new UpdateQuizCourseIdRequest(courseId);
@@ -296,7 +296,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task DeleteQuestion_WhenInstructor_ReturnsNoContent()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
         var (quizId, questionId) = await SeedQuizWithQuestionAsync(questionCount: 6);
 
         var response = await client.DeleteAsync($"/quizzes/{quizId}/questions/{questionId}");
@@ -308,7 +308,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task GetStudentQuizzes_WhenAdmin_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var (_, _, studentId) = await GetSeededIdsAsync();
 
         var response = await client.GetAsync($"/students/{studentId}/quizzes");
@@ -320,7 +320,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task GetStudentQuizzes_WhenStudent_ReturnsStudentQuizzesDto()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var (_, _, studentId) = await GetSeededIdsAsync();
 
         var response = await client.GetAsync($"/students/{studentId}/quizzes");

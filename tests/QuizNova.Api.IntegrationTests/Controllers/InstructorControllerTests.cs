@@ -35,7 +35,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
 
         // Act
         var response = await client.GetAsync("/instructors");
@@ -49,7 +49,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
 
         // Act
         var response = await client.GetAsync("/instructors");
@@ -63,7 +63,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Act
         var response = await client.GetAsync("/instructors?PageNumber=1&PageSize=10");
@@ -86,7 +86,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Act
         var response = await client.GetAsync($"/instructors?PageNumber={pageNumber}&PageSize={pageSize}");
@@ -100,7 +100,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var (_, instructorId) = await GetSeededIdsAsync();
 
         // Act
@@ -111,7 +111,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
 
         var result = await response.Content.ReadFromJsonAsync<InstructorDto>();
         result.Should().NotBeNull();
-        result.InstructorId.Should().Be(instructorId);
+        result.Id.Should().Be(instructorId);
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var nonExistentId = Guid.NewGuid();
 
         // Act
@@ -134,7 +134,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Act
         var response = await client.GetAsync($"/instructors/{Guid.Empty}");
@@ -148,7 +148,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var request = new CreateInstructorRequest("Unique Inst", "uniqueinst@quiznova.local", "InstPass123!",
             "01099999998", "Instructor");
 
@@ -169,7 +169,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var request = new CreateInstructorRequest("Duplicate Email Inst", TestUsers.Instructor.User.Email!,
             "InstPass123!", "01099999999", "Instructor");
 
@@ -185,7 +185,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var request = new CreateInstructorRequest("Twice Inst", "twiceinst@quiznova.local", "InstPass123!",
             "01088888888", "Instructor");
 
@@ -205,7 +205,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var (_, instructorId) = await GetSeededIdsAsync();
         var request =
             new UpdateInstructorRequest("Updated Instructor Name", "updatedinst@quiznova.local", "01066666666");
@@ -227,7 +227,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var nonExistentId = Guid.NewGuid();
         var request = new UpdateInstructorRequest("Nonexistent Name", "nonexistent@inst.local", "01055555555");
 
@@ -243,7 +243,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Create a temp instructor so we don't break database state for other tests
         var request = new CreateInstructorRequest("Temp Delete Inst", "tempdeleteinst@quiznova.local", "InstPass123!",
@@ -253,13 +253,13 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
         var created = await createResponse.Content.ReadFromJsonAsync<InstructorDto>();
 
         // Act
-        var response = await client.DeleteAsync($"/instructors/{created!.InstructorId}");
+        var response = await client.DeleteAsync($"/instructors/{created!.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // Verify indeed deleted
-        var getResponse = await client.GetAsync($"/instructors/{created.InstructorId}");
+        var getResponse = await client.GetAsync($"/instructors/{created.Id}");
         getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -268,7 +268,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var nonExistentId = Guid.NewGuid();
 
         // Act
@@ -283,7 +283,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         var request = new CreateInstructorRequest("Temp Delete Inst Twice", "tempdeletetwice@quiznova.local",
             "InstPass123!", "01033333333", "Instructor");
@@ -292,11 +292,11 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
         var created = await createResponse.Content.ReadFromJsonAsync<InstructorDto>();
 
         // Act - First delete
-        var response1 = await client.DeleteAsync($"/instructors/{created!.InstructorId}");
+        var response1 = await client.DeleteAsync($"/instructors/{created!.Id}");
         response1.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // Act - Second delete
-        var response2 = await client.DeleteAsync($"/instructors/{created.InstructorId}");
+        var response2 = await client.DeleteAsync($"/instructors/{created.Id}");
 
         // Assert
         response2.StatusCode.Should().Be(HttpStatusCode.NotFound);

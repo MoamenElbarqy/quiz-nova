@@ -35,7 +35,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
 
         // Act
         var response = await client.GetAsync("/courses");
@@ -49,7 +49,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
 
         // Act
         var response = await client.GetAsync("/courses");
@@ -63,7 +63,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Act
         var response = await client.GetAsync("/courses");
@@ -86,7 +86,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Act
         var response = await client.GetAsync($"/courses?PageNumber={pageNumber}&PageSize={pageSize}");
@@ -96,28 +96,15 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     }
 
     [Fact]
-    public async Task GetCoursesCount_WhenUnauthenticated_ReturnsUnauthorized()
-    {
-        // Arrange
-        using var client = factory.CreateAppHttpClient();
-
-        // Act
-        var response = await client.GetAsync("/courses/count");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    [Fact]
     public async Task GetCoursesCount_WithInstructorId_ReturnsCoursesCountDto()
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
         var (_, instructorId, _) = await GetSeededIdsAsync();
 
         // Act
-        var response = await client.GetAsync($"/courses/count?instructorId={instructorId}");
+        var response = await client.GetAsync($"/instructor/{instructorId}/courses/count");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -125,39 +112,6 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
         var countDto = await response.Content.ReadFromJsonAsync<CoursesCountDto>();
         countDto.Should().NotBeNull();
         countDto.CoursesCount.Should().BeGreaterThanOrEqualTo(0);
-    }
-
-    [Fact]
-    public async Task GetCoursesCount_WithStudentId_ReturnsCoursesCountDto()
-    {
-        // Arrange
-        using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
-        var (_, _, studentId) = await GetSeededIdsAsync();
-
-        // Act
-        var response = await client.GetAsync($"/courses/count?studentId={studentId}");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var countDto = await response.Content.ReadFromJsonAsync<CoursesCountDto>();
-        countDto.Should().NotBeNull();
-        countDto.CoursesCount.Should().BeGreaterThanOrEqualTo(0);
-    }
-
-    [Fact]
-    public async Task GetCoursesCount_WithMissingParameters_ReturnsBadRequest()
-    {
-        // Arrange
-        using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
-
-        // Act
-        var response = await client.GetAsync("/courses/count");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -179,7 +133,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var (courseId, _, _) = await GetSeededIdsAsync();
 
         // Act
@@ -190,7 +144,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
 
         var course = await response.Content.ReadFromJsonAsync<CourseDto>();
         course.Should().NotBeNull();
-        course!.CourseId.Should().Be(courseId);
+        course.CourseId.Should().Be(courseId);
     }
 
     [Fact]
@@ -198,7 +152,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var nonExistentId = Guid.NewGuid();
 
         // Act
@@ -213,7 +167,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
 
         // Act
         var response = await client.GetAsync($"/courses/{Guid.Empty}");
@@ -241,7 +195,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var request = new CreateCourseRequest("New Test Course", null, 50, 100);
 
         // Act
@@ -256,7 +210,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var request = new CreateCourseRequest("New Test Course", null, 50, 100);
 
         // Act
@@ -271,7 +225,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
         var (_, instructorId, _) = await GetSeededIdsAsync();
 
         var request = new CreateCourseRequest("New Integration Course", instructorId, 60, 100);
@@ -308,7 +262,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var (courseId, instructorId, _) = await GetSeededIdsAsync();
         var request = new UpdateCourseInstructorRequest(instructorId);
 
@@ -324,7 +278,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
         var (courseId, instructorId, _) = await GetSeededIdsAsync();
         var request = new UpdateCourseInstructorRequest(instructorId);
 
@@ -340,7 +294,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var (courseId, instructorId, _) = await GetSeededIdsAsync();
         var request = new UpdateCourseInstructorRequest(instructorId);
 
@@ -357,140 +311,37 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     }
 
     [Fact]
-    public async Task EnrollStudentInCourse_WhenUnauthenticated_ReturnsUnauthorized()
+    public async Task GetInstructorCourses_WithValidId_ReturnsCourseDtos()
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        var (courseId, _, studentId) = await GetSeededIdsAsync();
-        var request = new EnrollStudentInCourseRequest();
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        var (_, instructorId, _) = await GetSeededIdsAsync();
 
         // Act
-        var response = await client.PostAsJsonAsync($"/courses/{courseId}/students/{studentId}", request);
+        var response = await client.GetAsync($"/instructor/{instructorId}/courses");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var courses = await response.Content.ReadFromJsonAsync<List<CourseDto>>();
+        courses.Should().NotBeNull();
+        courses.Count.Should().BeGreaterThanOrEqualTo(0);
     }
 
     [Fact]
-    public async Task EnrollStudentInCourse_WhenStudent_ReturnsForbidden()
+    public async Task GetInstructorCourses_WithNonExistentId_ReturnsNotFound()
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
-        var (courseId, _, studentId) = await GetSeededIdsAsync();
-        var request = new EnrollStudentInCourseRequest();
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        var nonExistentId = Guid.NewGuid();
 
         // Act
-        var response = await client.PostAsJsonAsync($"/courses/{courseId}/students/{studentId}", request);
+        var response = await client.GetAsync($"/instructor/{nonExistentId}/courses");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
-
-    [Fact]
-    public async Task EnrollStudentInCourse_WhenInstructor_ReturnsForbidden()
-    {
-        // Arrange
-        using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
-        var (courseId, _, studentId) = await GetSeededIdsAsync();
-        var request = new EnrollStudentInCourseRequest();
-
-        // Act
-        var response = await client.PostAsJsonAsync($"/courses/{courseId}/students/{studentId}", request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
-
-    [Fact]
-    public async Task EnrollStudentInCourse_WhenAdmin_ReturnsNoContent()
-    {
-        // Arrange
-        using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
-
-        using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var student = await dbContext.Students.OrderBy(s => s.PersonalInformation.Email).LastAsync();
-        var course = await dbContext.Courses.FirstAsync();
-
-        // Remove student from course first in case they are already enrolled to ensure clean state
-        await client.DeleteAsync($"/courses/{course.Id}/students/{student.Id}");
-
-        var request = new EnrollStudentInCourseRequest();
-
-        // Act
-        var response = await client.PostAsJsonAsync($"/courses/{course.Id}/students/{student.Id}", request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-    }
-
-    [Fact]
-    public async Task RemoveStudentFromCourse_WhenUnauthenticated_ReturnsUnauthorized()
-    {
-        // Arrange
-        using var client = factory.CreateAppHttpClient();
-        var (courseId, _, studentId) = await GetSeededIdsAsync();
-
-        // Act
-        var response = await client.DeleteAsync($"/courses/{courseId}/students/{studentId}");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    [Fact]
-    public async Task RemoveStudentFromCourse_WhenStudent_ReturnsForbidden()
-    {
-        // Arrange
-        using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
-        var (courseId, _, studentId) = await GetSeededIdsAsync();
-
-        // Act
-        var response = await client.DeleteAsync($"/courses/{courseId}/students/{studentId}");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
-
-    [Fact]
-    public async Task RemoveStudentFromCourse_WhenInstructor_ReturnsForbidden()
-    {
-        // Arrange
-        using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
-        var (courseId, _, studentId) = await GetSeededIdsAsync();
-
-        // Act
-        var response = await client.DeleteAsync($"/courses/{courseId}/students/{studentId}");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
-
-    [Fact]
-    public async Task RemoveStudentFromCourse_WhenAdmin_ReturnsNoContent()
-    {
-        // Arrange
-        using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
-
-        using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var student = await dbContext.Students.OrderBy(s => s.PersonalInformation.Email).LastAsync();
-        var course = await dbContext.Courses.FirstAsync();
-
-        // Ensure enrollment exists
-        await client.PostAsJsonAsync($"/courses/{course.Id}/students/{student.Id}", new EnrollStudentInCourseRequest());
-
-        // Act
-        var response = await client.DeleteAsync($"/courses/{course.Id}/students/{student.Id}");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -512,7 +363,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var (courseId, _, _) = await GetSeededIdsAsync();
 
         // Act
@@ -527,7 +378,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
         var (courseId, _, _) = await GetSeededIdsAsync();
 
         // Act
@@ -542,7 +393,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Fetch courses first via GET /courses as requested, then try to delete one of them
         var getResponse = await client.GetAsync("/courses");

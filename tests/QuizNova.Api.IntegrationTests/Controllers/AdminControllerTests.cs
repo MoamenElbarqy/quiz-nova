@@ -32,7 +32,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
 
         // Act
         var response = await client.GetAsync("/admins");
@@ -46,7 +46,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
 
         // Act
         var response = await client.GetAsync("/admins");
@@ -60,7 +60,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Act
         var response = await client.GetAsync("/admins");
@@ -84,7 +84,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Act
         var response = await client.GetAsync($"/admins?PageNumber={pageNumber}&PageSize={pageSize}");
@@ -98,13 +98,13 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         var getAdminsResponse = await client.GetAsync("/admins");
         getAdminsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var paginatedAdmins = await getAdminsResponse.Content.ReadFromJsonAsync<PaginatedList<AdminDto>>();
         paginatedAdmins.Should().NotBeNull();
-        var adminId = paginatedAdmins.Items.First(a => a.Email == TestUsers.Admin.User.Email).AdminId;
+        var adminId = paginatedAdmins.Items.First(a => a.Email == TestUsers.Admin.User.Email).Id;
 
         // Act
         var response = await client.GetAsync($"/admins/{adminId}");
@@ -114,7 +114,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
 
         var admin = await response.Content.ReadFromJsonAsync<AdminDto>();
         admin.Should().NotBeNull();
-        admin.AdminId.Should().Be(adminId);
+        admin.Id.Should().Be(adminId);
         admin.Email.Should().Be(TestUsers.Admin.User.Email);
     }
 
@@ -123,7 +123,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var nonExistentId = Guid.NewGuid();
 
         // Act
@@ -138,7 +138,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var emptyId = Guid.Empty;
 
         // Act
@@ -153,7 +153,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         var request = new CreateAdminRequest(
             "New Admin",
@@ -179,7 +179,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var request = new CreateAdminRequest(
             "Another Admin",
             TestUsers.Admin.User.Email!, // Duplicate Email
@@ -199,13 +199,13 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         var getAdminsResponse = await client.GetAsync("/admins");
         getAdminsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var paginatedAdmins = await getAdminsResponse.Content.ReadFromJsonAsync<PaginatedList<AdminDto>>();
         paginatedAdmins.Should().NotBeNull();
-        var adminId = paginatedAdmins.Items.First(a => a.Email == TestUsers.Admin.User.Email).AdminId;
+        var adminId = paginatedAdmins.Items.First(a => a.Email == TestUsers.Admin.User.Email).Id;
 
         var request = new UpdateAdminRequest(
             "Updated Admin Name",
@@ -229,7 +229,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var nonExistentId = Guid.NewGuid();
         var request = new UpdateAdminRequest(
             "NonExistent Admin",
@@ -248,7 +248,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // 1. Create a temporary admin to delete
         var createRequest = new CreateAdminRequest(
@@ -261,7 +261,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
         createResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var createdAdmin = await createResponse.Content.ReadFromJsonAsync<AdminDto>();
-        var tempAdminId = createdAdmin!.AdminId;
+        var tempAdminId = createdAdmin!.Id;
 
         // Act
         var deleteResponse = await client.DeleteAsync($"/admins/{tempAdminId}");
@@ -275,7 +275,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var nonExistentId = Guid.NewGuid();
 
         // Act

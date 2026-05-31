@@ -9,9 +9,9 @@ public class AppHttpClient(HttpClient httpClient) : IDisposable
 {
     private string? _token;
 
-    public async Task<string> GenerateTokenAsync(string email, string password)
+    public async Task<string> GenerateTokenAsync(string email, string password, string role)
     {
-        var loginRequest = new LoginRequest(email, password);
+        var loginRequest = new LoginRequest(email, password, role);
 
         var response = await httpClient.PostAsJsonAsync("/Auth/login", loginRequest);
 
@@ -40,9 +40,9 @@ public class AppHttpClient(HttpClient httpClient) : IDisposable
         _token = null;
     }
 
-    public async Task AuthenticateAsync(string email, string password)
+    public async Task AuthenticateAsync(string email, string password, string role)
     {
-        var token = await GenerateTokenAsync(email, password);
+        var token = await GenerateTokenAsync(email, password, role);
         SetAuthToken(token);
     }
 

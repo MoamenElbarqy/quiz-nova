@@ -20,7 +20,7 @@ public class AuthControllerTests(CustomWebApplicationFactory factory) : IClassFi
     {
         // Arrange
         // The credentials below are pre-seeded in the test database by DbInitializer
-        var request = new LoginRequest(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        var request = new LoginRequest(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Act
         var response = await _client.PostAsJsonAsync("/Auth/login", request);
@@ -47,7 +47,7 @@ public class AuthControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task Login_WithInvalidCredentials_ReturnsErrorResponse()
     {
         // Arrange
-        var request = new LoginRequest("nonexistent@quiznova.local", "WrongPassword123!");
+        var request = new LoginRequest("nonexistent@quiznova.local", "WrongPassword123!", "Student");
 
         // Act
         var response = await _client.PostAsJsonAsync("/Auth/login", request);
@@ -117,7 +117,7 @@ public class AuthControllerTests(CustomWebApplicationFactory factory) : IClassFi
         using var client = factory.CreateAppHttpClient();
 
         // 1. Login to get a valid access token
-        var loginRequest = new LoginRequest(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        var loginRequest = new LoginRequest(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var loginResponse = await client.PostAsJsonAsync("/Auth/login", loginRequest);
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<AuthDto>();
         var validAccessToken = loginResult!.Token.AccessToken;
@@ -144,7 +144,7 @@ public class AuthControllerTests(CustomWebApplicationFactory factory) : IClassFi
         using var client = factory.CreateAppHttpClient();
 
         // 1. Login to get initial tokens
-        var loginRequest = new LoginRequest(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        var loginRequest = new LoginRequest(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var loginResponse = await client.PostAsJsonAsync("/Auth/login", loginRequest);
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<AuthDto>();
         var validAccessToken = loginResult!.Token.AccessToken;
@@ -178,7 +178,7 @@ public class AuthControllerTests(CustomWebApplicationFactory factory) : IClassFi
         using var client = factory.CreateAppHttpClient();
 
         // 1. Login to get initial tokens
-        var loginRequest = new LoginRequest(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        var loginRequest = new LoginRequest(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var loginResponse = await client.PostAsJsonAsync("/Auth/login", loginRequest);
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<AuthDto>();
         var originalAccessToken = loginResult!.Token.AccessToken;

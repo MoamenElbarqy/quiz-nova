@@ -37,7 +37,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetQuizAttemptById_WhenStudent_ReturnsQuizAttemptDto()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var (attemptId, studentId, _) = await SeedQuizAttemptAsync();
 
         var response = await client.GetAsync($"/students/{studentId}/quiz-attempts/{attemptId}");
@@ -53,7 +53,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetQuizAttemptById_WhenAdmin_ReturnsQuizAttemptDto()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var (attemptId, studentId, _) = await SeedQuizAttemptAsync();
 
         var response = await client.GetAsync($"/students/{studentId}/quiz-attempts/{attemptId}");
@@ -65,7 +65,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetQuizAttemptById_WithNonExistentId_ReturnsNotFound()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var (_, studentId, _) = await GetSeededIdsAsync();
 
         var response = await client.GetAsync($"/students/{studentId}/quiz-attempts/{Guid.NewGuid()}");
@@ -77,7 +77,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetQuizAttemptById_WithEmptyId_ReturnsBadRequest()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var (_, studentId, _) = await GetSeededIdsAsync();
 
         var response = await client.GetAsync($"/students/{studentId}/quiz-attempts/{Guid.Empty}");
@@ -89,7 +89,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetQuizAttemptByIdForGrading_WhenStudent_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var (attemptId, _, _) = await SeedQuizAttemptAsync();
 
         var response = await client.GetAsync($"/quiz-attempts/{attemptId}");
@@ -101,7 +101,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetQuizAttemptByIdForGrading_WhenAdmin_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var (attemptId, _, _) = await SeedQuizAttemptAsync();
 
         var response = await client.GetAsync($"/quiz-attempts/{attemptId}");
@@ -113,7 +113,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetQuizAttemptByIdForGrading_WhenInstructor_ReturnsQuizAttemptDto()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
         var (attemptId, _, _) = await SeedQuizAttemptAsync();
 
         var response = await client.GetAsync($"/quiz-attempts/{attemptId}");
@@ -129,7 +129,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task SubmitQuizAttempt_WhenInstructor_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
         var (quizId, studentId, questions) = await SeedActiveQuizForSubmissionAsync();
         var request = CreateSubmitRequest(quizId, questions);
 
@@ -142,7 +142,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task SubmitQuizAttempt_WhenAdmin_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var (quizId, studentId, questions) = await SeedActiveQuizForSubmissionAsync();
         var request = CreateSubmitRequest(quizId, questions);
 
@@ -155,7 +155,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task SubmitQuizAttempt_WhenStudent_ReturnsQuizAttemptDto()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var (quizId, studentId, questions) = await SeedActiveQuizForSubmissionAsync();
         var request = CreateSubmitRequest(quizId, questions);
 
@@ -172,7 +172,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetStudentQuizAttempts_WhenAdmin_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var (_, studentId, _) = await SeedQuizAttemptAsync();
 
         var response = await client.GetAsync($"/students/{studentId}/quiz-attempts");
@@ -184,7 +184,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetStudentQuizAttempts_WhenStudent_ReturnsQuizAttemptDtos()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var (_, studentId, _) = await SeedQuizAttemptAsync();
 
         var response = await client.GetAsync($"/students/{studentId}/quiz-attempts");
@@ -199,7 +199,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetStudentQuizAttemptsCount_WhenInstructor_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
         var (_, studentId, _) = await GetSeededIdsAsync();
 
         var response = await client.GetAsync($"/students/{studentId}/quiz-attempts/count");
@@ -211,7 +211,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetStudentQuizAttemptsCount_WhenStudent_ReturnsQuizAttemptsCountDto()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
         var (_, studentId, _) = await SeedQuizAttemptAsync();
 
         var response = await client.GetAsync($"/students/{studentId}/quiz-attempts/count");
@@ -227,7 +227,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetStudentQuizAttemptsCount_WhenAdmin_ReturnsQuizAttemptsCountDto()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var (_, studentId, _) = await SeedQuizAttemptAsync();
 
         var response = await client.GetAsync($"/students/{studentId}/quiz-attempts/count");
@@ -242,7 +242,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetAllQuizzesAttempts_WhenStudent_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password);
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
 
         var response = await client.GetAsync("/quiz-attempts");
 
@@ -253,7 +253,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetAllQuizzesAttempts_WhenInstructor_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password);
+        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
 
         var response = await client.GetAsync("/quiz-attempts");
 
@@ -264,7 +264,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetAllQuizzesAttempts_WhenAdmin_ReturnsPaginatedQuizAttempts()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         await SeedQuizAttemptAsync();
 
         var response = await client.GetAsync("/quiz-attempts");
@@ -285,7 +285,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetAllQuizzesAttempts_WithInvalidPagination_ReturnsBadRequest(int pageNumber, int pageSize)
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password);
+        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         var response = await client.GetAsync($"/quiz-attempts?PageNumber={pageNumber}&PageSize={pageSize}");
 
