@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace QuizNova.Application.Features.Courses.Commands.EnrollStudentInCourse;
+namespace QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
 
 public sealed class EnrollStudentInCourseCommandValidator : AbstractValidator<EnrollStudentInCourseCommand>
 {

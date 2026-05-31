@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace QuizNova.Application.Features.Courses.Queries.GetStudentEnrollmentsCount;
+namespace QuizNova.Application.Features.Enrollments.Queries.GetStudentEnrollmentsCount;
 
 public sealed class GetStudentEnrollmentsCountQueryValidator : AbstractValidator<GetStudentEnrollmentsCountQuery>
 {
@@ -10,4 +10,3 @@ public sealed class GetStudentEnrollmentsCountQueryValidator : AbstractValidator
             .NotEmpty().WithMessage("Student ID is required.");
     }
 }
-

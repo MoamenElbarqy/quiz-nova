@@ -1,21 +1,19 @@
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
-using QuizNova.Application.Features.Courses.DTOs;
+using QuizNova.Application.Features.Enrollments.DTOs;
 using QuizNova.Domain.Common.Results;
 
-namespace QuizNova.Application.Features.Courses.Queries.GetStudentEnrollmentsCount;
+namespace QuizNova.Application.Features.Enrollments.Queries.GetStudentEnrollmentsCount;
 
 public sealed class GetStudentEnrollmentsCountQueryHandler(
     IAppDbContext dbContext,
     ILogger<GetStudentEnrollmentsCountQueryHandler> logger)
-    : IRequestHandler<GetStudentEnrollmentsCountQuery, Result<CoursesCountDto>>
+    : IRequestHandler<GetStudentEnrollmentsCountQuery, Result<EnrollmentCountDto>>
 {
-    public async Task<Result<CoursesCountDto>> Handle(GetStudentEnrollmentsCountQuery request, CancellationToken ct)
+    public async Task<Result<EnrollmentCountDto>> Handle(GetStudentEnrollmentsCountQuery request, CancellationToken ct)
     {
         logger.LogInformation("Retrieving enrolled courses count for student with ID: {StudentId}", request.StudentId);
 
@@ -34,6 +32,6 @@ public sealed class GetStudentEnrollmentsCountQueryHandler(
         logger.LogInformation("Successfully retrieved enrolled courses count for student {StudentId}: {Count}",
             request.StudentId, courseCount);
 
-        return new CoursesCountDto(courseCount);
+        return new EnrollmentCountDto(courseCount);
     }
 }

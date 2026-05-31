@@ -8,14 +8,12 @@ using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Mappers;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Courses.Commands.DeleteCourseById;
-using QuizNova.Application.Features.Courses.Commands.EnrollStudentInCourse;
-using QuizNova.Application.Features.Courses.Commands.RemoveStudentFromCourse;
 using QuizNova.Application.Features.Courses.Commands.UpdateCourseInstructor;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Application.Features.Courses.Queries.GetAllCourses;
 using QuizNova.Application.Features.Courses.Queries.GetCourseById;
+using QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesById;
 using QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesCount;
-using QuizNova.Application.Features.Courses.Queries.GetStudentEnrollmentsCount;
 using QuizNova.Domain.Entities.Identity;
 
 namespace QuizNova.Api.Controllers;
@@ -40,29 +38,30 @@ public sealed class CourseController(ISender sender) : ApiController
         return result.Match(Ok, Problem);
     }
 
-    [EndpointSummary("Retrieves course counts.")]
-    [EndpointDescription("Returns instructor or student course counts based on the provided query parameter.")]
-    [EndpointName("GetCoursesCount")]
-    [HttpGet("courses/count")]
+    [HttpGet("instructor/{instructorId:guid}/courses")]
     [OutputCache(Tags = ["courses"])]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<CoursesCountDto>> GetCoursesCount(
-        [FromQuery] Guid? instructorId = null,
-        [FromQuery] Guid? studentId = null)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Retrieves instructor courses.")]
+    [EndpointDescription("Returns all courses for a specific instructor.")]
+    [EndpointName("GetInstructorCourses")]
+    public async Task<ActionResult<List<CourseDto>>> GetInstructorCourses(Guid instructorId)
     {
-        if (instructorId.HasValue)
-        {
-            var result = await sender.Send(new GetInstructorCoursesCountQuery(instructorId.Value));
-            return result.Match(Ok, Problem);
-        }
+        var result = await sender.Send(new GetInstructorCoursesByIdQuery(instructorId));
+        return result.Match(Ok, Problem);
+    }
 
-        if (studentId.HasValue)
-        {
-            var result = await sender.Send(new GetStudentEnrollmentsCountQuery(studentId.Value));
-            return result.Match(Ok, Problem);
-        }
-
-        return BadRequest("Either instructorId or studentId must be provided.");
+    [HttpGet("instructor/{instructorId:guid}/courses/count")]
+    [OutputCache(Tags = ["courses"])]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Retrieves instructor course counts.")]
+    [EndpointDescription("Returns instructor course counts based on the instructor ID.")]
+    [EndpointName("GetInstructorCoursesCount")]
+    public async Task<ActionResult<CoursesCountDto>> GetInstructorCoursesCount(Guid instructorId)
+    {
+        var result = await sender.Send(new GetInstructorCoursesCountQuery(instructorId));
+        return result.Match(Ok, Problem);
     }
 
     [HttpGet("courses/{id:guid}")]
@@ -107,39 +106,6 @@ public sealed class CourseController(ISender sender) : ApiController
     {
         var result = await sender.Send(new UpdateCourseInstructorCommand(courseId, request.InstructorId));
         return result.Match(Ok, Problem);
-    }
-
-    [HttpPost("courses/{courseId:guid}/students/{studentId:guid}")]
-    [Authorize(Roles = nameof(UserRole.Admin))]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [EndpointSummary("Enrolls a student in a course.")]
-    [EndpointDescription("Creates a course enrollment for the specified student.")]
-    [EndpointName("EnrollStudentInCourse")]
-    public async Task<ActionResult> EnrollStudentInCourse(
-        Guid courseId,
-        Guid studentId,
-        [FromBody] EnrollStudentInCourseRequest request)
-    {
-        var result = await sender.Send(new EnrollStudentInCourseCommand(courseId, studentId));
-        return result.Match(_ => NoContent(), Problem);
-    }
-
-    [HttpDelete("courses/{courseId:guid}/students/{studentId:guid}")]
-    [Authorize(Roles = nameof(UserRole.Admin))]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [EndpointSummary("Removes a student from a course.")]
-    [EndpointDescription("Deletes a course enrollment for the specified student.")]
-    [EndpointName("RemoveStudentFromCourse")]
-    public async Task<ActionResult> RemoveStudentFromCourse(Guid courseId, Guid studentId)
-    {
-        var result = await sender.Send(new RemoveStudentFromCourseCommand(courseId, studentId));
-        return result.Match(_ => NoContent(), Problem);
     }
 
     [HttpDelete("courses/{id:guid}")]

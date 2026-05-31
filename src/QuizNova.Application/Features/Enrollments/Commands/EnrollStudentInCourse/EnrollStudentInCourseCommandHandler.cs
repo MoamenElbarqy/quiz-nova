@@ -7,7 +7,7 @@ using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
 
-namespace QuizNova.Application.Features.Courses.Commands.EnrollStudentInCourse;
+namespace QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
 
 public sealed class EnrollStudentInCourseCommandHandler(
     IAppDbContext dbContext,
@@ -47,7 +47,6 @@ public sealed class EnrollStudentInCourseCommandHandler(
         }
 
         await dbContext.Enrollments.AddAsync(enrollmentResult.Value, ct);
-
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("Successfully enrolled student {StudentId} in course {CourseId}", request.StudentId,

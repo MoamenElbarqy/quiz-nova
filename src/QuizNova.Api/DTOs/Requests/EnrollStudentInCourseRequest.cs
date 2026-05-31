@@ -1,3 +1,3 @@
 namespace QuizNova.Api.DTOs.Requests;
 
-public sealed record EnrollStudentInCourseRequest;
+public sealed record EnrollStudentInCourseRequest(Guid CourseId);

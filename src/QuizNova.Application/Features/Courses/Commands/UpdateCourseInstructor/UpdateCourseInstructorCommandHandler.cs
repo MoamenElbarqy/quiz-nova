@@ -31,7 +31,8 @@ public sealed class UpdateCourseInstructorCommandHandler(
         if (request.InstructorId.HasValue &&
             !await dbContext.Instructors.AnyAsync(instructor => instructor.Id == request.InstructorId.Value, ct))
         {
-            logger.LogWarning("Course instructor update failed: Instructor {InstructorId} not found", request.InstructorId);
+            logger.LogWarning("Course instructor update failed: Instructor {InstructorId} not found",
+                request.InstructorId);
             return ApplicationErrors.InstructorNotFound(request.InstructorId.Value);
         }
 
@@ -43,7 +44,6 @@ public sealed class UpdateCourseInstructorCommandHandler(
             return updateResult.TopError;
         }
 
-        dbContext.Courses.Update(course);
         await dbContext.SaveChangesAsync(ct);
 
         var instructorName = request.InstructorId.HasValue
