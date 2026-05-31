@@ -100,3 +100,7 @@ appsettings.Development.json
 /dataSources/
 /dataSources.local.xml
 /containers/
+
+# Playwright
+**/test-results/
+**/playwright-report/

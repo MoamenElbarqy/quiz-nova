@@ -15,6 +15,8 @@
 │   │       ├── swagger-quiz-student-2.png
 │   │       └── swagger-quiz-student.png
 │   └── ubiquitous-language.md
+├── fix_tests.py
+├── package-lock.json
 ├── QuizNova.sln.DotSettings.user
 ├── QuizNova.slnx
 ├── README.md
@@ -28,6 +30,7 @@
 │   │   │   ├── AuthController.cs
 │   │   │   ├── CollegeController.cs
 │   │   │   ├── CourseController.cs
+│   │   │   ├── EnrollmentController.cs
 │   │   │   ├── GradingController.cs
 │   │   │   ├── InstructorController.cs
 │   │   │   ├── QuizAttemptController.cs
@@ -57,6 +60,12 @@
 │   │   ├── Infrastructure
 │   │   │   └── GlobalExceptionHandler.cs
 │   │   ├── Mappers
+│   │   │   ├── AdminMappers.cs
+│   │   │   ├── CourseMappers.cs
+│   │   │   ├── InstructorMappers.cs
+│   │   │   ├── QuizAttemptMappers.cs
+│   │   │   ├── QuizMappers.cs
+│   │   │   └── StudentMappers.cs
 │   │   ├── OpenApi
 │   │   │   └── Transformers
 │   │   │       ├── BearerSecurityOperationTransformer.cs
@@ -153,22 +162,13 @@
 │   │   │   │   │   │   ├── DeleteCourseByIdCommand.cs
 │   │   │   │   │   │   ├── DeleteCourseByIdCommandHandler.cs
 │   │   │   │   │   │   └── DeleteCourseByIdCommandValidator.cs
-│   │   │   │   │   ├── EnrollStudentInCourse
-│   │   │   │   │   │   ├── EnrollStudentInCourseCommand.cs
-│   │   │   │   │   │   ├── EnrollStudentInCourseCommandHandler.cs
-│   │   │   │   │   │   └── EnrollStudentInCourseCommandValidator.cs
-│   │   │   │   │   ├── RemoveStudentFromCourse
-│   │   │   │   │   │   ├── RemoveStudentFromCourseCommand.cs
-│   │   │   │   │   │   ├── RemoveStudentFromCourseCommandHandler.cs
-│   │   │   │   │   │   └── RemoveStudentFromCourseCommandValidator.cs
 │   │   │   │   │   └── UpdateCourseInstructor
 │   │   │   │   │       ├── UpdateCourseInstructorCommand.cs
 │   │   │   │   │       ├── UpdateCourseInstructorCommandHandler.cs
 │   │   │   │   │       └── UpdateCourseInstructorCommandValidator.cs
 │   │   │   │   ├── DTOs
 │   │   │   │   │   ├── CourseDto.cs
-│   │   │   │   │   ├── CoursesCountDto.cs
-│   │   │   │   │   └── StudentCourseDto.cs
+│   │   │   │   │   └── CoursesCountDto.cs
 │   │   │   │   ├── EventHandlers
 │   │   │   │   │   ├── CourseCreatedCacheInvalidationHandler.cs
 │   │   │   │   │   ├── CourseDeletedCacheInvalidationHandler.cs
@@ -176,8 +176,7 @@
 │   │   │   │   │   ├── StudentCourseCreatedCacheInvalidationHandler.cs
 │   │   │   │   │   └── StudentCourseDeletedCacheInvalidationHandler.cs
 │   │   │   │   ├── Mappers
-│   │   │   │   │   ├── CourseMapper.cs
-│   │   │   │   │   └── StudentCourseMapper.cs
+│   │   │   │   │   └── CourseMapper.cs
 │   │   │   │   └── Queries
 │   │   │   │       ├── GetAllCourses
 │   │   │   │       │   ├── GetAllCoursesQuery.cs
@@ -191,14 +190,28 @@
 │   │   │   │       │   ├── GetInstructorCoursesByIdQuery.cs
 │   │   │   │       │   ├── GetInstructorCoursesByIdQueryHandler.cs
 │   │   │   │       │   └── GetInstructorCoursesByIdQueryValidator.cs
-│   │   │   │       ├── GetInstructorCoursesCount
-│   │   │   │       │   ├── GetInstructorCoursesCountQuery.cs
-│   │   │   │       │   ├── GetInstructorCoursesCountQueryHandler.cs
-│   │   │   │       │   └── GetInstructorCoursesCountQueryValidator.cs
-│   │   │   │       ├── GetStudentCoursesById
-│   │   │   │       │   ├── GetStudentCoursesByIdQuery.cs
-│   │   │   │       │   ├── GetStudentCoursesByIdQueryHandler.cs
-│   │   │   │       │   └── GetStudentCoursesByIdQueryValidator.cs
+│   │   │   │       └── GetInstructorCoursesCount
+│   │   │   │           ├── GetInstructorCoursesCountQuery.cs
+│   │   │   │           ├── GetInstructorCoursesCountQueryHandler.cs
+│   │   │   │           └── GetInstructorCoursesCountQueryValidator.cs
+│   │   │   ├── Enrollments
+│   │   │   │   ├── Commands
+│   │   │   │   │   ├── EnrollStudentInCourse
+│   │   │   │   │   │   ├── EnrollStudentInCourseCommand.cs
+│   │   │   │   │   │   ├── EnrollStudentInCourseCommandHandler.cs
+│   │   │   │   │   │   └── EnrollStudentInCourseCommandValidator.cs
+│   │   │   │   │   └── RemoveStudentFromCourse
+│   │   │   │   │       ├── RemoveStudentFromCourseCommand.cs
+│   │   │   │   │       ├── RemoveStudentFromCourseCommandHandler.cs
+│   │   │   │   │       └── RemoveStudentFromCourseCommandValidator.cs
+│   │   │   │   ├── DTOs
+│   │   │   │   │   ├── EnrollmentCountDto.cs
+│   │   │   │   │   └── EnrollmentDto.cs
+│   │   │   │   └── Queries
+│   │   │   │       ├── GetStudentEnrollmentsById
+│   │   │   │       │   ├── GetStudentEnrollmentsByIdQuery.cs
+│   │   │   │       │   ├── GetStudentEnrollmentsByIdQueryHandler.cs
+│   │   │   │       │   └── GetStudentEnrollmentsByIdQueryValidator.cs
 │   │   │   │       └── GetStudentEnrollmentsCount
 │   │   │   │           ├── GetStudentEnrollmentsCountQuery.cs
 │   │   │   │           ├── GetStudentEnrollmentsCountQueryHandler.cs
@@ -385,11 +398,42 @@
 │   │   ├── angular.json
 │   │   ├── Dockerfile
 │   │   ├── Dockerfile.dev
+│   │   ├── e2e
+│   │   │   └── create-quiz.spec.ts
 │   │   ├── eslint.config.js
 │   │   ├── nginx
 │   │   │   └── default.conf
 │   │   ├── package.json
 │   │   ├── package-lock.json
+│   │   ├── playwright.config.ts
+│   │   ├── playwright-report
+│   │   │   ├── data
+│   │   │   │   ├── 16afc6e7bfed1f6bd6a35f551e213e6a23eb22d3.zip
+│   │   │   │   ├── 2521106f7315a5d73261861bdfe4302b36e78480.webm
+│   │   │   │   ├── b3090e6e5ac70163b42bd681d4bfec8cfdcbdd15.png
+│   │   │   │   ├── c2c3042db90baf65063d13955ee606c45289a1a4.zip
+│   │   │   │   └── e4a8a088cdffb833b37d3398b64b493b54ce50a8.md
+│   │   │   ├── index.html
+│   │   │   └── trace
+│   │   │       ├── assets
+│   │   │       │   ├── codeMirrorModule-Ds_H_9Yq.js
+│   │   │       │   ├── defaultSettingsView-D31xz8zv.js
+│   │   │       │   └── urlMatch-BYQrIQwR.js
+│   │   │       ├── codeMirrorModule.DYBRYzYX.css
+│   │   │       ├── codicon.DCmgc-ay.ttf
+│   │   │       ├── defaultSettingsView.BDKsFU3c.css
+│   │   │       ├── index.BCnMPevh.js
+│   │   │       ├── index.CzXZzn5A.css
+│   │   │       ├── index.html
+│   │   │       ├── manifest.webmanifest
+│   │   │       ├── playwright-logo.svg
+│   │   │       ├── snapshot.html
+│   │   │       ├── snapshot.v8KI4P3m.js
+│   │   │       ├── sw.bundle.js
+│   │   │       ├── uiMode.Btcz36p_.css
+│   │   │       ├── uiMode.C2Efnu2P.js
+│   │   │       ├── uiMode.html
+│   │   │       └── xtermModule.DYP7pi_n.css
 │   │   ├── public
 │   │   │   └── favicon.ico
 │   │   ├── src
@@ -428,7 +472,6 @@
 │   │   │   │   │   │   │   ├── add-course-modal.ts
 │   │   │   │   │   │   │   ├── delete-course-modal.ts
 │   │   │   │   │   │   │   ├── manage-course-modal.ts
-│   │   │   │   │   │   │   ├── manage-course.store.spec.ts
 │   │   │   │   │   │   │   └── manage-course.store.ts
 │   │   │   │   │   │   ├── college-courses.ts
 │   │   │   │   │   │   ├── college-instructors
@@ -462,11 +505,9 @@
 │   │   │   │   │   ├── instructor
 │   │   │   │   │   │   ├── create-quiz
 │   │   │   │   │   │   │   ├── create-quiz.model.ts
-│   │   │   │   │   │   │   ├── create-quiz.store.spec.ts
 │   │   │   │   │   │   │   ├── create-quiz.store.ts
 │   │   │   │   │   │   │   └── create-quiz.ts
 │   │   │   │   │   │   ├── edit-quiz
-│   │   │   │   │   │   │   ├── edit-quiz.store.spec.ts
 │   │   │   │   │   │   │   ├── edit-quiz.store.ts
 │   │   │   │   │   │   │   └── edit-quiz.ts
 │   │   │   │   │   │   ├── grade-review
@@ -519,7 +560,6 @@
 │   │   │   │   │       │   ├── questions-navigator.ts
 │   │   │   │   │       │   ├── questions-progress-bar.ts
 │   │   │   │   │       │   ├── quiz-attempt-header.ts
-│   │   │   │   │       │   ├── quiz-attempt.store.spec.ts
 │   │   │   │   │       │   ├── quiz-attempt.store.ts
 │   │   │   │   │       │   ├── quiz-attempt.ts
 │   │   │   │   │       │   └── tf-attempt.ts
@@ -531,7 +571,6 @@
 │   │   │   │   │       │   ├── result-banner.ts
 │   │   │   │   │       │   ├── review-quiz-header.ts
 │   │   │   │   │       │   ├── review-quiz-status-card.ts
-│   │   │   │   │       │   ├── review-quiz.store.spec.ts
 │   │   │   │   │       │   ├── review-quiz.store.ts
 │   │   │   │   │       │   ├── review-quiz.ts
 │   │   │   │   │       │   ├── tf-answer-review.ts
@@ -586,6 +625,7 @@
 │   │   │   │       │   │   ├── create-course.model.ts
 │   │   │   │       │   │   └── update-course-instructor.model.ts
 │   │   │   │       │   ├── enrollment
+│   │   │   │       │   │   ├── enrollment-count.model.ts
 │   │   │   │       │   │   └── enrollment.model.ts
 │   │   │   │       │   ├── pagination
 │   │   │   │       │   │   ├── paginated-list.model.ts
@@ -615,6 +655,7 @@
 │   │   │   │       │   ├── admin.service.ts
 │   │   │   │       │   ├── college.service.ts
 │   │   │   │       │   ├── courses.service.ts
+│   │   │   │       │   ├── enrollment.service.ts
 │   │   │   │       │   ├── instructor.service.ts
 │   │   │   │       │   ├── question-component-mapper.service.ts
 │   │   │   │       │   ├── quiz-attempt.service.ts
@@ -637,6 +678,14 @@
 │   │   │   ├── store-features
 │   │   │   │   └── with-request-status.feature.ts
 │   │   │   └── styles.css
+│   │   ├── test-results
+│   │   │   ├── create-quiz-Instructor---C-d2ba7-adata-and-adding-a-question-chromium
+│   │   │   │   └── trace.zip
+│   │   │   └── create-quiz-Instructor---C-f5fa6-tline-placeholder-initially-chromium
+│   │   │       ├── error-context.md
+│   │   │       ├── test-failed-1.png
+│   │   │       ├── trace.zip
+│   │   │       └── video.webm
 │   │   ├── tsconfig.app.json
 │   │   ├── tsconfig.json
 │   │   ├── tsconfig.spec.json
@@ -793,6 +842,10 @@
 │       │       ├── 20260522224732_AddFeedbackAndGradedAtToManuallyGradedAnswers.Designer.cs
 │       │       ├── 20260523130222_MakeCorrectChoiceIdNullable.cs
 │       │       ├── 20260523130222_MakeCorrectChoiceIdNullable.Designer.cs
+│       │       ├── 20260528123451_FixQuestionQuizIdForeignKey.cs
+│       │       ├── 20260528123451_FixQuestionQuizIdForeignKey.Designer.cs
+│       │       ├── 20260530162822_AddCourseStatus.cs
+│       │       ├── 20260530162822_AddCourseStatus.Designer.cs
 │       │       └── AppDbContextModelSnapshot.cs
 │       ├── DependencyInjection.cs
 │       ├── Identity
@@ -806,85 +859,186 @@
 │           ├── AppSettings.cs
 │           └── JwtSettings.cs
 ├── structure.txt
-└── tests
-    ├── QuizNova.Api.IntegrationTests
-    │   ├── Common
-    │   │   ├── AppHttpClient.cs
-    │   │   └── CustomWebApplicationFactory.cs
-    │   ├── Controllers
-    │   │   ├── AdminControllerTests.cs
-    │   │   ├── AuthControllerTests.cs
-    │   │   ├── CollegeControllerTests.cs
-    │   │   ├── CourseControllerTests.cs
-    │   │   ├── GradingControllerTests.cs
-    │   │   ├── InstructorControllerTests.cs
-    │   │   └── StudentControllerTests.cs
-    │   └── QuizNova.Api.IntegrationTests.csproj
-    ├── QuizNova.Application.SubcutaneousTests
-    │   ├── Common
-    │   │   ├── AppHttpClient.cs
-    │   │   └── CustomWebApplicationFactory.cs
-    │   └── QuizNova.Application.SubcutaneousTests.csproj
-    ├── QuizNova.Application.UnitTests
-    │   ├── Behaviors
-    │   │   ├── CashingBehaviorTests.cs
-    │   │   ├── LoggingBehaviourTests.cs
-    │   │   ├── PerformanceBehaviour.cs
-    │   │   ├── UnhandledExceptionBehaviourTests.cs
-    │   │   └── ValidationBehaviorTests.cs
-    │   ├── Mappers
-    │   │   ├── AdminMapperTests.cs
-    │   │   ├── ChoiceMapperTests.cs
-    │   │   ├── CourseMapperTests.cs
-    │   │   ├── EnrollmentMapperTests.cs
-    │   │   ├── InstructorMapperTests.cs
-    │   │   ├── QuestionMapperTests.cs
-    │   │   ├── QuizAttemptMapperTests.cs
-    │   │   ├── QuizMapperTests.cs
-    │   │   ├── StudentMapperTests.cs
-    │   │   └── StudentQuizMapperTests.cs
-    │   └── QuizNova.Application.UnitTests.csproj
-    ├── QuizNova.Domain.UnitTests
-    │   ├── Courses
-    │   │   └── CourseTests.cs
-    │   ├── QuizAttempts
-    │   │   └── QuizAttemptTests.cs
-    │   ├── QuizNova.Domain.UnitTests.csproj
-    │   ├── Quizzes
-    │   │   ├── McqTests.cs
-    │   │   └── QuizTests.cs
-    │   └── Users
-    │       ├── AdminTests.cs
-    │       ├── InstructorTests.cs
-    │       ├── PersonalInformationTests.cs
-    │       └── StudentTests.cs
-    └── QuizNova.Tests.Common
-        ├── Courses
-        │   └── CourseFactory.cs
-        ├── Enrollments
-        │   └── EnrollmentFactory.cs
-        ├── QuizAttempts
-        │   ├── Answers
-        │   │   └── AnswerFactory.cs
-        │   └── QuizAttemptFactory.cs
-        ├── QuizNova.Tests.Common.csproj
-        ├── Quizzes
-        │   ├── Questions
-        │   │   ├── ChoiceFactory.cs
-        │   │   └── QuestionFactory.cs
-        │   └── QuizFactory.cs
-        ├── Security
-        │   ├── TestCurrentUser.cs
-        │   ├── TestUsers.cs
-        │   └── UserFactory.cs
-        └── Users
-            ├── Admins
-            │   └── AdminFactory.cs
-            ├── Instructors
-            │   └── InstructorFactory.cs
-            ├── Student
-            │   └── StudentFactory.cs
-            └── UserPersonalInformation
-                └── PersonalInformationFactory.cs
+├── test-results
+├── tests
+│   ├── QuizNova.Api.IntegrationTests
+│   │   ├── Common
+│   │   │   ├── AppHttpClient.cs
+│   │   │   └── CustomWebApplicationFactory.cs
+│   │   ├── Controllers
+│   │   │   ├── AdminControllerTests.cs
+│   │   │   ├── AuthControllerTests.cs
+│   │   │   ├── CollegeControllerTests.cs
+│   │   │   ├── CourseControllerTests.cs
+│   │   │   ├── EnrollmentControllerTests.cs
+│   │   │   ├── GradingControllerTests.cs
+│   │   │   ├── InstructorControllerTests.cs
+│   │   │   ├── QuizAttemptControllerTests.cs
+│   │   │   ├── QuizControllerTests.cs
+│   │   │   └── StudentControllerTests.cs
+│   │   └── QuizNova.Api.IntegrationTests.csproj
+│   ├── QuizNova.Application.SubcutaneousTests
+│   │   ├── Common
+│   │   │   ├── AppHttpClient.cs
+│   │   │   └── CustomWebApplicationFactory.cs
+│   │   ├── Features
+│   │   │   ├── Admins
+│   │   │   │   ├── Commands
+│   │   │   │   │   ├── CreateAdmin
+│   │   │   │   │   │   └── CreateAdminCommandHandlerTests.cs
+│   │   │   │   │   ├── DeleteAdmin
+│   │   │   │   │   │   └── DeleteAdminCommandHandlerTests.cs
+│   │   │   │   │   └── UpdateAdmin
+│   │   │   │   │       └── UpdateAdminCommandHandlerTests.cs
+│   │   │   │   ├── EventHandlers
+│   │   │   │   └── Queries
+│   │   │   │       ├── GetAdminById
+│   │   │   │       └── GetAllAdmins
+│   │   │   ├── Auth
+│   │   │   │   └── Commands
+│   │   │   │       ├── Login
+│   │   │   │       └── RefreshToken
+│   │   │   ├── Colleges
+│   │   │   │   └── Queries
+│   │   │   │       └── GetCollegeSummary
+│   │   │   ├── Courses
+│   │   │   │   ├── Commands
+│   │   │   │   │   ├── CreateCourse
+│   │   │   │   │   │   └── CreateCourseCommandHandlerTests.cs
+│   │   │   │   │   ├── DeleteCourseById
+│   │   │   │   │   │   └── DeleteCourseByIdCommandHandlerTests.cs
+│   │   │   │   │   ├── EnrollStudentInCourse
+│   │   │   │   │   ├── RemoveStudentFromCourse
+│   │   │   │   │   └── UpdateCourseInstructor
+│   │   │   │   │       └── UpdateCourseInstructorCommandHandlerTests.cs
+│   │   │   │   ├── EventHandlers
+│   │   │   │   └── Queries
+│   │   │   │       ├── GetAllCourses
+│   │   │   │       ├── GetCourseById
+│   │   │   │       ├── GetInstructorCoursesById
+│   │   │   │       ├── GetInstructorCoursesCount
+│   │   │   │       ├── GetStudentCoursesById
+│   │   │   │       └── GetStudentEnrollmentsCount
+│   │   │   ├── Enrollments
+│   │   │   │   └── Commands
+│   │   │   │       ├── EnrollStudentInCourse
+│   │   │   │       │   └── EnrollStudentInCourseCommandHandlerTests.cs
+│   │   │   │       └── RemoveStudentFromCourse
+│   │   │   │           └── RemoveStudentFromCourseCommandHandlerTests.cs
+│   │   │   ├── Instructors
+│   │   │   │   ├── Commands
+│   │   │   │   │   ├── CreateInstructor
+│   │   │   │   │   │   └── CreateInstructorCommandHandlerTests.cs
+│   │   │   │   │   ├── DeleteInstructor
+│   │   │   │   │   │   └── DeleteInstructorCommandHandlerTests.cs
+│   │   │   │   │   └── UpdateInstructor
+│   │   │   │   │       └── UpdateInstructorCommandHandlerTests.cs
+│   │   │   │   ├── EventHandlers
+│   │   │   │   └── Queries
+│   │   │   │       ├── GetAllInstructors
+│   │   │   │       └── GetInstructorById
+│   │   │   ├── QuizAttempts
+│   │   │   │   ├── Commands
+│   │   │   │   │   ├── GradeQuestion
+│   │   │   │   │   ├── GradeQuestionManually
+│   │   │   │   │   └── SubmitQuizAttempt
+│   │   │   │   ├── EventHandlers
+│   │   │   │   └── Queries
+│   │   │   │       ├── GetAllQuizzesAttempts
+│   │   │   │       ├── GetPendingManualAnswers
+│   │   │   │       ├── GetQuizAttemptById
+│   │   │   │       ├── GetStudentQuizAttempts
+│   │   │   │       └── GetStudentQuizAttemptsCount
+│   │   │   ├── Quizzes
+│   │   │   │   ├── Commands
+│   │   │   │   │   ├── AddQuestion
+│   │   │   │   │   ├── CreateQuiz
+│   │   │   │   │   ├── DeleteQuestion
+│   │   │   │   │   ├── UpdateQuestion
+│   │   │   │   │   ├── UpdateQuizCourseId
+│   │   │   │   │   └── UpdateQuizMetadata
+│   │   │   │   ├── EventHandlers
+│   │   │   │   └── Queries
+│   │   │   │       ├── GetAllQuizzes
+│   │   │   │       ├── GetInstructorQuizzesCount
+│   │   │   │       ├── GetQuizById
+│   │   │   │       └── GetStudentQuizzes
+│   │   │   ├── Students
+│   │   │   │   ├── Commands
+│   │   │   │   │   ├── CreateStudent
+│   │   │   │   │   │   └── CreateStudentCommandHandlerTests.cs
+│   │   │   │   │   ├── DeleteStudent
+│   │   │   │   │   │   └── DeleteStudentCommandHandlerTests.cs
+│   │   │   │   │   └── UpdateStudent
+│   │   │   │   │       └── UpdateStudentCommandHandlerTests.cs
+│   │   │   │   ├── EventHandlers
+│   │   │   │   └── Queries
+│   │   │   │       ├── GetAllStudents
+│   │   │   │       └── GetStudentById
+│   │   │   └── Users
+│   │   │       └── Queries
+│   │   │           └── GetUserById
+│   │   └── QuizNova.Application.SubcutaneousTests.csproj
+│   ├── QuizNova.Application.UnitTests
+│   │   ├── Behaviors
+│   │   │   ├── CashingBehaviorTests.cs
+│   │   │   ├── LoggingBehaviourTests.cs
+│   │   │   ├── PerformanceBehaviour.cs
+│   │   │   ├── UnhandledExceptionBehaviourTests.cs
+│   │   │   └── ValidationBehaviorTests.cs
+│   │   ├── Mappers
+│   │   │   ├── AdminMapperTests.cs
+│   │   │   ├── ChoiceMapperTests.cs
+│   │   │   ├── CourseMapperTests.cs
+│   │   │   ├── InstructorMapperTests.cs
+│   │   │   ├── QuestionMapperTests.cs
+│   │   │   ├── QuizAttemptMapperTests.cs
+│   │   │   ├── QuizMapperTests.cs
+│   │   │   ├── StudentMapperTests.cs
+│   │   │   └── StudentQuizMapperTests.cs
+│   │   └── QuizNova.Application.UnitTests.csproj
+│   ├── QuizNova.Domain.UnitTests
+│   │   ├── Courses
+│   │   │   └── CourseTests.cs
+│   │   ├── QuizAttempts
+│   │   │   └── QuizAttemptTests.cs
+│   │   ├── QuizNova.Domain.UnitTests.csproj
+│   │   ├── Quizzes
+│   │   │   ├── McqTests.cs
+│   │   │   └── QuizTests.cs
+│   │   └── Users
+│   │       ├── AdminTests.cs
+│   │       ├── InstructorTests.cs
+│   │       ├── PersonalInformationTests.cs
+│   │       └── StudentTests.cs
+│   └── QuizNova.Tests.Common
+│       ├── Courses
+│       │   └── CourseFactory.cs
+│       ├── Enrollments
+│       │   └── EnrollmentFactory.cs
+│       ├── QuizAttempts
+│       │   ├── Answers
+│       │   │   └── AnswerFactory.cs
+│       │   └── QuizAttemptFactory.cs
+│       ├── QuizNova.Tests.Common.csproj
+│       ├── Quizzes
+│       │   ├── Questions
+│       │   │   ├── ChoiceFactory.cs
+│       │   │   └── QuestionFactory.cs
+│       │   └── QuizFactory.cs
+│       ├── Security
+│       │   ├── TestCurrentUser.cs
+│       │   ├── TestUsers.cs
+│       │   └── UserFactory.cs
+│       └── Users
+│           ├── Admins
+│           │   └── AdminFactory.cs
+│           ├── Instructors
+│           │   └── InstructorFactory.cs
+│           ├── Student
+│           │   └── StudentFactory.cs
+│           └── UserPersonalInformation
+│               └── PersonalInformationFactory.cs
+└── x
 
-268 directories, 620 files
+364 directories, 678 files

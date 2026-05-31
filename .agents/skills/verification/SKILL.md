@@ -17,7 +17,7 @@ When changes are made to the backend projects, execute the following commands fr
 1. **Lint and Format Check:**
 
    ```bash
-   dotnet format analyzers
+   dotnet format QuizNova.slnx
    ```
 
 2. **Build Verification:**
