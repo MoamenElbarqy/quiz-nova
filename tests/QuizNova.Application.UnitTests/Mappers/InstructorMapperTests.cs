@@ -20,7 +20,7 @@ public class InstructorMapperTests
 
         // Assert
         Assert.NotNull(dto);
-        Assert.Equal(instructor.Id, dto.InstructorId);
+        Assert.Equal(instructor.Id, dto.Id);
         Assert.Equal(instructor.PersonalInformation.Name, dto.Name);
         Assert.Equal(instructor.PersonalInformation.Email, dto.Email);
         Assert.Equal(instructor.PersonalInformation.PhoneNumber, dto.PhoneNumber);

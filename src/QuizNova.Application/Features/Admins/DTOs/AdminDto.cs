@@ -1,7 +1,7 @@
 namespace QuizNova.Application.Features.Admins.DTOs;
 
 public sealed record AdminDto(
-    Guid AdminId,
+    Guid Id,
     string Name,
     string Email,
     string PhoneNumber);

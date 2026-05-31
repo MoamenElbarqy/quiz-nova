@@ -19,7 +19,7 @@ public class StudentMapperTests
 
         // Assert
         Assert.NotNull(dto);
-        Assert.Equal(student.Id, dto.StudentId);
+        Assert.Equal(student.Id, dto.Id);
         Assert.Equal(student.PersonalInformation.Name, dto.Name);
         Assert.Equal(student.PersonalInformation.Email, dto.Email);
         Assert.Equal(student.PersonalInformation.PhoneNumber, dto.PhoneNumber);
