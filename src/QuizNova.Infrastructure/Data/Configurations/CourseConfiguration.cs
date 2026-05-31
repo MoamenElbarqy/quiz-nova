@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using QuizNova.Domain.Entities.Courses;
+using QuizNova.Domain.Entities.Courses.Enums;
 
 namespace QuizNova.Infrastructure.Data.Configurations;
 
@@ -14,6 +15,10 @@ public sealed class CourseConfiguration : IEntityTypeConfiguration<Course>
 
         builder.Property(c => c.Name)
             .HasMaxLength(200)
+            .IsRequired();
+
+        builder.Property(c => c.Status)
+            .HasDefaultValue(CourseStatus.Active)
             .IsRequired();
 
         builder.Navigation(c => c.Quizzes)
