@@ -1,4 +1,4 @@
-using MediatR;
+using System.Text.Json;
 
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -24,8 +24,7 @@ using QuizNova.Infrastructure.Identity;
 namespace QuizNova.Infrastructure.Data;
 
 public class AppDbContext(
-    DbContextOptions<AppDbContext> options,
-    IMediator mediator)
+    DbContextOptions<AppDbContext> options)
     : IdentityDbContext<AppUser>(options), IAppDbContext
 {
     public DbSet<Course> Courses => Set<Course>();
@@ -55,6 +54,8 @@ public class AppDbContext(
     public DbSet<Admin> Admins => Set<Admin>();
 
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
+
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
@@ -114,11 +115,19 @@ public class AppDbContext(
             .SelectMany(e => e.DomainEvents)
             .ToList();
 
-        foreach (var domainEvent in domainEvents)
+        // Convert domain events into Outbox Messages
+        var outboxMessages = domainEvents.Select(domainEvent => new OutboxMessage
         {
-            await mediator.Publish(domainEvent, ct);
-        }
+            Id = Guid.NewGuid(),
+            OccurredOnUtc = DateTime.UtcNow,
+            Type = domainEvent.GetType().Name,
+            Content = JsonSerializer.Serialize(domainEvent, domainEvent.GetType()),
+        }).ToList();
 
+        // Save outbox messages to the database
+        await OutboxMessages.AddRangeAsync(outboxMessages, ct);
+
+        // Clear events from domain entities
         foreach (var entity in domainEntities)
         {
             entity.ClearDomainEvents();

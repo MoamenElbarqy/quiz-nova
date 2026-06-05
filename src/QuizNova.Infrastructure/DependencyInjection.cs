@@ -10,6 +10,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 using QuizNova.Application.Common.Interfaces;
+using QuizNova.Infrastructure.BackgroundJobs;
 using QuizNova.Infrastructure.Caching;
 using QuizNova.Infrastructure.Data;
 using QuizNova.Infrastructure.Identity;
@@ -30,7 +31,7 @@ public static class DependencyInjection
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<DbInitializer>();
-
+        services.AddHostedService<ProcessOutboxMessagesJob>();
         return services;
     }
 
