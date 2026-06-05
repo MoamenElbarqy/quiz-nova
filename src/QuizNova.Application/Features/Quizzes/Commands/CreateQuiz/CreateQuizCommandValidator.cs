@@ -18,11 +18,15 @@ public sealed class CreateQuizCommandValidator : AbstractValidator<CreateQuizCom
             .NotEmpty().WithMessage("Instructor ID is required.");
 
         RuleFor(x => x.StartsAtUtc)
-            .NotEmpty().WithMessage("Start time is required.");
+            .NotEmpty().WithMessage("Start time is required.")
+            .GreaterThanOrEqualTo(_ => DateTimeOffset.UtcNow.AddMinutes(-5))
+            .WithMessage("Start time must not be in the past.");
 
         RuleFor(x => x.EndsAtUtc)
             .NotEmpty().WithMessage("End time is required.")
-            .GreaterThan(x => x.StartsAtUtc).WithMessage("End time must be after start time.");
+            .GreaterThan(x => x.StartsAtUtc).WithMessage("End time must be after start time.")
+            .Must((cmd, endsAt) => endsAt >= cmd.StartsAtUtc.AddMinutes(10))
+            .WithMessage("Quiz start and end time must be at least 10 minutes apart.");
 
         RuleFor(x => x.Questions)
             .NotEmpty().WithMessage("At least one question is required.");
@@ -57,10 +61,10 @@ public sealed class CreateQuestionCommandValidator : AbstractValidator<CreateQue
         RuleFor(x => x.QuestionText)
             .NotEmpty().WithMessage("Question text is required.")
             .MinimumLength(3).WithMessage("Question text must be at least 3 characters long.")
-            .MaximumLength(500).WithMessage("Question text must not exceed 500 characters.");
+            .MaximumLength(1000).WithMessage("Question text must not exceed 1000 characters.");
 
         RuleFor(x => x.Marks)
-            .GreaterThan(0).WithMessage("Marks must be greater than 0.");
+            .InclusiveBetween(1, 5).WithMessage("Marks must be between 1 and 5.");
     }
 }
 

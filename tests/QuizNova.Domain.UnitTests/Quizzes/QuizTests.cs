@@ -116,6 +116,35 @@ public class QuizTests
     }
 
     [Fact]
+    public void Create_ShouldFail_WithScheduleDurationLessThanTenMinutes()
+    {
+        // Arrange
+        var starts = DateTimeOffset.UtcNow.AddHours(1);
+        var ends = starts.AddMinutes(9); // Less than 10 minutes!
+
+        // Act
+        var result = QuizFactory.CreateQuiz(startsAtUtc: starts, endsAtUtc: ends);
+
+        // Assert
+        Assert.True(result.IsError);
+        Assert.Equal(QuizErrors.ScheduleDurationTooShort, result.TopError);
+    }
+
+    [Fact]
+    public void Update_ShouldFail_WithScheduleDurationLessThanTenMinutes()
+    {
+        // Arrange
+        var quiz = QuizFactory.CreateQuiz().Value;
+
+        // Act
+        var result = quiz.Update("Updated Title", DateTimeOffset.UtcNow.AddHours(1), DateTimeOffset.UtcNow.AddHours(1).AddMinutes(9));
+
+        // Assert
+        Assert.True(result.IsError);
+        Assert.Equal(QuizErrors.ScheduleDurationTooShort, result.TopError);
+    }
+
+    [Fact]
     public void Create_ShouldFail_WithLessQuestionsThanThree()
     {
         // Arrange

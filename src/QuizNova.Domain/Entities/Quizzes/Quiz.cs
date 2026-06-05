@@ -113,6 +113,11 @@ public class Quiz : Entity
             return QuizErrors.ScheduleInvalid;
         }
 
+        if (endsAtUtc < startsAtUtc.AddMinutes(10))
+        {
+            return QuizErrors.ScheduleDurationTooShort;
+        }
+
         if (questions.Sum(q => q.Marks) <= 0)
         {
             return QuizErrors.MarksInvalid;
@@ -189,6 +194,11 @@ public class Quiz : Entity
         if (startsAtUtc >= endsAtUtc)
         {
             return QuizErrors.ScheduleInvalid;
+        }
+
+        if (endsAtUtc < startsAtUtc.AddMinutes(10))
+        {
+            return QuizErrors.ScheduleDurationTooShort;
         }
 
         Title = trimmedTitle;

@@ -57,4 +57,7 @@ public static class QuizErrors
 
     public static readonly Error CourseCompleted =
         Error.Validation("Quiz_CourseCompleted", "Cannot perform operations on a quiz belonging to a completed course.");
+
+    public static readonly Error ScheduleDurationTooShort =
+        Error.Validation("Quiz_Schedule_DurationTooShort", "Quiz start and end time must be at least 10 minutes apart.");
 }
