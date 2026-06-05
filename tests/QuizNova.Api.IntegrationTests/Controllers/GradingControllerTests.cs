@@ -68,10 +68,10 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
 
         // Seed an answer belonging to this instructor
-        await SeedManualAnswerAsync(TestUsers.Instructor.User.Email!);
+        await SeedManualAnswerAsync(TestUsers.Instructor1.User.Email!);
 
         // Act
         var response = await client.GetAsync("/quiz-attempts/manually-graded-answers");
@@ -94,7 +94,7 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
 
         // Act
         var response =
@@ -110,9 +110,9 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
 
-        var (_, answerId, _) = await SeedManualAnswerAsync(TestUsers.Instructor.User.Email!);
+        var (_, answerId, _) = await SeedManualAnswerAsync(TestUsers.Instructor1.User.Email!);
         var request = new GradeQuestionRequest(8, "Excellent explanation of REST API principles!");
 
         // Act
@@ -127,9 +127,9 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
 
-        var (_, answerId, _) = await SeedManualAnswerAsync(TestUsers.Instructor.User.Email!);
+        var (_, answerId, _) = await SeedManualAnswerAsync(TestUsers.Instructor1.User.Email!);
 
         // Negative score is invalid
         var request = new GradeQuestionRequest(-5, "Score is invalid.");
@@ -146,7 +146,7 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
 
         var nonExistentId = Guid.NewGuid();
         var request = new GradeQuestionRequest(5, "Valid feedback");
@@ -163,9 +163,9 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
 
-        var (_, answerId, _) = await SeedManualAnswerAsync(TestUsers.Instructor.User.Email!);
+        var (_, answerId, _) = await SeedManualAnswerAsync(TestUsers.Instructor1.User.Email!);
         var firstRequest = new GradeQuestionRequest(7, "First valid grade");
         var secondRequest = new GradeQuestionRequest(9, "Trying to grade a second time");
 

@@ -1,4 +1,5 @@
 using MediatR;
+
 using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;

@@ -45,7 +45,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task GetAllQuizzes_WhenInstructor_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
 
         var response = await client.GetAsync("/quizzes");
 
@@ -100,7 +100,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task GetInstructorQuizzesCount_WhenInstructor_ReturnsQuizzesCountDto()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var (_, instructorId, _) = await GetSeededIdsAsync();
 
         var response = await client.GetAsync($"/quizzes/count?instructorId={instructorId}");
@@ -205,7 +205,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task CreateQuiz_WhenInstructor_ReturnsQuizDto()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var request = await CreateValidQuizRequestAsync();
 
         var response = await client.PostAsJsonAsync("/quizzes", request);
@@ -237,7 +237,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task UpdateQuizMetadata_WhenInstructor_ReturnsNoContent()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var quizId = await SeedQuizAsync();
         var request = new UpdateQuizMetadataRequest(
             "Updated Quiz",
@@ -253,7 +253,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task AddQuestion_WhenInstructor_ReturnsCreatedQuestion()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var quizId = await SeedQuizAsync();
         var request = new CreateTfRequest("Additional true false question", 5, true);
 
@@ -269,7 +269,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task UpdateQuestion_WhenInstructor_ReturnsNoContent()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var (quizId, questionId) = await SeedQuizWithQuestionAsync();
         var request = new UpdateTfRequest("Updated true false question", 0, 10, false);
 
@@ -282,7 +282,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task UpdateQuizCourseId_WhenInstructor_ReturnsNoContent()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var quizId = await SeedQuizAsync();
         var (courseId, _, _) = await GetAlternateSeededIdsAsync();
         var request = new UpdateQuizCourseIdRequest(courseId);
@@ -296,7 +296,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     public async Task DeleteQuestion_WhenInstructor_ReturnsNoContent()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var (quizId, questionId) = await SeedQuizWithQuestionAsync(questionCount: 6);
 
         var response = await client.DeleteAsync($"/quizzes/{quizId}/questions/{questionId}");
@@ -358,15 +358,15 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     {
         var (courseId, instructorId, _) = await GetSeededIdsAsync();
         return new CreateQuizRequest(
-            $"Quiz {Guid.NewGuid():N}"[..20],
+            "TESTING QUIZ TITLE",
             courseId,
             instructorId,
             DateTimeOffset.UtcNow.AddDays(1),
             DateTimeOffset.UtcNow.AddDays(2),
             [
-                new CreateTfRequest("Question one text", 10, true),
-                new CreateTfRequest("Question two text", 10, false),
-                new CreateTfRequest("Question three text", 10, true),
+                new CreateTfRequest("Question one text", 5, true),
+                new CreateTfRequest("Question two text", 5, false),
+                new CreateTfRequest("Question three text", 5, true),
             ]);
     }
 

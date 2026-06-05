@@ -4,9 +4,12 @@ using MediatR;
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 using QuizNova.Api;
+using QuizNova.Application.Common.Interfaces;
+using QuizNova.Tests.Common.Security;
 
 using Testcontainers.PostgreSql;
 
@@ -14,6 +17,13 @@ namespace QuizNova.Application.SubcutaneousTests.Common;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>, IAsyncLifetime
 {
+    static CustomWebApplicationFactory()
+    {
+        Environment.SetEnvironmentVariable("DOTNET_USE_POLLING_FILE_WATCHER", "1");
+        Environment.SetEnvironmentVariable("ASPNETCORE_hostBuilder_reloadConfigOnChange", "false");
+        Environment.SetEnvironmentVariable("DOTNET_hostBuilder_reloadConfigOnChange", "false");
+    }
+
     private static readonly PostgreSqlContainer DbContainer = new PostgreSqlBuilder()
         .WithImage("postgres:18.3")
         .WithDatabase("postgres")
@@ -76,6 +86,26 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.ConfigureAppConfiguration((_, configBuilder) =>
+        {
+            foreach (var source in configBuilder.Sources.OfType<FileConfigurationSource>())
+            {
+                source.ReloadOnChange = false;
+            }
+        });
+
+        builder.ConfigureServices(services =>
+        {
+            var descriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(IUser));
+            if (descriptor != null)
+            {
+                services.Remove(descriptor);
+            }
+
+            services.AddScoped<IUser, TestCurrentUser>();
+        });
+
         builder.UseSetting("ConnectionStrings:DefaultConnection", _connectionString);
         builder.UseSetting("AutoMigrateDb", "true");
         builder.UseSetting("JwtSettings:Secret", "QuizNova-Development-Secret-Key-Change-This-2026-Super-Long-Key");

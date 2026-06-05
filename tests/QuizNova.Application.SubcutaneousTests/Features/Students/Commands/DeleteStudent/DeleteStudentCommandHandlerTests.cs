@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Students.Commands.CreateStudent;
 using QuizNova.Application.Features.Students.Commands.DeleteStudent;
@@ -42,7 +43,7 @@ public class DeleteStudentCommandHandlerTests(CustomWebApplicationFactory factor
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Student.NotFound");
+        result.TopError.Code.Should().Be(ApplicationErrors.StudentNotFound(Guid.Empty).Code);
     }
 
     [Fact]
@@ -50,14 +51,14 @@ public class DeleteStudentCommandHandlerTests(CustomWebApplicationFactory factor
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        
+
         // 1. Create a valid Student first
         var uniqueEmail = $"student_{Guid.NewGuid()}@example.com";
         var uniquePhone = $"+1{Guid.NewGuid().ToString()[..10]}";
         var createCommand = new CreateStudentCommand("Student to Delete", uniqueEmail, "SecurePass123!", uniquePhone, nameof(UserRole.Student));
         var createResult = await mediator.Send(createCommand);
         createResult.IsSuccess.Should().BeTrue();
-        
+
         var studentId = createResult.Value.Id;
 
         var deleteCommand = new DeleteStudentCommand(studentId);
@@ -80,14 +81,14 @@ public class DeleteStudentCommandHandlerTests(CustomWebApplicationFactory factor
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        
+
         // 1. Create a valid Student first
         var uniqueEmail = $"student_{Guid.NewGuid()}@example.com";
         var uniquePhone = $"+1{Guid.NewGuid().ToString()[..10]}";
         var createCommand = new CreateStudentCommand("Student to Delete Twice", uniqueEmail, "SecurePass123!", uniquePhone, nameof(UserRole.Student));
         var createResult = await mediator.Send(createCommand);
         createResult.IsSuccess.Should().BeTrue();
-        
+
         var studentId = createResult.Value.Id;
 
         var deleteCommand1 = new DeleteStudentCommand(studentId);
@@ -100,6 +101,6 @@ public class DeleteStudentCommandHandlerTests(CustomWebApplicationFactory factor
         // Assert
         deleteResult1.IsSuccess.Should().BeTrue();
         deleteResult2.IsError.Should().BeTrue();
-        deleteResult2.TopError.Code.Should().Be("Student.NotFound");
+        deleteResult2.TopError.Code.Should().Be(ApplicationErrors.StudentNotFound(Guid.Empty).Code);
     }
 }

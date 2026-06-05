@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Students.Commands.CreateStudent;
 using QuizNova.Application.Features.Students.Commands.UpdateStudent;
@@ -50,7 +51,7 @@ public class UpdateStudentCommandHandlerTests(CustomWebApplicationFactory factor
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Student.NotFound");
+        result.TopError.Code.Should().Be(ApplicationErrors.StudentNotFound(Guid.Empty).Code);
     }
 
     [Fact]
@@ -58,14 +59,14 @@ public class UpdateStudentCommandHandlerTests(CustomWebApplicationFactory factor
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        
+
         // 1. Create a valid Student first
         var uniqueEmail1 = $"student_{Guid.NewGuid()}@example.com";
         var uniquePhone1 = $"+1{Guid.NewGuid().ToString()[..10]}";
         var createCommand = new CreateStudentCommand("Original Name", uniqueEmail1, "SecurePass123!", uniquePhone1, nameof(UserRole.Student));
         var createResult = await mediator.Send(createCommand);
         createResult.IsSuccess.Should().BeTrue();
-        
+
         var studentId = createResult.Value.Id;
 
         // 2. Prepare Update Command
@@ -89,7 +90,7 @@ public class UpdateStudentCommandHandlerTests(CustomWebApplicationFactory factor
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
         var studentInDb = await dbContext.Students.FirstOrDefaultAsync(s => s.Id == studentId);
-        
+
         studentInDb.Should().NotBeNull();
         studentInDb.PersonalInformation.Name.Should().Be("Updated Student Name");
         studentInDb.PersonalInformation.Email.Should().Be(uniqueEmail2);
@@ -101,7 +102,7 @@ public class UpdateStudentCommandHandlerTests(CustomWebApplicationFactory factor
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        
+
         // Create Student
         var uniqueEmail = $"student_{Guid.NewGuid()}@example.com";
         var uniquePhone = $"+1{Guid.NewGuid().ToString()[..10]}";
@@ -129,7 +130,7 @@ public class UpdateStudentCommandHandlerTests(CustomWebApplicationFactory factor
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        
+
         // 1. Create Student A
         var emailA = $"student_{Guid.NewGuid()}@example.com";
         var phoneA = $"+1{Guid.NewGuid().ToString()[..10]}";
@@ -156,7 +157,7 @@ public class UpdateStudentCommandHandlerTests(CustomWebApplicationFactory factor
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("User.Email.AlreadyExists");
+        result.TopError.Code.Should().Be(ApplicationErrors.UserEmailAlreadyExists(string.Empty).Code);
     }
 
     [Fact]
@@ -164,7 +165,7 @@ public class UpdateStudentCommandHandlerTests(CustomWebApplicationFactory factor
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        
+
         // 1. Create Student A
         var emailA = $"student_{Guid.NewGuid()}@example.com";
         var phoneA = $"+1{Guid.NewGuid().ToString()[..10]}";
@@ -191,6 +192,6 @@ public class UpdateStudentCommandHandlerTests(CustomWebApplicationFactory factor
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("User.PhoneNumber.AlreadyExists");
+        result.TopError.Code.Should().Be(ApplicationErrors.UserPhoneNumberAlreadyExists(string.Empty).Code);
     }
 }

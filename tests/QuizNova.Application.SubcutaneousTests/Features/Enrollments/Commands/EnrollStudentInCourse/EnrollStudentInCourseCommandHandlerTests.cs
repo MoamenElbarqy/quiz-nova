@@ -3,11 +3,13 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
 using QuizNova.Application.Features.Students.Commands.CreateStudent;
 using QuizNova.Application.SubcutaneousTests.Common;
+using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Identity;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Enrollments.Commands.EnrollStudentInCourse;
@@ -40,7 +42,7 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
             MinimumPassingMarks: 50,
             MaximumMarks: 100));
         courseResult.IsSuccess.Should().BeTrue();
-        var courseId = courseResult.Value.CourseId;
+        var courseId = courseResult.Value.Id;
 
         // Act
         var enrollResult = await mediator.Send(new EnrollStudentInCourseCommand(courseId, studentId));
@@ -99,7 +101,7 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Course.NotFound");
+        result.TopError.Code.Should().Be(ApplicationErrors.CourseNotFound(Guid.Empty).Code);
     }
 
     [Fact]
@@ -115,7 +117,7 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
             MinimumPassingMarks: 50,
             MaximumMarks: 100));
         courseResult.IsSuccess.Should().BeTrue();
-        var courseId = courseResult.Value.CourseId;
+        var courseId = courseResult.Value.Id;
 
         // 2. Use a non-existent student ID
         var command = new EnrollStudentInCourseCommand(courseId, Guid.NewGuid());
@@ -125,7 +127,7 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Student.NotFound");
+        result.TopError.Code.Should().Be(ApplicationErrors.StudentNotFound(Guid.Empty).Code);
     }
 
     [Fact]
@@ -153,7 +155,7 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
             MinimumPassingMarks: 50,
             MaximumMarks: 100));
         courseResult.IsSuccess.Should().BeTrue();
-        var courseId = courseResult.Value.CourseId;
+        var courseId = courseResult.Value.Id;
 
         // 3. Mark course as completed directly via DbContext
         using (var scope = factory.Services.CreateScope())
@@ -171,7 +173,7 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
 
         // Assert
         enrollResult.IsError.Should().BeTrue();
-        enrollResult.TopError.Code.Should().Be("Course_CannotEnroll_Completed");
+        enrollResult.TopError.Code.Should().Be(CourseErrors.CannotEnrollInCompletedCourse.Code);
     }
 
     [Fact]
@@ -199,7 +201,7 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
             MinimumPassingMarks: 50,
             MaximumMarks: 100));
         courseResult.IsSuccess.Should().BeTrue();
-        var courseId = courseResult.Value.CourseId;
+        var courseId = courseResult.Value.Id;
 
         var enrollCommand = new EnrollStudentInCourseCommand(courseId, studentId);
 
@@ -210,6 +212,6 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
         // Assert
         firstEnroll.IsSuccess.Should().BeTrue();
         secondEnroll.IsError.Should().BeTrue();
-        secondEnroll.TopError.Code.Should().Be("Course_Student_Already_Enrolled");
+        secondEnroll.TopError.Code.Should().Be(CourseErrors.StudentAlreadyEnrolled(Guid.Empty).Code);
     }
 }

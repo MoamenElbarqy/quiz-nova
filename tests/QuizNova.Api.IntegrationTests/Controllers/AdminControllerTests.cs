@@ -46,7 +46,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
 
         // Act
         var response = await client.GetAsync("/admins");

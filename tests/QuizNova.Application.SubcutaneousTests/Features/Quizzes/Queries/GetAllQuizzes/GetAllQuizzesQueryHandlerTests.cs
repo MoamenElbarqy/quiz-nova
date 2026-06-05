@@ -1,0 +1,103 @@
+using FluentAssertions;
+
+using Microsoft.Extensions.DependencyInjection;
+
+using QuizNova.Application.Common.Interfaces;
+using QuizNova.Application.Features.Quizzes.Queries.GetAllQuizzes;
+using QuizNova.Application.SubcutaneousTests.Common;
+using QuizNova.Tests.Common.Courses;
+using QuizNova.Tests.Common.Quizzes;
+using QuizNova.Tests.Common.Users.Instructors;
+
+namespace QuizNova.Application.SubcutaneousTests.Features.Quizzes.Queries.GetAllQuizzes;
+
+public class GetAllQuizzesQueryHandlerTests(CustomWebApplicationFactory factory)
+    : IClassFixture<CustomWebApplicationFactory>
+{
+    [Fact]
+    public async Task Handle_WithDefaultPagination_ShouldReturnPaginatedList()
+    {
+        // Arrange
+        var mediator = factory.CreateMediator();
+        var query = new GetAllQuizzesQuery();
+
+        // Act
+        var result = await mediator.Send(query);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value.PageNumber.Should().Be(1);
+        result.Value.PageSize.Should().Be(10);
+    }
+
+    [Fact]
+    public async Task Handle_WithSearchTerm_ShouldFilterCorrectly()
+    {
+        // Arrange
+        var mediator = factory.CreateMediator();
+
+        var instructor = InstructorFactory.CreateInstructor().Value;
+        var course = CourseFactory.CreateCourse(instructorId: instructor.Id).Value;
+
+        var quiz1 = QuizFactory
+            .CreateQuiz(courseId: course.Id, instructorId: instructor.Id, title: "SearchableQuizName").Value;
+        var quiz2 = QuizFactory.CreateQuiz(courseId: course.Id, instructorId: instructor.Id, title: "OtherQuizName")
+            .Value;
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            dbContext.Instructors.Add(instructor);
+            dbContext.Courses.Add(course);
+            dbContext.Quizzes.AddRange(quiz1, quiz2);
+            await dbContext.SaveChangesAsync(CancellationToken.None);
+        }
+
+        var query = new GetAllQuizzesQuery(SearchTerm: "SearchableQuiz");
+
+        // Act
+        var result = await mediator.Send(query);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().ContainSingle(q => q.QuizId == quiz1.Id);
+        result.Value.Items.Should().NotContain(q => q.QuizId == quiz2.Id);
+    }
+
+    [Fact]
+    public async Task Handle_WithMarks_ShouldFilterCorrectly()
+    {
+        // Arrange
+        var mediator = factory.CreateMediator();
+
+        var instructor = InstructorFactory.CreateInstructor().Value;
+        var course = CourseFactory.CreateCourse(instructorId: instructor.Id).Value;
+
+        var quiz = QuizFactory.CreateQuiz(courseId: course.Id, instructorId: instructor.Id).Value;
+
+        // Total marks for quiz created by QuizFactory is 30 (3 questions * 10 marks)
+        using (var scope = factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            dbContext.Instructors.Add(instructor);
+            dbContext.Courses.Add(course);
+            dbContext.Quizzes.Add(quiz);
+            await dbContext.SaveChangesAsync(CancellationToken.None);
+        }
+
+        var queryMatch = new GetAllQuizzesQuery(Marks: 30);
+        var queryMismatch = new GetAllQuizzesQuery(Marks: 10);
+
+        // Act
+        var resultMatch = await mediator.Send(queryMatch);
+        var resultMismatch = await mediator.Send(queryMismatch);
+
+        // Assert
+        resultMatch.IsSuccess.Should().BeTrue();
+        resultMatch.Value.Items.Any(q => q.QuizId == quiz.Id).Should().BeTrue();
+
+        resultMismatch.IsSuccess.Should().BeTrue();
+        resultMismatch.Value.Items.Any(q => q.QuizId == quiz.Id).Should().BeFalse();
+    }
+}

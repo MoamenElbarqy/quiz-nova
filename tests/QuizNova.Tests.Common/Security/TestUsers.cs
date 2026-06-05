@@ -23,13 +23,25 @@ public static class TestUsers
         Password = "Admin123!",
     };
 
-    public static TestUserAccount Instructor => new()
+    public static TestUserAccount Instructor1 => new()
     {
         User = new AppUser
         {
             Id = "54cd01ba-b9ae-4c14-bab6-f3df0219ba4c",
             Email = "instructor1@quiznova.local",
             UserName = "instructor1@quiznova.local",
+            EmailConfirmed = true,
+        },
+        Password = "Instructor123!",
+    };
+
+    public static TestUserAccount Instructor2 => new()
+    {
+        User = new AppUser
+        {
+            Id = "45edc655-7f22-4334-8792-15557a99cc9d",
+            Email = "instructor2@quiznova.local",
+            UserName = "instructor2@quiznova.local",
             EmailConfirmed = true,
         },
         Password = "Instructor123!",

@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Admins.Commands.CreateAdmin;
 using QuizNova.Application.SubcutaneousTests.Common;
@@ -210,7 +211,7 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // Assert
         result1.IsSuccess.Should().BeTrue();
         result2.IsError.Should().BeTrue();
-        result2.TopError.Code.Should().Be("User.Email.AlreadyExists");
+        result2.TopError.Code.Should().Be(ApplicationErrors.UserEmailAlreadyExists(string.Empty).Code);
     }
 
     [Fact]
@@ -232,6 +233,6 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // Assert
         result1.IsSuccess.Should().BeTrue();
         result2.IsError.Should().BeTrue();
-        result2.TopError.Code.Should().Be("User.PhoneNumber.AlreadyExists");
+        result2.TopError.Code.Should().Be(ApplicationErrors.UserPhoneNumberAlreadyExists(string.Empty).Code);
     }
 }

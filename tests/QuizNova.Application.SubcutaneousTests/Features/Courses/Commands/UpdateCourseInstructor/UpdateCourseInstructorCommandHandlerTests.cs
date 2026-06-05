@@ -3,11 +3,13 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Courses.Commands.UpdateCourseInstructor;
 using QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
 using QuizNova.Application.SubcutaneousTests.Common;
+using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Identity;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Courses.Commands.UpdateCourseInstructor;
@@ -42,7 +44,7 @@ public class UpdateCourseInstructorCommandHandlerTests(CustomWebApplicationFacto
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Course.NotFound");
+        result.TopError.Code.Should().Be(ApplicationErrors.CourseNotFound(Guid.Empty).Code);
     }
 
     [Fact]
@@ -58,7 +60,7 @@ public class UpdateCourseInstructorCommandHandlerTests(CustomWebApplicationFacto
             MinimumPassingMarks: 50,
             MaximumMarks: 100));
         createCourseResult.IsSuccess.Should().BeTrue();
-        var courseId = createCourseResult.Value.CourseId;
+        var courseId = createCourseResult.Value.Id;
 
         // 2. Try to assign a non-existent instructor
         var command = new UpdateCourseInstructorCommand(courseId, Guid.NewGuid());
@@ -68,7 +70,7 @@ public class UpdateCourseInstructorCommandHandlerTests(CustomWebApplicationFacto
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Instructor_NotFound");
+        result.TopError.Code.Should().Be(ApplicationErrors.InstructorNotFound(Guid.Empty).Code);
     }
 
     [Fact]
@@ -96,7 +98,7 @@ public class UpdateCourseInstructorCommandHandlerTests(CustomWebApplicationFacto
             MinimumPassingMarks: 60,
             MaximumMarks: 100));
         courseResult.IsSuccess.Should().BeTrue();
-        var courseId = courseResult.Value.CourseId;
+        var courseId = courseResult.Value.Id;
 
         // Act
         var updateResult = await mediator.Send(new UpdateCourseInstructorCommand(courseId, instructorId));
@@ -139,7 +141,7 @@ public class UpdateCourseInstructorCommandHandlerTests(CustomWebApplicationFacto
             MinimumPassingMarks: 60,
             MaximumMarks: 100));
         courseResult.IsSuccess.Should().BeTrue();
-        var courseId = courseResult.Value.CourseId;
+        var courseId = courseResult.Value.Id;
 
         // Act — set instructor to null (unassign)
         var updateResult = await mediator.Send(new UpdateCourseInstructorCommand(courseId, null));
@@ -171,7 +173,7 @@ public class UpdateCourseInstructorCommandHandlerTests(CustomWebApplicationFacto
             MinimumPassingMarks: 50,
             MaximumMarks: 100));
         courseResult.IsSuccess.Should().BeTrue();
-        var courseId = courseResult.Value.CourseId;
+        var courseId = courseResult.Value.Id;
 
         // 2. Mark course as completed directly via DbContext (no application command for this)
         using (var scope = factory.Services.CreateScope())
@@ -189,6 +191,6 @@ public class UpdateCourseInstructorCommandHandlerTests(CustomWebApplicationFacto
 
         // Assert
         updateResult.IsError.Should().BeTrue();
-        updateResult.TopError.Code.Should().Be("Course_CannotUpdate_Completed");
+        updateResult.TopError.Code.Should().Be(CourseErrors.CannotUpdateCompletedCourse.Code);
     }
 }

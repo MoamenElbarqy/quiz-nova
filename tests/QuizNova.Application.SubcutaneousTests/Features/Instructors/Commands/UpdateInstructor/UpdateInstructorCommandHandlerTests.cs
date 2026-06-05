@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
 using QuizNova.Application.Features.Instructors.Commands.UpdateInstructor;
@@ -50,7 +51,7 @@ public class UpdateInstructorCommandHandlerTests(CustomWebApplicationFactory fac
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Instructor_NotFound");
+        result.TopError.Code.Should().Be(ApplicationErrors.InstructorNotFound(Guid.Empty).Code);
     }
 
     [Fact]
@@ -58,14 +59,14 @@ public class UpdateInstructorCommandHandlerTests(CustomWebApplicationFactory fac
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        
+
         // 1. Create a valid Instructor first
         var uniqueEmail1 = $"instructor_{Guid.NewGuid()}@example.com";
         var uniquePhone1 = $"+1{Guid.NewGuid().ToString()[..10]}";
         var createCommand = new CreateInstructorCommand("Original Name", uniqueEmail1, "SecurePass123!", uniquePhone1, nameof(UserRole.Instructor));
         var createResult = await mediator.Send(createCommand);
         createResult.IsSuccess.Should().BeTrue();
-        
+
         var instructorId = createResult.Value.Id;
 
         // 2. Prepare Update Command
@@ -89,7 +90,7 @@ public class UpdateInstructorCommandHandlerTests(CustomWebApplicationFactory fac
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
         var instructorInDb = await dbContext.Instructors.FirstOrDefaultAsync(i => i.Id == instructorId);
-        
+
         instructorInDb.Should().NotBeNull();
         instructorInDb.PersonalInformation.Name.Should().Be("Updated Instructor Name");
         instructorInDb.PersonalInformation.Email.Should().Be(uniqueEmail2);
@@ -101,7 +102,7 @@ public class UpdateInstructorCommandHandlerTests(CustomWebApplicationFactory fac
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        
+
         // Create Instructor
         var uniqueEmail = $"instructor_{Guid.NewGuid()}@example.com";
         var uniquePhone = $"+1{Guid.NewGuid().ToString()[..10]}";
@@ -129,7 +130,7 @@ public class UpdateInstructorCommandHandlerTests(CustomWebApplicationFactory fac
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        
+
         // 1. Create Instructor A
         var emailA = $"instructor_{Guid.NewGuid()}@example.com";
         var phoneA = $"+1{Guid.NewGuid().ToString()[..10]}";
@@ -156,7 +157,7 @@ public class UpdateInstructorCommandHandlerTests(CustomWebApplicationFactory fac
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("User.Email.AlreadyExists");
+        result.TopError.Code.Should().Be(ApplicationErrors.UserEmailAlreadyExists(string.Empty).Code);
     }
 
     [Fact]
@@ -164,7 +165,7 @@ public class UpdateInstructorCommandHandlerTests(CustomWebApplicationFactory fac
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        
+
         // 1. Create Instructor A
         var emailA = $"instructor_{Guid.NewGuid()}@example.com";
         var phoneA = $"+1{Guid.NewGuid().ToString()[..10]}";
@@ -191,6 +192,6 @@ public class UpdateInstructorCommandHandlerTests(CustomWebApplicationFactory fac
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("User.PhoneNumber.AlreadyExists");
+        result.TopError.Code.Should().Be(ApplicationErrors.UserPhoneNumberAlreadyExists(string.Empty).Code);
     }
 }

@@ -20,7 +20,7 @@ public class CourseMapperTests
 
         // Assert
         Assert.NotNull(dto);
-        Assert.Equal(course.Id, dto.CourseId);
+        Assert.Equal(course.Id, dto.Id);
         Assert.Equal(course.Name, dto.CourseName);
         Assert.Equal(course.InstructorId, dto.InstructorId);
         Assert.Equal(0, dto.EnrolledStudentsCount);

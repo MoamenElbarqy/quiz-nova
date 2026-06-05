@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Admins.Commands.CreateAdmin;
 using QuizNova.Application.Features.Admins.Commands.UpdateAdmin;
@@ -50,7 +51,7 @@ public class UpdateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Admin.NotFound");
+        result.TopError.Code.Should().Be(ApplicationErrors.AdminNotFound(Guid.Empty).Code);
     }
 
     [Fact]
@@ -58,14 +59,14 @@ public class UpdateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        
+
         // 1. Create a valid Admin first
         var uniqueEmail1 = $"admin_{Guid.NewGuid()}@example.com";
         var uniquePhone1 = $"+1{Guid.NewGuid().ToString()[..10]}";
         var createCommand = new CreateAdminCommand("Original Name", uniqueEmail1, "SecurePass123!", uniquePhone1, nameof(UserRole.Admin));
         var createResult = await mediator.Send(createCommand);
         createResult.IsSuccess.Should().BeTrue();
-        
+
         var adminId = createResult.Value.Id;
 
         // 2. Prepare Update Command
@@ -89,7 +90,7 @@ public class UpdateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
         var adminInDb = await dbContext.Admins.FirstOrDefaultAsync(a => a.Id == adminId);
-        
+
         adminInDb.Should().NotBeNull();
         adminInDb.PersonalInformation.Name.Should().Be("Updated Admin Name");
         adminInDb.PersonalInformation.Email.Should().Be(uniqueEmail2);
@@ -101,7 +102,7 @@ public class UpdateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        
+
         // Create Admin
         var uniqueEmail = $"admin_{Guid.NewGuid()}@example.com";
         var uniquePhone = $"+1{Guid.NewGuid().ToString()[..10]}";
@@ -129,7 +130,7 @@ public class UpdateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        
+
         // 1. Create Admin A
         var emailA = $"admin_{Guid.NewGuid()}@example.com";
         var phoneA = $"+1{Guid.NewGuid().ToString()[..10]}";
@@ -156,7 +157,7 @@ public class UpdateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("User.Email.AlreadyExists");
+        result.TopError.Code.Should().Be(ApplicationErrors.UserEmailAlreadyExists(string.Empty).Code);
     }
 
     [Fact]
@@ -164,7 +165,7 @@ public class UpdateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        
+
         // 1. Create Admin A
         var emailA = $"admin_{Guid.NewGuid()}@example.com";
         var phoneA = $"+1{Guid.NewGuid().ToString()[..10]}";
@@ -191,6 +192,6 @@ public class UpdateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("User.PhoneNumber.AlreadyExists");
+        result.TopError.Code.Should().Be(ApplicationErrors.UserPhoneNumberAlreadyExists(string.Empty).Code);
     }
 }

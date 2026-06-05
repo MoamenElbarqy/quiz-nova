@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Courses.Commands.DeleteCourseById;
@@ -40,7 +41,7 @@ public class DeleteCourseByIdCommandHandlerTests(CustomWebApplicationFactory fac
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Course.NotFound");
+        result.TopError.Code.Should().Be(ApplicationErrors.CourseNotFound(Guid.Empty).Code);
     }
 
     [Fact]
@@ -56,7 +57,7 @@ public class DeleteCourseByIdCommandHandlerTests(CustomWebApplicationFactory fac
             MinimumPassingMarks: 50,
             MaximumMarks: 100));
         createResult.IsSuccess.Should().BeTrue();
-        var courseId = createResult.Value.CourseId;
+        var courseId = createResult.Value.Id;
 
         // Act
         var deleteResult = await mediator.Send(new DeleteCourseByIdCommand(courseId));
@@ -84,7 +85,7 @@ public class DeleteCourseByIdCommandHandlerTests(CustomWebApplicationFactory fac
             MinimumPassingMarks: 50,
             MaximumMarks: 100));
         createResult.IsSuccess.Should().BeTrue();
-        var courseId = createResult.Value.CourseId;
+        var courseId = createResult.Value.Id;
 
         var deleteCommand = new DeleteCourseByIdCommand(courseId);
 
@@ -95,7 +96,7 @@ public class DeleteCourseByIdCommandHandlerTests(CustomWebApplicationFactory fac
         // Assert
         deleteResult1.IsSuccess.Should().BeTrue();
         deleteResult2.IsError.Should().BeTrue();
-        deleteResult2.TopError.Code.Should().Be("Course.NotFound");
+        deleteResult2.TopError.Code.Should().Be(ApplicationErrors.CourseNotFound(Guid.Empty).Code);
 
         // Verify absent in database
         using var scope = factory.Services.CreateScope();

@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
 using QuizNova.Application.Features.Instructors.Commands.DeleteInstructor;
@@ -42,7 +43,7 @@ public class DeleteInstructorCommandHandlerTests(CustomWebApplicationFactory fac
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Instructor_NotFound");
+        result.TopError.Code.Should().Be(ApplicationErrors.InstructorNotFound(Guid.Empty).Code);
     }
 
     [Fact]
@@ -50,14 +51,14 @@ public class DeleteInstructorCommandHandlerTests(CustomWebApplicationFactory fac
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        
+
         // 1. Create a valid Instructor first
         var uniqueEmail = $"instructor_{Guid.NewGuid()}@example.com";
         var uniquePhone = $"+1{Guid.NewGuid().ToString()[..10]}";
         var createCommand = new CreateInstructorCommand("Instructor to Delete", uniqueEmail, "SecurePass123!", uniquePhone, nameof(UserRole.Instructor));
         var createResult = await mediator.Send(createCommand);
         createResult.IsSuccess.Should().BeTrue();
-        
+
         var instructorId = createResult.Value.Id;
 
         var deleteCommand = new DeleteInstructorCommand(instructorId);
@@ -80,14 +81,14 @@ public class DeleteInstructorCommandHandlerTests(CustomWebApplicationFactory fac
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        
+
         // 1. Create a valid Instructor first
         var uniqueEmail = $"instructor_{Guid.NewGuid()}@example.com";
         var uniquePhone = $"+1{Guid.NewGuid().ToString()[..10]}";
         var createCommand = new CreateInstructorCommand("Instructor to Delete Twice", uniqueEmail, "SecurePass123!", uniquePhone, nameof(UserRole.Instructor));
         var createResult = await mediator.Send(createCommand);
         createResult.IsSuccess.Should().BeTrue();
-        
+
         var instructorId = createResult.Value.Id;
 
         var deleteCommand1 = new DeleteInstructorCommand(instructorId);
@@ -100,6 +101,6 @@ public class DeleteInstructorCommandHandlerTests(CustomWebApplicationFactory fac
         // Assert
         deleteResult1.IsSuccess.Should().BeTrue();
         deleteResult2.IsError.Should().BeTrue();
-        deleteResult2.TopError.Code.Should().Be("Instructor_NotFound");
+        deleteResult2.TopError.Code.Should().Be(ApplicationErrors.InstructorNotFound(Guid.Empty).Code);
     }
 }

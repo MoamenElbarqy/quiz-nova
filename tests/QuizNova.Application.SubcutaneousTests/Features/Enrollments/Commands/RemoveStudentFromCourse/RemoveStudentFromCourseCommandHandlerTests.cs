@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
@@ -58,7 +59,7 @@ public class RemoveStudentFromCourseCommandHandlerTests(CustomWebApplicationFact
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Enrollment.NotFound");
+        result.TopError.Code.Should().Be(ApplicationErrors.EnrollmentNotFound(Guid.Empty).Code);
     }
 
     [Fact]
@@ -86,7 +87,7 @@ public class RemoveStudentFromCourseCommandHandlerTests(CustomWebApplicationFact
             MinimumPassingMarks: 50,
             MaximumMarks: 100));
         courseResult.IsSuccess.Should().BeTrue();
-        var courseId = courseResult.Value.CourseId;
+        var courseId = courseResult.Value.Id;
 
         // 3. Enroll the student
         var enrollResult = await mediator.Send(new EnrollStudentInCourseCommand(courseId, studentId));
@@ -143,7 +144,7 @@ public class RemoveStudentFromCourseCommandHandlerTests(CustomWebApplicationFact
             MinimumPassingMarks: 50,
             MaximumMarks: 100));
         courseResult.IsSuccess.Should().BeTrue();
-        var courseId = courseResult.Value.CourseId;
+        var courseId = courseResult.Value.Id;
 
         // 3. Enroll the student
         var enrollResult = await mediator.Send(new EnrollStudentInCourseCommand(courseId, studentId));
@@ -169,7 +170,7 @@ public class RemoveStudentFromCourseCommandHandlerTests(CustomWebApplicationFact
         // Assert
         removeResult1.IsSuccess.Should().BeTrue();
         removeResult2.IsError.Should().BeTrue();
-        removeResult2.TopError.Code.Should().Be("Enrollment.NotFound");
+        removeResult2.TopError.Code.Should().Be(ApplicationErrors.EnrollmentNotFound(Guid.Empty).Code);
 
         // Verify enrollment is still absent in database
         using var verifyScope = factory.Services.CreateScope();

@@ -113,7 +113,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetQuizAttemptByIdForGrading_WhenInstructor_ReturnsQuizAttemptDto()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var (attemptId, _, _) = await SeedQuizAttemptAsync();
 
         var response = await client.GetAsync($"/quiz-attempts/{attemptId}");
@@ -129,7 +129,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task SubmitQuizAttempt_WhenInstructor_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var (quizId, studentId, questions) = await SeedActiveQuizForSubmissionAsync();
         var request = CreateSubmitRequest(quizId, questions);
 
@@ -199,7 +199,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetStudentQuizAttemptsCount_WhenInstructor_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var (_, studentId, _) = await GetSeededIdsAsync();
 
         var response = await client.GetAsync($"/students/{studentId}/quiz-attempts/count");
@@ -253,7 +253,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     public async Task GetAllQuizzesAttempts_WhenInstructor_ReturnsForbidden()
     {
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
 
         var response = await client.GetAsync("/quiz-attempts");
 

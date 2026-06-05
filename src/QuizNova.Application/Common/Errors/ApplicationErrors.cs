@@ -61,11 +61,6 @@ public static class ApplicationErrors
             code: "Admin.NotFound",
             description: $"Admin with ID '{adminId}' was not found.");
 
-    public static Error QuizIdAlreadyExists(Guid quizId) =>
-        Error.Conflict(
-            code: "Quiz.Id.AlreadyExists",
-            description: $"Quiz with ID '{quizId}' already exists.");
-
     public static Error QuizCourseNotFound(Guid courseId) =>
         Error.NotFound(
             code: "Quiz.Course.NotFound",
@@ -91,20 +86,10 @@ public static class ApplicationErrors
             code: "Enrollment.Enrollment.NotFound",
             description: $"Student with ID '{studentId}' is not enrolled in course '{courseId}'.");
 
-    public static Error StudentAlreadyEnrolledInCourse(Guid studentId, Guid courseId) =>
-        Error.Conflict(
-            code: "Enrollment.Enrollment.AlreadyExists",
-            description: $"Student with ID '{studentId}' is already enrolled in course '{courseId}'.");
-
     public static Error QuizAttemptAlreadyExists(Guid studentId, Guid quizId) =>
         Error.Conflict(
             code: "QuizAttempt.AlreadyExists",
             description: $"Student '{studentId}' already has an attempt for quiz '{quizId}'.");
-
-    public static Error QuizQuestionIdAlreadyExists(Guid questionId) =>
-        Error.Conflict(
-            code: "Quiz.Question.Id.AlreadyExists",
-            description: $"Question with ID '{questionId}' already exists.");
 
     public static Error QuizCorrectChoiceNotFound(Guid questionId, Guid correctChoiceId) =>
         Error.Validation(
@@ -116,31 +101,6 @@ public static class ApplicationErrors
         Error.Validation(
             code: "Quiz.Question.ChoiceIds.NotUnique",
             description: $"Choice IDs must be unique for question with ID '{questionId}'.");
-
-    public static Error QuizChoiceBelongsToDifferentQuestion(Guid choiceId, Guid questionId) =>
-        Error.Validation(
-            code: "Quiz.Question.Choice.QuestionId.Invalid",
-            description: $"Choice with ID '{choiceId}' belongs to a different question than '{questionId}'.");
-
-    public static Error QuizDuplicateQuestionIdsInRequest() =>
-        Error.Validation(
-            code: "Quiz.Request.DuplicateQuestionIds",
-            description: "Duplicate question IDs found in the request.");
-
-    public static Error QuizSomeIdAlreadyExists(Guid id) =>
-        Error.Conflict(
-            code: "Quiz.Request.Id.AlreadyExists",
-            description: $"An entity with ID '{id}' already exists.");
-
-    public static Error CourseIdAlreadyExists(Guid courseId) =>
-        Error.Conflict(
-            code: "Course.Id.AlreadyExists",
-            description: $"Course with ID '{courseId}' already exists.");
-
-    public static Error UserIdAlreadyExists(Guid userId) =>
-        Error.Conflict(
-            code: "User.Id.AlreadyExists",
-            description: $"User with ID '{userId}' already exists.");
 
     public static Error UserEmailAlreadyExists(string email) =>
         Error.Conflict(
@@ -186,11 +146,6 @@ public static class ApplicationErrors
         Error.NotFound(
             code: "Course.NotFound",
             description: $"Course with ID '{courseId}' was not found.");
-
-    public static Error EnrollmentEnrollmentIdAlreadyExists(Guid enrollmentId) =>
-        Error.Conflict(
-            code: "Enrollment.Enrollment.Id.AlreadyExists",
-            description: $"Enrollment with ID '{enrollmentId}' already exists.");
 
     public static Error EnrollmentNotFound(Guid enrollmentId) =>
         Error.NotFound(

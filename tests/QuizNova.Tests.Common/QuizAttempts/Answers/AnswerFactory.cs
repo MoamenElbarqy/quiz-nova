@@ -43,18 +43,17 @@ public static class AnswerFactory
     }
 
     public static Result<TfAnswer> CreateTfAnswer(
-        Guid? id = null,
-        Guid? studentId = null,
-        Guid? questionId = null,
-        Guid? quizAttemptId = null,
+        Guid studentId,
+        Guid questionId,
+        Guid quizAttemptId,
         bool studentChoice = true,
-        bool isCorrect = true)
+        bool isCorrect = true, Guid? id = null)
     {
         return TfAnswer.Create(
             id ?? Guid.NewGuid(),
-            studentId ?? Guid.NewGuid(),
-            questionId ?? Guid.NewGuid(),
-            quizAttemptId ?? Guid.NewGuid(),
+            studentId,
+            questionId,
+            quizAttemptId,
             studentChoice,
             isCorrect);
     }

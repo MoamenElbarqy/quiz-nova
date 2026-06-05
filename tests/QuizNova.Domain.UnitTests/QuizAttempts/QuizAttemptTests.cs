@@ -33,11 +33,11 @@ public class QuizAttemptTests
 
         var questions = quiz.Questions.ToList();
         var ans1 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, quizAttemptId: attemptId, questionId: questions[0].Id).Value;
+            .CreateTfAnswer(studentId: studentId, questionId: questions[0].Id, quizAttemptId: attemptId).Value;
         var ans2 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, quizAttemptId: attemptId, questionId: questions[1].Id).Value;
+            .CreateTfAnswer(studentId: studentId, questionId: questions[1].Id, quizAttemptId: attemptId).Value;
         var ans3 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, quizAttemptId: attemptId, questionId: questions[2].Id).Value;
+            .CreateTfAnswer(studentId: studentId, questionId: questions[2].Id, quizAttemptId: attemptId).Value;
 
         // Act
         var result = quiz.SubmitAttempt(
@@ -66,9 +66,9 @@ public class QuizAttemptTests
 
         // Submitting only 2 answers for a 3-question quiz
         var ans1 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, quizAttemptId: attemptId, questionId: questions[0].Id).Value;
+            .CreateTfAnswer(studentId: studentId, questionId: questions[0].Id, quizAttemptId: attemptId).Value;
         var ans2 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, quizAttemptId: attemptId, questionId: questions[1].Id).Value;
+            .CreateTfAnswer(studentId: studentId, questionId: questions[1].Id, quizAttemptId: attemptId).Value;
 
         // Act
         var result = quiz.SubmitAttempt(
@@ -95,13 +95,13 @@ public class QuizAttemptTests
 
         var questions = quiz.Questions.ToList();
         var ans1 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, quizAttemptId: attemptId, questionId: questions[0].Id).Value;
+            .CreateTfAnswer(studentId: studentId, questionId: questions[0].Id, quizAttemptId: attemptId).Value;
         var ans2 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, quizAttemptId: attemptId, questionId: questions[1].Id).Value;
+            .CreateTfAnswer(studentId: studentId, questionId: questions[1].Id, quizAttemptId: attemptId).Value;
         var ans3 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, quizAttemptId: attemptId, questionId: questions[2].Id).Value;
+            .CreateTfAnswer(studentId: studentId, questionId: questions[2].Id, quizAttemptId: attemptId).Value;
         var ans4 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, quizAttemptId: attemptId, questionId: Guid.NewGuid()).Value;
+            .CreateTfAnswer(studentId: studentId, questionId: Guid.NewGuid(), quizAttemptId: attemptId).Value;
 
         // Act
         var result = quiz.SubmitAttempt(
@@ -209,7 +209,7 @@ public class QuizAttemptTests
 
         // Answer belongs to a completely different attempt
         var ans1 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, quizAttemptId: Guid.NewGuid(), questionId: questions[0].Id).Value;
+            .CreateTfAnswer(studentId: studentId, questionId: questions[0].Id, quizAttemptId: Guid.NewGuid()).Value;
 
         // Act
         var result = quiz.SubmitAttempt(
@@ -238,7 +238,7 @@ public class QuizAttemptTests
 
         // Answer belongs to a different student
         var ans1 = AnswerFactory
-            .CreateTfAnswer(studentId: Guid.NewGuid(), quizAttemptId: attemptId, questionId: questions[0].Id).Value;
+            .CreateTfAnswer(studentId: Guid.NewGuid(), questionId: questions[0].Id, quizAttemptId: attemptId).Value;
 
         // Act
         var result = quiz.SubmitAttempt(
@@ -264,7 +264,7 @@ public class QuizAttemptTests
         var studentId = Guid.NewGuid();
 
         var ans1 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, quizAttemptId: attemptId, questionId: Guid.NewGuid())
+            .CreateTfAnswer(studentId: studentId, questionId: Guid.NewGuid(), quizAttemptId: attemptId)
             .Value; // Guid.NewGuid is not in quiz!
 
         // Act
@@ -308,14 +308,14 @@ public class QuizAttemptTests
 
         // 1. Correct TF Answer (10 marks)
         var tfQuest = QuestionFactory.CreateTfQuestion(marks: 10).Value;
-        var tfAns = AnswerFactory.CreateTfAnswer(studentId: studentId, quizAttemptId: attemptId, questionId: tfQuest.Id,
-            isCorrect: true).Value;
+        var tfAns = AnswerFactory.CreateTfAnswer(studentId: studentId, questionId: tfQuest.Id,
+            quizAttemptId: attemptId, isCorrect: true).Value;
         typeof(QuestionAnswer).GetProperty("Question")!.SetValue(tfAns, tfQuest);
 
         // 2. Incorrect TF Answer (marks 10, but incorrect so 0)
         var tfQuestIncorrect = QuestionFactory.CreateTfQuestion(marks: 10).Value;
-        var tfAnsIncorrect = AnswerFactory.CreateTfAnswer(studentId: studentId, quizAttemptId: attemptId,
-            questionId: tfQuestIncorrect.Id, isCorrect: false).Value;
+        var tfAnsIncorrect = AnswerFactory.CreateTfAnswer(studentId: studentId,
+            questionId: tfQuestIncorrect.Id, quizAttemptId: attemptId, isCorrect: false).Value;
         typeof(QuestionAnswer).GetProperty("Question")!.SetValue(tfAnsIncorrect, tfQuestIncorrect);
 
         // 3. Correct MCQ Answer (15 marks)
@@ -327,10 +327,8 @@ public class QuizAttemptTests
         typeof(QuestionAnswer).GetProperty("Question")!.SetValue(mcqAns, mcqQuest);
 
         // Act
-        var attempt = QuizAttemptFactory.CreateQuizAttempt(
-            id: attemptId,
-            studentId: studentId,
-            studentAnswers: [tfAns, tfAnsIncorrect, mcqAns]).Value;
+        var attempt = QuizAttemptFactory.CreateQuizAttempt(studentAnswers: [tfAns, tfAnsIncorrect, mcqAns],
+            id: attemptId, studentId: studentId).Value;
 
         // Assert
         Assert.Equal(25, attempt.Score); // 10 + 0 + 15 = 25
@@ -342,14 +340,13 @@ public class QuizAttemptTests
         // Arrange
         var studentId = Guid.NewGuid();
         var attemptId = Guid.NewGuid();
-        var essayAns = AnswerFactory.CreateEssayAnswer(studentId: studentId, quizAttemptId: attemptId, score: null).Value;
-        var tfAns = AnswerFactory.CreateTfAnswer(studentId: studentId, quizAttemptId: attemptId).Value;
+        var essayAns = AnswerFactory.CreateEssayAnswer(studentId: studentId, quizAttemptId: attemptId, score: null)
+            .Value;
+        var tfAns = AnswerFactory.CreateTfAnswer(studentId: studentId, questionId: Guid.NewGuid(), quizAttemptId: attemptId).Value;
 
         // Act
-        var attempt = QuizAttemptFactory.CreateQuizAttempt(
-            id: attemptId,
-            studentId: studentId,
-            studentAnswers: [essayAns, tfAns]).Value;
+        var attempt = QuizAttemptFactory
+            .CreateQuizAttempt(studentAnswers: [essayAns, tfAns], id: attemptId, studentId: studentId).Value;
 
         // Assert
         Assert.Equal(QuizAttemptStatus.Pending, attempt.Status);
@@ -364,13 +361,11 @@ public class QuizAttemptTests
 
         // Give it a score so it is graded
         var essayAns = AnswerFactory.CreateEssayAnswer(studentId: studentId, quizAttemptId: attemptId, score: 10).Value;
-        var tfAns = AnswerFactory.CreateTfAnswer(studentId: studentId, quizAttemptId: attemptId).Value;
+        var tfAns = AnswerFactory.CreateTfAnswer(studentId: studentId, questionId: Guid.NewGuid(), quizAttemptId: attemptId).Value;
 
         // Act
-        var attempt = QuizAttemptFactory.CreateQuizAttempt(
-            id: attemptId,
-            studentId: studentId,
-            studentAnswers: [essayAns, tfAns]).Value;
+        var attempt = QuizAttemptFactory
+            .CreateQuizAttempt(studentAnswers: [essayAns, tfAns], id: attemptId, studentId: studentId).Value;
 
         // Assert
         Assert.Equal(QuizAttemptStatus.Completed, attempt.Status);
@@ -382,13 +377,11 @@ public class QuizAttemptTests
         // Arrange
         var studentId = Guid.NewGuid();
         var attemptId = Guid.NewGuid();
-        var tfAns = AnswerFactory.CreateTfAnswer(studentId: studentId, quizAttemptId: attemptId).Value;
+        var tfAns = AnswerFactory.CreateTfAnswer(studentId: studentId, questionId: Guid.NewGuid(), quizAttemptId: attemptId).Value;
 
         // Act
-        var attempt = QuizAttemptFactory.CreateQuizAttempt(
-            id: attemptId,
-            studentId: studentId,
-            studentAnswers: [tfAns]).Value;
+        var attempt = QuizAttemptFactory.CreateQuizAttempt(studentAnswers: [tfAns], id: attemptId, studentId: studentId)
+            .Value;
 
         // Assert
         Assert.Equal(QuizAttemptStatus.Completed, attempt.Status);

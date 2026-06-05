@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Admins.Commands.CreateAdmin;
 using QuizNova.Application.Features.Admins.Commands.DeleteAdmin;
@@ -42,7 +43,7 @@ public class DeleteAdminCommandHandlerTests(CustomWebApplicationFactory factory)
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Admin.NotFound");
+        result.TopError.Code.Should().Be(ApplicationErrors.AdminNotFound(Guid.Empty).Code);
     }
 
     [Fact]
@@ -102,6 +103,6 @@ public class DeleteAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // Assert
         deleteResult1.IsSuccess.Should().BeTrue();
         deleteResult2.IsError.Should().BeTrue();
-        deleteResult2.TopError.Code.Should().Be("Admin.NotFound");
+        deleteResult2.TopError.Code.Should().Be(ApplicationErrors.AdminNotFound(Guid.Empty).Code);
     }
 }

@@ -49,7 +49,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
 
         // Act
         var response = await client.GetAsync("/courses");
@@ -100,7 +100,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var (_, instructorId, _) = await GetSeededIdsAsync();
 
         // Act
@@ -144,7 +144,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
 
         var course = await response.Content.ReadFromJsonAsync<CourseDto>();
         course.Should().NotBeNull();
-        course.CourseId.Should().Be(courseId);
+        course.Id.Should().Be(courseId);
     }
 
     [Fact]
@@ -225,7 +225,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var (_, instructorId, _) = await GetSeededIdsAsync();
 
         var request = new CreateCourseRequest("New Integration Course", instructorId, 60, 100);
@@ -278,7 +278,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var (courseId, instructorId, _) = await GetSeededIdsAsync();
         var request = new UpdateCourseInstructorRequest(instructorId);
 
@@ -306,7 +306,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
 
         var course = await response.Content.ReadFromJsonAsync<CourseDto>();
         course.Should().NotBeNull();
-        course.CourseId.Should().Be(courseId);
+        course.Id.Should().Be(courseId);
         course.InstructorId.Should().Be(instructorId);
     }
 
@@ -315,7 +315,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var (_, instructorId, _) = await GetSeededIdsAsync();
 
         // Act
@@ -334,7 +334,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var nonExistentId = Guid.NewGuid();
 
         // Act
@@ -378,7 +378,7 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var (courseId, _, _) = await GetSeededIdsAsync();
 
         // Act
@@ -406,13 +406,13 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
         var courseToDelete = paginatedCourses.Items.First();
 
         // Act
-        var response = await client.DeleteAsync($"/courses/{courseToDelete.CourseId}");
+        var response = await client.DeleteAsync($"/courses/{courseToDelete.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // Verify it is indeed deleted
-        var getByIdResponse = await client.GetAsync($"/courses/{courseToDelete.CourseId}");
+        var getByIdResponse = await client.GetAsync($"/courses/{courseToDelete.Id}");
         getByIdResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 

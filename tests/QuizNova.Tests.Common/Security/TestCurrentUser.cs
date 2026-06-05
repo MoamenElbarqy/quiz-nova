@@ -5,12 +5,16 @@ namespace QuizNova.Tests.Common.Security;
 
 public class TestCurrentUser : IUser
 {
-    private AppUser? _currentUser;
+    // async local like a local storage for async context so it preserve the context of the current user test context
+    // to rsolve the problem of using raw AppUser and different tests manipluate them
+    // this also make the runtime preserve the AppUser in the Execution Context of the thread
+    // and whenever making await call the value is preserved
+    private static readonly AsyncLocal<AppUser?> CurrentUserHolder = new();
 
-    public string? Id => _currentUser?.Id;
+    public string? Id => CurrentUserHolder.Value?.Id;
 
-    public void Returns(AppUser currentUser)
+    public static void Set(AppUser? currentUser)
     {
-        _currentUser = currentUser;
+        CurrentUserHolder.Value = currentUser;
     }
 }

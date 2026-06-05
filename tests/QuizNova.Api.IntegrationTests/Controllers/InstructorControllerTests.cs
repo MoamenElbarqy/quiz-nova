@@ -49,7 +49,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor.User.Email!, TestUsers.Instructor.Password, "Instructor");
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
 
         // Act
         var response = await client.GetAsync("/instructors");
@@ -170,7 +170,7 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
         // Arrange
         using var client = factory.CreateAppHttpClient();
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
-        var request = new CreateInstructorRequest("Duplicate Email Inst", TestUsers.Instructor.User.Email!,
+        var request = new CreateInstructorRequest("Duplicate Email Inst", TestUsers.Instructor1.User.Email!,
             "InstPass123!", "01099999999", "Instructor");
 
         // Act

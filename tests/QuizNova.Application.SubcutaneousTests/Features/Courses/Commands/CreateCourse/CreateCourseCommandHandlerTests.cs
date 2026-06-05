@@ -3,10 +3,12 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
 using QuizNova.Application.SubcutaneousTests.Common;
+using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Identity;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Courses.Commands.CreateCourse;
@@ -29,7 +31,8 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
         var result = await mediator.Send(command);
 
         // Assert
-        result.IsSuccess.Should().BeTrue($"because creation should succeed but failed with: {result.TopError.Description}");
+        result.IsSuccess.Should()
+            .BeTrue($"because creation should succeed but failed with: {result.TopError.Description}");
         result.Value.Should().NotBeNull();
         result.Value.CourseName.Should().Be("Valid Course Name");
 
@@ -37,7 +40,7 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
         var courseInDb = await dbContext.Courses
-            .FirstOrDefaultAsync(c => c.Id == result.Value.CourseId);
+            .FirstOrDefaultAsync(c => c.Id == result.Value.Id);
 
         courseInDb.Should().NotBeNull();
         courseInDb!.Name.Should().Be("Valid Course Name");
@@ -120,7 +123,7 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Course_Name_Invalid");
+        result.TopError.Code.Should().Be(CourseErrors.NameInvalid.Code);
     }
 
     [Fact]
@@ -138,12 +141,13 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
         var result = await mediator.Send(command);
 
         // Assert
-        result.IsSuccess.Should().BeTrue($"because 3-char name is at the lower boundary, but failed with: {result.TopError.Description}");
+        result.IsSuccess.Should()
+            .BeTrue($"because 3-char name is at the lower boundary, but failed with: {result.TopError.Description}");
 
         // Verify existence in database
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.CourseId);
+        var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.Id);
         courseInDb.Should().NotBeNull();
         courseInDb!.Name.Should().Be("ABC");
     }
@@ -164,12 +168,13 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
         var result = await mediator.Send(command);
 
         // Assert
-        result.IsSuccess.Should().BeTrue($"because 30-char name is at the upper boundary, but failed with: {result.TopError.Description}");
+        result.IsSuccess.Should()
+            .BeTrue($"because 30-char name is at the upper boundary, but failed with: {result.TopError.Description}");
 
         // Verify existence in database
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.CourseId);
+        var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.Id);
         courseInDb.Should().NotBeNull();
         courseInDb!.Name.Should().Be(longName);
     }
@@ -264,12 +269,13 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
         var result = await mediator.Send(command);
 
         // Assert
-        result.IsSuccess.Should().BeTrue($"because equal marks is a valid boundary, but failed with: {result.TopError.Description}");
+        result.IsSuccess.Should()
+            .BeTrue($"because equal marks is a valid boundary, but failed with: {result.TopError.Description}");
 
         // Verify existence in database
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.CourseId);
+        var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.Id);
         courseInDb.Should().NotBeNull();
         courseInDb!.MinimumPassingMarks.Should().Be(100);
         courseInDb.MaximumMarks.Should().Be(100);
@@ -292,7 +298,7 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Instructor_NotFound");
+        result.TopError.Code.Should().Be(ApplicationErrors.InstructorNotFound(Guid.Empty).Code);
     }
 
     [Fact]
@@ -325,13 +331,14 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
         var result = await mediator.Send(command);
 
         // Assert
-        result.IsSuccess.Should().BeTrue($"because course with instructor should succeed, but failed with: {result.TopError.Description}");
+        result.IsSuccess.Should()
+            .BeTrue($"because course with instructor should succeed, but failed with: {result.TopError.Description}");
         result.Value.InstructorId.Should().Be(instructorId);
 
         // Verify in database
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.CourseId);
+        var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.Id);
         courseInDb.Should().NotBeNull();
         courseInDb!.InstructorId.Should().Be(instructorId);
     }

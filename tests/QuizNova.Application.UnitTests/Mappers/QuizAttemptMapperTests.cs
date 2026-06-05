@@ -38,11 +38,8 @@ public class QuizAttemptMapperTests
             selectedChoiceId: Guid.NewGuid(),
             isCorrect: false).Value;
 
-        var quizAttempt = QuizAttemptFactory.CreateQuizAttempt(
-            id: attemptId,
-            studentId: studentId,
-            quizId: quizId,
-            studentAnswers: [tfAnswer1, tfAnswer2, mcqAnswer]).Value;
+        var quizAttempt = QuizAttemptFactory.CreateQuizAttempt(quizId: quizId,
+            studentAnswers: [tfAnswer1, tfAnswer2, mcqAnswer], id: attemptId, studentId: studentId).Value;
 
         // Act
         var dto = quizAttempt.ToQuizAttemptDto();

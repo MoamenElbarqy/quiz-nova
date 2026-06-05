@@ -26,7 +26,7 @@ public sealed class LoginCommandHandler(
 
         if (!string.Equals(userResult.Value.Role, request.Role, StringComparison.OrdinalIgnoreCase))
         {
-            logger.LogWarning("Login failed: User {Email} has role {ActualRole} but attempted to login as {RequestedRole}", 
+            logger.LogWarning("Login failed: User {Email} has role {ActualRole} but attempted to login as {RequestedRole}",
                 request.Email, userResult.Value.Role, request.Role);
             return ApplicationErrors.InvalidRoleForLogin;
         }
