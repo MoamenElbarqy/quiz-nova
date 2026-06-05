@@ -8,6 +8,7 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Courses.Commands.UpdateCourseInstructor;
 using QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
+using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Identity;
@@ -83,10 +84,8 @@ public class UpdateCourseInstructorCommandHandlerTests(CustomWebApplicationFacto
         var instructorEmail = $"instructor_{Guid.NewGuid()}@example.com";
         var instructorPhone = $"+1{Guid.NewGuid().ToString()[..10]}";
         var instructorResult = await mediator.Send(new CreateInstructorCommand(
-            Name: "New Instructor",
-            Email: instructorEmail,
+            PersonalInformation: new PersonalInformationDto("New Instructor", instructorEmail, instructorPhone),
             Password: "SecurePass123!",
-            PhoneNumber: instructorPhone,
             Role: nameof(UserRole.Instructor)));
         instructorResult.IsSuccess.Should().BeTrue();
         var instructorId = instructorResult.Value.Id;
@@ -126,10 +125,8 @@ public class UpdateCourseInstructorCommandHandlerTests(CustomWebApplicationFacto
         var instructorEmail = $"instructor_{Guid.NewGuid()}@example.com";
         var instructorPhone = $"+1{Guid.NewGuid().ToString()[..10]}";
         var instructorResult = await mediator.Send(new CreateInstructorCommand(
-            Name: "Removable Instructor",
-            Email: instructorEmail,
+            PersonalInformation: new PersonalInformationDto("Removable Instructor", instructorEmail, instructorPhone),
             Password: "SecurePass123!",
-            PhoneNumber: instructorPhone,
             Role: nameof(UserRole.Instructor)));
         instructorResult.IsSuccess.Should().BeTrue();
         var instructorId = instructorResult.Value.Id;

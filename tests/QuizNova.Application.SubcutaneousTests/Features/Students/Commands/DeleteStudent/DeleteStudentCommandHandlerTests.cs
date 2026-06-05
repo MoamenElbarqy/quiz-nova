@@ -7,6 +7,7 @@ using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Students.Commands.CreateStudent;
 using QuizNova.Application.Features.Students.Commands.DeleteStudent;
+using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Entities.Identity;
 
@@ -55,7 +56,9 @@ public class DeleteStudentCommandHandlerTests(CustomWebApplicationFactory factor
         // 1. Create a valid Student first
         var uniqueEmail = $"student_{Guid.NewGuid()}@example.com";
         var uniquePhone = $"+1{Guid.NewGuid().ToString()[..10]}";
-        var createCommand = new CreateStudentCommand("Student to Delete", uniqueEmail, "SecurePass123!", uniquePhone, nameof(UserRole.Student));
+        var createCommand =
+            new CreateStudentCommand(new PersonalInformationDto("Student to Delete", uniqueEmail, uniquePhone),
+                "SecurePass123!", nameof(UserRole.Student));
         var createResult = await mediator.Send(createCommand);
         createResult.IsSuccess.Should().BeTrue();
 
@@ -85,7 +88,9 @@ public class DeleteStudentCommandHandlerTests(CustomWebApplicationFactory factor
         // 1. Create a valid Student first
         var uniqueEmail = $"student_{Guid.NewGuid()}@example.com";
         var uniquePhone = $"+1{Guid.NewGuid().ToString()[..10]}";
-        var createCommand = new CreateStudentCommand("Student to Delete Twice", uniqueEmail, "SecurePass123!", uniquePhone, nameof(UserRole.Student));
+        var createCommand =
+            new CreateStudentCommand(new PersonalInformationDto("Student to Delete Twice", uniqueEmail, uniquePhone),
+                "SecurePass123!", nameof(UserRole.Student));
         var createResult = await mediator.Send(createCommand);
         createResult.IsSuccess.Should().BeTrue();
 

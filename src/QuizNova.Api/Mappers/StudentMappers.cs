@@ -1,14 +1,15 @@
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Application.Features.Students.Commands.CreateStudent;
 using QuizNova.Application.Features.Students.Commands.UpdateStudent;
+using QuizNova.Application.Features.Users.DTOs;
 
 namespace QuizNova.Api.Mappers;
 
 public static class StudentMappers
 {
     public static CreateStudentCommand ToCommand(this CreateStudentRequest request) =>
-        new(request.Name, request.Email, request.Password, request.PhoneNumber, request.Role);
+        new(new PersonalInformationDto(request.Name, request.Email, request.PhoneNumber), request.Password, request.Role);
 
     public static UpdateStudentCommand ToCommand(this UpdateStudentRequest request, Guid id) =>
-        new(id, request.Name, request.Email, request.PhoneNumber);
+        new(id, new PersonalInformationDto(request.Name, request.Email, request.PhoneNumber));
 }

@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Queries.GetAllCourses;
 using QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
+using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Entities.Identity;
 using QuizNova.Tests.Common.Courses;
@@ -70,17 +71,13 @@ public class GetAllCoursesQueryHandlerTests(CustomWebApplicationFactory factory)
         var mediator = factory.CreateMediator();
 
         var createInstructorCmd1 = new CreateInstructorCommand(
-            Name: "Instructor One",
-            Email: $"instructor_{Guid.NewGuid()}@example.com",
+            PersonalInformation: new PersonalInformationDto("Instructor One", $"instructor_{Guid.NewGuid()}@example.com", $"+1{Guid.NewGuid().ToString()[..10]}"),
             Password: "SecurePass123!",
-            PhoneNumber: $"+1{Guid.NewGuid().ToString()[..10]}",
             Role: nameof(UserRole.Instructor));
 
         var createInstructorCmd2 = new CreateInstructorCommand(
-            Name: "Instructor Two",
-            Email: $"instructor_{Guid.NewGuid()}@example.com",
+            PersonalInformation: new PersonalInformationDto("Instructor Two", $"instructor_{Guid.NewGuid()}@example.com", $"+1{Guid.NewGuid().ToString()[..10]}"),
             Password: "SecurePass123!",
-            PhoneNumber: $"+1{Guid.NewGuid().ToString()[..10]}",
             Role: nameof(UserRole.Instructor));
 
         var instructorResult1 = await mediator.Send(createInstructorCmd1);

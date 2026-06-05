@@ -7,6 +7,7 @@ using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Admins.Commands.CreateAdmin;
 using QuizNova.Application.Features.Admins.Commands.UpdateAdmin;
+using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Entities.Identity;
 
@@ -21,10 +22,8 @@ public class UpdateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // Arrange
         var mediator = factory.CreateMediator();
         var command = new UpdateAdminCommand(
-            Id: Guid.Empty,
-            Name: "Valid Name",
-            Email: "admin@example.com",
-            PhoneNumber: "+123456789");
+            Guid.Empty,
+            new PersonalInformationDto("Valid Name", "admin@example.com", "+123456789"));
 
         // Act
         var result = await mediator.Send(command);
@@ -41,10 +40,8 @@ public class UpdateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         var mediator = factory.CreateMediator();
         var nonExistentId = Guid.NewGuid();
         var command = new UpdateAdminCommand(
-            Id: nonExistentId,
-            Name: "Valid Name",
-            Email: "admin@example.com",
-            PhoneNumber: "+123456789");
+            nonExistentId,
+            new PersonalInformationDto("Valid Name", "admin@example.com", "+123456789"));
 
         // Act
         var result = await mediator.Send(command);
@@ -63,7 +60,10 @@ public class UpdateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // 1. Create a valid Admin first
         var uniqueEmail1 = $"admin_{Guid.NewGuid()}@example.com";
         var uniquePhone1 = $"+1{Guid.NewGuid().ToString()[..10]}";
-        var createCommand = new CreateAdminCommand("Original Name", uniqueEmail1, "SecurePass123!", uniquePhone1, nameof(UserRole.Admin));
+        var createCommand = new CreateAdminCommand(
+            new PersonalInformationDto("Original Name", uniqueEmail1, uniquePhone1),
+            "SecurePass123!",
+            nameof(UserRole.Admin));
         var createResult = await mediator.Send(createCommand);
         createResult.IsSuccess.Should().BeTrue();
 
@@ -73,18 +73,16 @@ public class UpdateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         var uniqueEmail2 = $"admin_{Guid.NewGuid()}@example.com";
         var uniquePhone2 = $"+1{Guid.NewGuid().ToString()[..10]}";
         var updateCommand = new UpdateAdminCommand(
-            Id: adminId,
-            Name: "Updated Admin Name",
-            Email: uniqueEmail2,
-            PhoneNumber: uniquePhone2);
+            adminId,
+            new PersonalInformationDto("Updated Admin Name", uniqueEmail2, uniquePhone2));
 
         // Act
         var updateResult = await mediator.Send(updateCommand);
 
         // Assert
         updateResult.IsSuccess.Should().BeTrue();
-        updateResult.Value.Name.Should().Be("Updated Admin Name");
-        updateResult.Value.Email.Should().Be(uniqueEmail2);
+        updateResult.Value.PersonalInformation.Name.Should().Be("Updated Admin Name");
+        updateResult.Value.PersonalInformation.Email.Should().Be(uniqueEmail2);
 
         // Verify updated in database
         using var scope = factory.Services.CreateScope();
@@ -106,23 +104,24 @@ public class UpdateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // Create Admin
         var uniqueEmail = $"admin_{Guid.NewGuid()}@example.com";
         var uniquePhone = $"+1{Guid.NewGuid().ToString()[..10]}";
-        var createCommand = new CreateAdminCommand("Original Name", uniqueEmail, "SecurePass123!", uniquePhone, nameof(UserRole.Admin));
+        var createCommand = new CreateAdminCommand(
+            new PersonalInformationDto("Original Name", uniqueEmail, uniquePhone),
+            "SecurePass123!",
+            nameof(UserRole.Admin));
         var createResult = await mediator.Send(createCommand);
         var adminId = createResult.Value.Id;
 
         // Update with name too short
         var updateCommand = new UpdateAdminCommand(
-            Id: adminId,
-            Name: "Ab",
-            Email: uniqueEmail,
-            PhoneNumber: uniquePhone);
+            adminId,
+            new PersonalInformationDto("Ab", uniqueEmail, uniquePhone));
 
         // Act
         var result = await mediator.Send(updateCommand);
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.Errors.Should().Contain(e => e.Code == "Name" && e.Description.Contains("at least 3 characters"));
+        result.Errors.Should().Contain(e => e.Code == "PersonalInformation.Name" && e.Description.Contains("at least 3 characters"));
     }
 
     [Fact]
@@ -134,23 +133,27 @@ public class UpdateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // 1. Create Admin A
         var emailA = $"admin_{Guid.NewGuid()}@example.com";
         var phoneA = $"+1{Guid.NewGuid().ToString()[..10]}";
-        var createA = new CreateAdminCommand("Admin A", emailA, "SecurePass123!", phoneA, nameof(UserRole.Admin));
+        var createA = new CreateAdminCommand(
+            new PersonalInformationDto("Admin A", emailA, phoneA),
+            "SecurePass123!",
+            nameof(UserRole.Admin));
         var resA = await mediator.Send(createA);
         resA.IsSuccess.Should().BeTrue();
 
         // 2. Create Admin B
         var emailB = $"admin_{Guid.NewGuid()}@example.com";
         var phoneB = $"+1{Guid.NewGuid().ToString()[..10]}";
-        var createB = new CreateAdminCommand("Admin B", emailB, "SecurePass123!", phoneB, nameof(UserRole.Admin));
+        var createB = new CreateAdminCommand(
+            new PersonalInformationDto("Admin B", emailB, phoneB),
+            "SecurePass123!",
+            nameof(UserRole.Admin));
         var resB = await mediator.Send(createB);
         var adminBId = resB.Value.Id;
 
         // 3. Try to update Admin B's email to match Admin A
         var updateCommand = new UpdateAdminCommand(
-            Id: adminBId,
-            Name: "Admin B Updated",
-            Email: emailA,
-            PhoneNumber: phoneB);
+            adminBId,
+            new PersonalInformationDto("Admin B Updated", emailA, phoneB));
 
         // Act
         var result = await mediator.Send(updateCommand);
@@ -169,23 +172,27 @@ public class UpdateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // 1. Create Admin A
         var emailA = $"admin_{Guid.NewGuid()}@example.com";
         var phoneA = $"+1{Guid.NewGuid().ToString()[..10]}";
-        var createA = new CreateAdminCommand("Admin A", emailA, "SecurePass123!", phoneA, nameof(UserRole.Admin));
+        var createA = new CreateAdminCommand(
+            new PersonalInformationDto("Admin A", emailA, phoneA),
+            "SecurePass123!",
+            nameof(UserRole.Admin));
         var resA = await mediator.Send(createA);
         resA.IsSuccess.Should().BeTrue();
 
         // 2. Create Admin B
         var emailB = $"admin_{Guid.NewGuid()}@example.com";
         var phoneB = $"+1{Guid.NewGuid().ToString()[..10]}";
-        var createB = new CreateAdminCommand("Admin B", emailB, "SecurePass123!", phoneB, nameof(UserRole.Admin));
+        var createB = new CreateAdminCommand(
+            new PersonalInformationDto("Admin B", emailB, phoneB),
+            "SecurePass123!",
+            nameof(UserRole.Admin));
         var resB = await mediator.Send(createB);
         var adminBId = resB.Value.Id;
 
         // 3. Try to update Admin B's phone number to match Admin A
         var updateCommand = new UpdateAdminCommand(
-            Id: adminBId,
-            Name: "Admin B Updated",
-            Email: emailB,
-            PhoneNumber: phoneA);
+            adminBId,
+            new PersonalInformationDto("Admin B Updated", emailB, phoneA));
 
         // Act
         var result = await mediator.Send(updateCommand);
@@ -194,4 +201,5 @@ public class UpdateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         result.IsError.Should().BeTrue();
         result.TopError.Code.Should().Be(ApplicationErrors.UserPhoneNumberAlreadyExists(string.Empty).Code);
     }
+
 }

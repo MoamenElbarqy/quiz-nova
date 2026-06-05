@@ -71,7 +71,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
         var paginatedAdmins = await response.Content.ReadFromJsonAsync<PaginatedList<AdminDto>>();
         paginatedAdmins.Should().NotBeNull();
         paginatedAdmins.Items.Should().NotBeEmpty();
-        paginatedAdmins.Items.Should().Contain(a => a.Email == TestUsers.Admin.User.Email);
+        paginatedAdmins.Items.Should().Contain(a => a.PersonalInformation.Email == TestUsers.Admin.User.Email);
     }
 
     [Theory]
@@ -104,7 +104,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
         getAdminsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var paginatedAdmins = await getAdminsResponse.Content.ReadFromJsonAsync<PaginatedList<AdminDto>>();
         paginatedAdmins.Should().NotBeNull();
-        var adminId = paginatedAdmins.Items.First(a => a.Email == TestUsers.Admin.User.Email).Id;
+        var adminId = paginatedAdmins.Items.First(a => a.PersonalInformation.Email == TestUsers.Admin.User.Email).Id;
 
         // Act
         var response = await client.GetAsync($"/admins/{adminId}");
@@ -115,7 +115,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
         var admin = await response.Content.ReadFromJsonAsync<AdminDto>();
         admin.Should().NotBeNull();
         admin.Id.Should().Be(adminId);
-        admin.Email.Should().Be(TestUsers.Admin.User.Email);
+        admin.PersonalInformation.Email.Should().Be(TestUsers.Admin.User.Email);
     }
 
     [Fact]
@@ -170,8 +170,8 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
 
         var admin = await response.Content.ReadFromJsonAsync<AdminDto>();
         admin.Should().NotBeNull();
-        admin!.Email.Should().Be(request.Email);
-        admin.Name.Should().Be(request.Name);
+        admin!.PersonalInformation.Email.Should().Be(request.Email);
+        admin.PersonalInformation.Name.Should().Be(request.Name);
     }
 
     [Fact]
@@ -182,7 +182,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var request = new CreateAdminRequest(
             "Another Admin",
-            TestUsers.Admin.User.Email!, // Duplicate Email
+            TestUsers.Admin.User.Email!,
             "Password123!",
             "+9999999999",
             "Admin");
@@ -205,12 +205,12 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
         getAdminsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var paginatedAdmins = await getAdminsResponse.Content.ReadFromJsonAsync<PaginatedList<AdminDto>>();
         paginatedAdmins.Should().NotBeNull();
-        var adminId = paginatedAdmins.Items.First(a => a.Email == TestUsers.Admin.User.Email).Id;
+        var adminId = paginatedAdmins.Items.First(a => a.PersonalInformation.Email == TestUsers.Admin.User.Email).Id;
 
         var request = new UpdateAdminRequest(
             "Updated Admin Name",
             TestUsers.Admin.User.Email!,
-            "+1112223334"); // Updated Phone
+            "+1112223334");
 
         // Act
         var response = await client.PutAsJsonAsync($"/admins/{adminId}", request);
@@ -220,8 +220,8 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
 
         var admin = await response.Content.ReadFromJsonAsync<AdminDto>();
         admin.Should().NotBeNull();
-        admin!.Name.Should().Be(request.Name);
-        admin.PhoneNumber.Should().Be(request.PhoneNumber);
+        admin!.PersonalInformation.Name.Should().Be(request.Name);
+        admin.PersonalInformation.PhoneNumber.Should().Be(request.PhoneNumber);
     }
 
     [Fact]

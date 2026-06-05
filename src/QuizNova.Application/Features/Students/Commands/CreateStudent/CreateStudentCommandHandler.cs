@@ -22,7 +22,7 @@ public sealed class CreateStudentCommandHandler(
 {
     public async Task<Result<StudentDto>> Handle(CreateStudentCommand request, CancellationToken ct)
     {
-        logger.LogInformation("Creating student with email: {Email}", request.Email);
+        logger.LogInformation("Creating student with email: {Email}", request.PersonalInformation.Email);
 
         if (!Enum.TryParse<UserRole>(request.Role, true, out var role))
         {
@@ -36,19 +36,19 @@ public sealed class CreateStudentCommandHandler(
             return ApplicationErrors.CreateStudentRoleInvalid(request.Role);
         }
 
-        if (await dbContext.Users.AnyAsync(u => u.PersonalInformation.PhoneNumber == request.PhoneNumber, ct))
+        if (await dbContext.Users.AnyAsync(u => u.PersonalInformation.PhoneNumber == request.PersonalInformation.PhoneNumber, ct))
         {
             logger.LogWarning(
                 "Student creation failed: Phone number {PhoneNumber} already exists",
-                request.PhoneNumber);
-            return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PhoneNumber);
+                request.PersonalInformation.PhoneNumber);
+            return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PersonalInformation.PhoneNumber);
         }
 
         // 1. Register User in Identity Database
         var identityResult = await identityService.RegisterUserAsync(
-            request.Email,
+            request.PersonalInformation.Email,
             request.Password,
-            request.Name,
+            request.PersonalInformation.Name,
             nameof(UserRole.Student),
             ct);
 
@@ -63,9 +63,9 @@ public sealed class CreateStudentCommandHandler(
 
         // 2. Create PersonalInformation Domain Value Object
         var personalInformationResult = PersonalInformation.Create(
-            request.Name,
-            request.Email,
-            request.PhoneNumber);
+            request.PersonalInformation.Name,
+            request.PersonalInformation.Email,
+            request.PersonalInformation.PhoneNumber);
 
         if (personalInformationResult.IsError)
         {
@@ -94,7 +94,7 @@ public sealed class CreateStudentCommandHandler(
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("Successfully created student {StudentId} with email {Email}",
-            createStudentResult.Value.Id, request.Email);
+            createStudentResult.Value.Id, request.PersonalInformation.Email);
 
         return createStudentResult.Value.ToStudentDto(0);
     }

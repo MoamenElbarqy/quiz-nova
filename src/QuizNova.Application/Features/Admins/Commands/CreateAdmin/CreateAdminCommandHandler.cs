@@ -22,7 +22,7 @@ public sealed class CreateAdminCommandHandler(
 {
     public async Task<Result<AdminDto>> Handle(CreateAdminCommand request, CancellationToken ct)
     {
-        logger.LogInformation("Creating admin with email: {Email}", request.Email);
+        logger.LogInformation("Creating admin with email: {Email}", request.PersonalInformation.Email);
 
         if (!Enum.TryParse<UserRole>(request.Role, true, out var role))
         {
@@ -37,24 +37,24 @@ public sealed class CreateAdminCommandHandler(
         }
 
         if (await dbContext.Users
-                .AnyAsync(user => user.PersonalInformation.Email == request.Email, ct))
+                .AnyAsync(user => user.PersonalInformation.Email == request.PersonalInformation.Email, ct))
         {
-            logger.LogWarning("Admin creation failed: Email {Email} already exists", request.Email);
-            return ApplicationErrors.UserEmailAlreadyExists(request.Email);
+            logger.LogWarning("Admin creation failed: Email {Email} already exists", request.PersonalInformation.Email);
+            return ApplicationErrors.UserEmailAlreadyExists(request.PersonalInformation.Email);
         }
 
         if (await dbContext.Users
-                .AnyAsync(user => user.PersonalInformation.PhoneNumber == request.PhoneNumber, ct))
+                .AnyAsync(user => user.PersonalInformation.PhoneNumber == request.PersonalInformation.PhoneNumber, ct))
         {
-            logger.LogWarning("Admin creation failed: Phone number {PhoneNumber} already exists", request.PhoneNumber);
-            return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PhoneNumber);
+            logger.LogWarning("Admin creation failed: Phone number {PhoneNumber} already exists", request.PersonalInformation.PhoneNumber);
+            return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PersonalInformation.PhoneNumber);
         }
 
         // 1. Register User in Identity Database
         var identityResult = await identityService.RegisterUserAsync(
-            request.Email,
+            request.PersonalInformation.Email,
             request.Password,
-            request.Name,
+            request.PersonalInformation.Name,
             nameof(UserRole.Admin),
             ct);
 
@@ -69,9 +69,9 @@ public sealed class CreateAdminCommandHandler(
 
         // 2. Create PersonalInformation Domain Value Object
         var personalInformationResult = PersonalInformation.Create(
-            request.Name,
-            request.Email,
-            request.PhoneNumber);
+            request.PersonalInformation.Name,
+            request.PersonalInformation.Email,
+            request.PersonalInformation.PhoneNumber);
 
         if (personalInformationResult.IsError)
         {
@@ -96,7 +96,7 @@ public sealed class CreateAdminCommandHandler(
         await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("Successfully created admin {AdminId} with email {Email}", createAdminResult.Value.Id,
-            request.Email);
+            request.PersonalInformation.Email);
 
         return createAdminResult.Value.ToAdminDto();
     }

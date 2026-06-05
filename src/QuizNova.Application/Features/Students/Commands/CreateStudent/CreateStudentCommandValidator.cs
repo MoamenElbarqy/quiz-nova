@@ -8,11 +8,11 @@ public sealed class CreateStudentCommandValidator : AbstractValidator<CreateStud
 {
     public CreateStudentCommandValidator()
     {
-        RuleFor(command => command.Name)
+        RuleFor(command => command.PersonalInformation.Name)
             .NotEmpty().WithMessage("Name is required.")
             .MinimumLength(3).WithMessage("Name must be at least 3 characters.");
 
-        RuleFor(command => command.Email)
+        RuleFor(command => command.PersonalInformation.Email)
             .NotEmpty().WithMessage("Email is required.")
             .EmailAddress().WithMessage("A valid email address is required.");
 
@@ -24,7 +24,7 @@ public sealed class CreateStudentCommandValidator : AbstractValidator<CreateStud
             .Matches("[0-9]").WithMessage("Password must contain at least one number.")
             .Matches("[^a-zA-Z0-9]").WithMessage("Password must contain at least one special character.");
 
-        RuleFor(command => command.PhoneNumber)
+        RuleFor(command => command.PersonalInformation.PhoneNumber)
             .NotEmpty().WithMessage("Phone number is required.")
             .Length(7, 15).WithMessage("Phone number must be between 7 and 15 characters.");
 

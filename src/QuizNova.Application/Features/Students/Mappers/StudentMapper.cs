@@ -1,4 +1,5 @@
 using QuizNova.Application.Features.Students.DTOs;
+using QuizNova.Application.Features.Users.Mappers;
 using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Application.Features.Students.Mappers;
@@ -9,9 +10,7 @@ public static class StudentMapper
     {
         return new StudentDto(
             student.Id,
-            student.PersonalInformation.Name,
-            student.PersonalInformation.Email,
-            student.PersonalInformation.PhoneNumber,
+            student.PersonalInformation.ToDto(),
             enrolledCoursesCount);
     }
 }

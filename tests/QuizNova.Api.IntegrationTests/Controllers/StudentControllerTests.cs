@@ -149,8 +149,12 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
         // Arrange
         using var client = factory.CreateAppHttpClient();
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
-        var request = new CreateStudentRequest("Unique Stud", "uniquestud@quiznova.local", "StudPass123!",
-            "01199999998", "Student");
+        var request = new CreateStudentRequest(
+            "Unique Stud",
+            "uniquestud@quiznova.local",
+            "StudPass123!",
+            "01199999998",
+            "Student");
 
         // Act
         var response = await client.PostAsJsonAsync("/students", request);
@@ -160,8 +164,8 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
 
         var result = await response.Content.ReadFromJsonAsync<StudentDto>();
         result.Should().NotBeNull();
-        result.Email.Should().Be(request.Email);
-        result.Name.Should().Be(request.Name);
+        result!.PersonalInformation.Email.Should().Be(request.Email);
+        result.PersonalInformation.Name.Should().Be(request.Name);
     }
 
     [Fact]
@@ -170,8 +174,12 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
         // Arrange
         using var client = factory.CreateAppHttpClient();
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
-        var request = new CreateStudentRequest("Duplicate Email Stud", TestUsers.Student.User.Email!, "StudPass123!",
-            "01199999999", "Student");
+        var request = new CreateStudentRequest(
+            "Duplicate Email Stud",
+            TestUsers.Student.User.Email!,
+            "StudPass123!",
+            "01199999999",
+            "Student");
 
         // Act
         var response = await client.PostAsJsonAsync("/students", request);
@@ -186,7 +194,11 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
         // Arrange
         using var client = factory.CreateAppHttpClient();
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
-        var request = new CreateStudentRequest("Twice Stud", "twicestud@quiznova.local", "StudPass123!", "01188888888",
+        var request = new CreateStudentRequest(
+            "Twice Stud",
+            "twicestud@quiznova.local",
+            "StudPass123!",
+            "01188888888",
             "Student");
 
         // Act - First call
@@ -207,7 +219,10 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
         using var client = factory.CreateAppHttpClient();
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var (studentId, _) = await GetSeededIdsAsync();
-        var request = new UpdateStudentRequest("Updated Student Name", "updatedstud@quiznova.local", "01166666666");
+        var request = new UpdateStudentRequest(
+            "Updated Student Name",
+            "updatedstud@quiznova.local",
+            "01166666666");
 
         // Act
         var response = await client.PutAsJsonAsync($"/students/{studentId}", request);
@@ -217,8 +232,8 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
 
         var result = await response.Content.ReadFromJsonAsync<StudentDto>();
         result.Should().NotBeNull();
-        result.Name.Should().Be(request.Name);
-        result.Email.Should().Be(request.Email);
+        result!.PersonalInformation.Name.Should().Be(request.Name);
+        result.PersonalInformation.Email.Should().Be(request.Email);
     }
 
     [Fact]
@@ -228,7 +243,8 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
         using var client = factory.CreateAppHttpClient();
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
         var nonExistentId = Guid.NewGuid();
-        var request = new UpdateStudentRequest("Nonexistent Name", "nonexistent@stud.local", "01155555555");
+        var request =
+            new UpdateStudentRequest("Nonexistent Name", "nonexistent@stud.local", "01155555555");
 
         // Act
         var response = await client.PutAsJsonAsync($"/students/{nonExistentId}", request);
@@ -245,8 +261,12 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Create a temp student so we don't break database state for other tests
-        var request = new CreateStudentRequest("Temp Delete Stud", "tempdeletestud@quiznova.local", "StudPass123!",
-            "01144444444", "Student");
+        var request = new CreateStudentRequest(
+            "Temp Delete Stud",
+            "tempdeletestud@quiznova.local",
+            "StudPass123!",
+            "01144444444",
+            "Student");
         var createResponse = await client.PostAsJsonAsync("/students", request);
         createResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var created = await createResponse.Content.ReadFromJsonAsync<StudentDto>();
@@ -284,8 +304,12 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
         using var client = factory.CreateAppHttpClient();
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
-        var request = new CreateStudentRequest("Temp Delete Stud Twice", "tempdeletestudtwice@quiznova.local",
-            "StudPass123!", "01133333333", "Student");
+        var request = new CreateStudentRequest(
+            "Temp Delete Stud Twice",
+            "tempdeletestudtwice@quiznova.local",
+            "StudPass123!",
+            "01133333333",
+            "Student");
         var createResponse = await client.PostAsJsonAsync("/students", request);
         createResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var created = await createResponse.Content.ReadFromJsonAsync<StudentDto>();

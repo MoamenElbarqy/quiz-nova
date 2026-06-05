@@ -7,6 +7,7 @@ using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
+using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Identity;
@@ -311,10 +312,8 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
         var instructorEmail = $"instructor_{Guid.NewGuid()}@example.com";
         var instructorPhone = $"+1{Guid.NewGuid().ToString()[..10]}";
         var createInstructorCommand = new CreateInstructorCommand(
-            Name: "Course Instructor",
-            Email: instructorEmail,
+            PersonalInformation: new PersonalInformationDto("Course Instructor", instructorEmail, instructorPhone),
             Password: "SecurePass123!",
-            PhoneNumber: instructorPhone,
             Role: nameof(UserRole.Instructor));
         var instructorResult = await mediator.Send(createInstructorCommand);
         instructorResult.IsSuccess.Should().BeTrue();

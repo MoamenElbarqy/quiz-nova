@@ -149,8 +149,12 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
         // Arrange
         using var client = factory.CreateAppHttpClient();
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
-        var request = new CreateInstructorRequest("Unique Inst", "uniqueinst@quiznova.local", "InstPass123!",
-            "01099999998", "Instructor");
+        var request = new CreateInstructorRequest(
+            "Unique Inst",
+            "uniqueinst@quiznova.local",
+            "InstPass123!",
+            "01099999998",
+            "Instructor");
 
         // Act
         var response = await client.PostAsJsonAsync("/instructors", request);
@@ -160,8 +164,8 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
 
         var result = await response.Content.ReadFromJsonAsync<InstructorDto>();
         result.Should().NotBeNull();
-        result.Email.Should().Be(request.Email);
-        result.Name.Should().Be(request.Name);
+        result!.PersonalInformation.Email.Should().Be(request.Email);
+        result.PersonalInformation.Name.Should().Be(request.Name);
     }
 
     [Fact]
@@ -170,8 +174,12 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
         // Arrange
         using var client = factory.CreateAppHttpClient();
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
-        var request = new CreateInstructorRequest("Duplicate Email Inst", TestUsers.Instructor1.User.Email!,
-            "InstPass123!", "01099999999", "Instructor");
+        var request = new CreateInstructorRequest(
+            "Duplicate Email Inst",
+            TestUsers.Instructor1.User.Email!,
+            "InstPass123!",
+            "01099999999",
+            "Instructor");
 
         // Act
         var response = await client.PostAsJsonAsync("/instructors", request);
@@ -186,8 +194,12 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
         // Arrange
         using var client = factory.CreateAppHttpClient();
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
-        var request = new CreateInstructorRequest("Twice Inst", "twiceinst@quiznova.local", "InstPass123!",
-            "01088888888", "Instructor");
+        var request = new CreateInstructorRequest(
+            "Twice Inst",
+            "twiceinst@quiznova.local",
+            "InstPass123!",
+            "01088888888",
+            "Instructor");
 
         // Act - First call
         var response1 = await client.PostAsJsonAsync("/instructors", request);
@@ -218,8 +230,8 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
 
         var result = await response.Content.ReadFromJsonAsync<InstructorDto>();
         result.Should().NotBeNull();
-        result.Name.Should().Be(request.Name);
-        result.Email.Should().Be(request.Email);
+        result!.PersonalInformation.Name.Should().Be(request.Name);
+        result.PersonalInformation.Email.Should().Be(request.Email);
     }
 
     [Fact]
@@ -246,8 +258,12 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Create a temp instructor so we don't break database state for other tests
-        var request = new CreateInstructorRequest("Temp Delete Inst", "tempdeleteinst@quiznova.local", "InstPass123!",
-            "01044444444", "Instructor");
+        var request = new CreateInstructorRequest(
+            "Temp Delete Inst",
+            "tempdeleteinst@quiznova.local",
+            "InstPass123!",
+            "01044444444",
+            "Instructor");
         var createResponse = await client.PostAsJsonAsync("/instructors", request);
         createResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var created = await createResponse.Content.ReadFromJsonAsync<InstructorDto>();
@@ -285,8 +301,12 @@ public class InstructorControllerTests(CustomWebApplicationFactory factory) : IC
         using var client = factory.CreateAppHttpClient();
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
-        var request = new CreateInstructorRequest("Temp Delete Inst Twice", "tempdeletetwice@quiznova.local",
-            "InstPass123!", "01033333333", "Instructor");
+        var request = new CreateInstructorRequest(
+            "Temp Delete Inst Twice",
+            "tempdeletetwice@quiznova.local",
+            "InstPass123!",
+            "01033333333",
+            "Instructor");
         var createResponse = await client.PostAsJsonAsync("/instructors", request);
         createResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var created = await createResponse.Content.ReadFromJsonAsync<InstructorDto>();

@@ -1,4 +1,5 @@
 using QuizNova.Application.Features.Instructors.DTOs;
+using QuizNova.Application.Features.Users.Mappers;
 using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Application.Features.Instructors.Mappers;
@@ -9,9 +10,7 @@ public static class InstructorMapper
     {
         return new InstructorDto(
             instructor.Id,
-            instructor.PersonalInformation.Name,
-            instructor.PersonalInformation.Email,
-            instructor.PersonalInformation.PhoneNumber,
+            instructor.PersonalInformation.ToDto(),
             coursesCount,
             quizzesCount);
     }

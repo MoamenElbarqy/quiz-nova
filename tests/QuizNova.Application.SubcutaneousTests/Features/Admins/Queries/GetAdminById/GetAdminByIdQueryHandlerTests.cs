@@ -73,7 +73,7 @@ public class GetAdminByIdQueryHandlerTests(CustomWebApplicationFactory factory)
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value.Id.Should().Be(admin.Id);
-        result.Value.Name.Should().Be("Existing Admin");
-        result.Value.Email.Should().Be(admin.PersonalInformation.Email);
+        result.Value.PersonalInformation.Name.Should().Be("Existing Admin");
+        result.Value.PersonalInformation.Email.Should().Be(admin.PersonalInformation.Email);
     }
 }

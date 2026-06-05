@@ -33,25 +33,25 @@ public sealed class UpdateInstructorCommandHandler(
         }
 
         if (await dbContext.Users.AnyAsync(
-                user => user.Id != request.Id && user.PersonalInformation.Email == request.Email, ct))
+                user => user.Id != request.Id && user.PersonalInformation.Email == request.PersonalInformation.Email, ct))
         {
-            logger.LogWarning("Instructor update failed: Email {Email} already exists for another user", request.Email);
-            return ApplicationErrors.UserEmailAlreadyExists(request.Email);
+            logger.LogWarning("Instructor update failed: Email {Email} already exists for another user", request.PersonalInformation.Email);
+            return ApplicationErrors.UserEmailAlreadyExists(request.PersonalInformation.Email);
         }
 
         if (await dbContext.Users.AnyAsync(
-                user => user.Id != request.Id && user.PersonalInformation.PhoneNumber == request.PhoneNumber, ct))
+                user => user.Id != request.Id && user.PersonalInformation.PhoneNumber == request.PersonalInformation.PhoneNumber, ct))
         {
             logger.LogWarning(
                 "Instructor update failed: Phone number {PhoneNumber} already exists for another user",
-                request.PhoneNumber);
-            return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PhoneNumber);
+                request.PersonalInformation.PhoneNumber);
+            return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PersonalInformation.PhoneNumber);
         }
 
         var personalInformationResult = PersonalInformation.Create(
-            request.Name,
-            request.Email,
-            request.PhoneNumber);
+            request.PersonalInformation.Name,
+            request.PersonalInformation.Email,
+            request.PersonalInformation.PhoneNumber);
 
         if (personalInformationResult.IsError)
         {

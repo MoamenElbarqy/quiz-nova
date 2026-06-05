@@ -1,8 +1,8 @@
+using QuizNova.Application.Features.Users.DTOs;
+
 namespace QuizNova.Application.Features.Students.DTOs;
 
 public sealed record StudentDto(
     Guid Id,
-    string Name,
-    string Email,
-    string PhoneNumber,
+    PersonalInformationDto PersonalInformation,
     int EnrolledCoursesCount);

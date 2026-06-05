@@ -1,4 +1,5 @@
 using QuizNova.Application.Features.Admins.DTOs;
+using QuizNova.Application.Features.Users.Mappers;
 using QuizNova.Domain.Entities.Users.Admins;
 
 namespace QuizNova.Application.Features.Admins.Mappers;
@@ -9,8 +10,6 @@ public static class AdminMapper
     {
         return new AdminDto(
             admin.Id,
-            admin.PersonalInformation.Name,
-            admin.PersonalInformation.Email,
-            admin.PersonalInformation.PhoneNumber);
+            admin.PersonalInformation.ToDto());
     }
 }

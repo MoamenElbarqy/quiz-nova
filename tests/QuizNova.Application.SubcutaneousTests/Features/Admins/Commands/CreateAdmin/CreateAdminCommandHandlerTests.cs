@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Admins.Commands.CreateAdmin;
+using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Entities.Identity;
 
@@ -15,7 +16,7 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
     : IClassFixture<CustomWebApplicationFactory>
 {
     [Fact]
-    public async Task Handle_WithValidData_ShouldSuccess()
+    public async Task Handle_WithValidData_ShouldCreateAdminSuccessfully()
     {
         // Arrange
         var mediator = factory.CreateMediator();
@@ -23,11 +24,9 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         var uniquePhone = $"+1{Guid.NewGuid().ToString()[..10]}"; // ensure valid length between 7 and 15
 
         var command = new CreateAdminCommand(
-            Name: "Valid Admin Name",
-            Email: uniqueEmail,
-            Password: "SecurePass123!",
-            PhoneNumber: uniquePhone,
-            Role: nameof(UserRole.Admin));
+            new PersonalInformationDto("Valid Admin Name", uniqueEmail, uniquePhone),
+            "SecurePass123!",
+            nameof(UserRole.Admin));
 
         // Act
         var result = await mediator.Send(command);
@@ -36,7 +35,7 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         result.IsSuccess.Should()
             .BeTrue($"because creation should succeed but failed with: {result.TopError.Description}");
         result.Value.Should().NotBeNull();
-        result.Value.Email.Should().Be(uniqueEmail);
+        result.Value.PersonalInformation.Email.Should().Be(uniqueEmail);
 
         // Verify existence in database
         using var scope = factory.Services.CreateScope();
@@ -56,18 +55,16 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // Arrange
         var mediator = factory.CreateMediator();
         var command = new CreateAdminCommand(
-            Name: "Ab",
-            Email: "admin@example.com",
-            Password: "SecurePass123!",
-            PhoneNumber: "+123456789",
-            Role: nameof(UserRole.Admin));
+            new PersonalInformationDto("Ab", "admin@example.com", "+123456789"),
+            "SecurePass123!",
+            nameof(UserRole.Admin));
 
         // Act
         var result = await mediator.Send(command);
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.Errors.Should().Contain(e => e.Code == "Name" && e.Description.Contains("at least 3 characters"));
+        result.Errors.Should().Contain(e => e.Code == "PersonalInformation.Name" && e.Description.Contains("at least 3 characters"));
     }
 
     [Fact]
@@ -76,18 +73,16 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // Arrange
         var mediator = factory.CreateMediator();
         var command = new CreateAdminCommand(
-            Name: "Valid Name",
-            Email: string.Empty,
-            Password: "SecurePass123!",
-            PhoneNumber: "+123456789",
-            Role: nameof(UserRole.Admin));
+            new PersonalInformationDto("Valid Name", string.Empty, "+123456789"),
+            "SecurePass123!",
+            nameof(UserRole.Admin));
 
         // Act
         var result = await mediator.Send(command);
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.Errors.Should().Contain(e => e.Code == "Email" && e.Description.Contains("required"));
+        result.Errors.Should().Contain(e => e.Code == "PersonalInformation.Email" && e.Description.Contains("required"));
     }
 
     [Fact]
@@ -96,18 +91,16 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // Arrange
         var mediator = factory.CreateMediator();
         var command = new CreateAdminCommand(
-            Name: "Valid Name",
-            Email: "invalid-email",
-            Password: "SecurePass123!",
-            PhoneNumber: "+123456789",
-            Role: nameof(UserRole.Admin));
+            new PersonalInformationDto("Valid Name", "invalid-email", "+123456789"),
+            "SecurePass123!",
+            nameof(UserRole.Admin));
 
         // Act
         var result = await mediator.Send(command);
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.Errors.Should().Contain(e => e.Code == "Email" && e.Description.Contains("valid email address"));
+        result.Errors.Should().Contain(e => e.Code == "PersonalInformation.Email" && e.Description.Contains("valid email address"));
     }
 
     [Fact]
@@ -116,11 +109,9 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // Arrange
         var mediator = factory.CreateMediator();
         var command = new CreateAdminCommand(
-            Name: "Valid Name",
-            Email: "admin@example.com",
-            Password: "weak",
-            PhoneNumber: "+123456789",
-            Role: nameof(UserRole.Admin));
+            new PersonalInformationDto("Valid Name", "admin@example.com", "+123456789"),
+            "weak",
+            nameof(UserRole.Admin));
 
         // Act
         var result = await mediator.Send(command);
@@ -136,11 +127,9 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // Arrange
         var mediator = factory.CreateMediator();
         var command = new CreateAdminCommand(
-            Name: "Valid Name",
-            Email: "admin@example.com",
-            Password: "SecurePass123!",
-            PhoneNumber: "+123456789",
-            Role: nameof(UserRole.Instructor));
+            new PersonalInformationDto("Valid Name", "admin@example.com", "+123456789"),
+            "SecurePass123!",
+            nameof(UserRole.Instructor));
 
         // Act
         var result = await mediator.Send(command);
@@ -156,11 +145,9 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // Arrange
         var mediator = factory.CreateMediator();
         var command = new CreateAdminCommand(
-            Name: "Valid Name",
-            Email: "admin@example.com",
-            Password: "SecurePass123!",
-            PhoneNumber: "12345",
-            Role: nameof(UserRole.Admin));
+            new PersonalInformationDto("Valid Name", "admin@example.com", "12345"),
+            "SecurePass123!",
+            nameof(UserRole.Admin));
 
         // Act
         var result = await mediator.Send(command);
@@ -168,7 +155,7 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // Assert
         result.IsError.Should().BeTrue();
         result.Errors.Should()
-            .Contain(e => e.Code == "PhoneNumber" && e.Description.Contains("between 7 and 15 characters"));
+            .Contain(e => e.Code == "PersonalInformation.PhoneNumber" && e.Description.Contains("between 7 and 15 characters"));
     }
 
     [Fact]
@@ -177,11 +164,9 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // Arrange
         var mediator = factory.CreateMediator();
         var command = new CreateAdminCommand(
-            Name: "Valid Name",
-            Email: "admin@example.com",
-            Password: "SecurePass123!",
-            PhoneNumber: "1234567890123456",
-            Role: nameof(UserRole.Admin));
+            new PersonalInformationDto("Valid Name", "admin@example.com", "1234567890123456"),
+            "SecurePass123!",
+            nameof(UserRole.Admin));
 
         // Act
         var result = await mediator.Send(command);
@@ -189,7 +174,7 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // Assert
         result.IsError.Should().BeTrue();
         result.Errors.Should()
-            .Contain(e => e.Code == "PhoneNumber" && e.Description.Contains("between 7 and 15 characters"));
+            .Contain(e => e.Code == "PersonalInformation.PhoneNumber" && e.Description.Contains("between 7 and 15 characters"));
     }
 
     [Fact]
@@ -201,8 +186,8 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         var phone1 = $"+1{Guid.NewGuid().ToString()[..10]}";
         var phone2 = $"+1{Guid.NewGuid().ToString()[..10]}";
 
-        var command1 = new CreateAdminCommand("Admin One", email, "SecurePass123!", phone1, nameof(UserRole.Admin));
-        var command2 = new CreateAdminCommand("Admin Two", email, "SecurePass123!", phone2, nameof(UserRole.Admin));
+        var command1 = new CreateAdminCommand(new PersonalInformationDto("Admin One", email, phone1), "SecurePass123!", nameof(UserRole.Admin));
+        var command2 = new CreateAdminCommand(new PersonalInformationDto("Admin Two", email, phone2), "SecurePass123!", nameof(UserRole.Admin));
 
         // Act
         var result1 = await mediator.Send(command1);
@@ -223,8 +208,8 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         var email2 = $"admin_{Guid.NewGuid()}@example.com";
         var phone = $"+1{Guid.NewGuid().ToString()[..10]}";
 
-        var command1 = new CreateAdminCommand("Admin One", email1, "SecurePass123!", phone, nameof(UserRole.Admin));
-        var command2 = new CreateAdminCommand("Admin Two", email2, "SecurePass123!", phone, nameof(UserRole.Admin));
+        var command1 = new CreateAdminCommand(new PersonalInformationDto("Admin One", email1, phone), "SecurePass123!", nameof(UserRole.Admin));
+        var command2 = new CreateAdminCommand(new PersonalInformationDto("Admin Two", email2, phone), "SecurePass123!", nameof(UserRole.Admin));
 
         // Act
         var result1 = await mediator.Send(command1);

@@ -47,6 +47,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
         {
             ConnectionString = baseConnectionString,
             ["Database"] = dbName,
+            ["Maximum Pool Size"] = 5,
+            ["Minimum Pool Size"] = 0,
         };
         _connectionString = connBuilder.ConnectionString;
     }

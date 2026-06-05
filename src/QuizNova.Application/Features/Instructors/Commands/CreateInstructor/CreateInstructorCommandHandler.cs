@@ -22,7 +22,7 @@ public sealed class CreateInstructorCommandHandler(
 {
     public async Task<Result<InstructorDto>> Handle(CreateInstructorCommand request, CancellationToken ct)
     {
-        logger.LogInformation("Creating instructor with email: {Email}", request.Email);
+        logger.LogInformation("Creating instructor with email: {Email}", request.PersonalInformation.Email);
 
         if (!Enum.TryParse<UserRole>(request.Role, true, out var role))
         {
@@ -37,25 +37,25 @@ public sealed class CreateInstructorCommandHandler(
         }
 
         if (await dbContext.Users
-                .AnyAsync(user => user.PersonalInformation.Email == request.Email, ct))
+                .AnyAsync(user => user.PersonalInformation.Email == request.PersonalInformation.Email, ct))
         {
-            logger.LogWarning("Instructor creation failed: Email {Email} already exists", request.Email);
-            return ApplicationErrors.UserEmailAlreadyExists(request.Email);
+            logger.LogWarning("Instructor creation failed: Email {Email} already exists", request.PersonalInformation.Email);
+            return ApplicationErrors.UserEmailAlreadyExists(request.PersonalInformation.Email);
         }
 
         if (await dbContext.Users
-                .AnyAsync(user => user.PersonalInformation.PhoneNumber == request.PhoneNumber, ct))
+                .AnyAsync(user => user.PersonalInformation.PhoneNumber == request.PersonalInformation.PhoneNumber, ct))
         {
             logger.LogWarning("Instructor creation failed: Phone number {PhoneNumber} already exists",
-                request.PhoneNumber);
-            return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PhoneNumber);
+                request.PersonalInformation.PhoneNumber);
+            return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PersonalInformation.PhoneNumber);
         }
 
         // 1. Register User in Identity Database
         var identityResult = await identityService.RegisterUserAsync(
-            request.Email,
+            request.PersonalInformation.Email,
             request.Password,
-            request.Name,
+            request.PersonalInformation.Name,
             nameof(UserRole.Instructor),
             ct);
 
@@ -70,9 +70,9 @@ public sealed class CreateInstructorCommandHandler(
 
         // 2. Create PersonalInformation Domain Value Object
         var personalInformationResult = PersonalInformation.Create(
-            request.Name,
-            request.Email,
-            request.PhoneNumber);
+            request.PersonalInformation.Name,
+            request.PersonalInformation.Email,
+            request.PersonalInformation.PhoneNumber);
 
         if (personalInformationResult.IsError)
         {
@@ -101,7 +101,7 @@ public sealed class CreateInstructorCommandHandler(
 
         logger.LogInformation("Successfully created instructor {InstructorId} with email {Email}",
             createInstructorResult.Value.Id,
-            request.Email);
+            request.PersonalInformation.Email);
 
         return createInstructorResult.Value.ToInstructorDto(0, 0);
     }

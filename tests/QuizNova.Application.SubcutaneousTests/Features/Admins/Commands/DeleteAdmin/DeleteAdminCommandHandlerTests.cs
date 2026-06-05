@@ -7,6 +7,7 @@ using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Admins.Commands.CreateAdmin;
 using QuizNova.Application.Features.Admins.Commands.DeleteAdmin;
+using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Entities.Identity;
 
@@ -55,7 +56,9 @@ public class DeleteAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // 1. Create a valid Admin first
         var uniqueEmail = $"admin_{Guid.NewGuid()}@example.com";
         var uniquePhone = $"+1{Guid.NewGuid().ToString()[..10]}";
-        var createCommand = new CreateAdminCommand("Admin to Delete", uniqueEmail, "SecurePass123!", uniquePhone,
+        var createCommand = new CreateAdminCommand(
+            new PersonalInformationDto("Admin to Delete", uniqueEmail, uniquePhone),
+            "SecurePass123!",
             nameof(UserRole.Admin));
         var createResult = await mediator.Send(createCommand);
         createResult.IsSuccess.Should().BeTrue();
@@ -86,7 +89,9 @@ public class DeleteAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // 1. Create a valid Admin first
         var uniqueEmail = $"admin_{Guid.NewGuid()}@example.com";
         var uniquePhone = $"+1{Guid.NewGuid().ToString()[..10]}";
-        var createCommand = new CreateAdminCommand("Admin to Delete Twice", uniqueEmail, "SecurePass123!", uniquePhone,
+        var createCommand = new CreateAdminCommand(
+            new PersonalInformationDto("Admin to Delete Twice", uniqueEmail, uniquePhone),
+            "SecurePass123!",
             nameof(UserRole.Admin));
         var createResult = await mediator.Send(createCommand);
         createResult.IsSuccess.Should().BeTrue();

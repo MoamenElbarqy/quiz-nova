@@ -19,8 +19,8 @@ public class AdminMapperTests
         // Assert
         Assert.NotNull(dto);
         Assert.Equal(admin.Id, dto.Id);
-        Assert.Equal(admin.PersonalInformation.Name, dto.Name);
-        Assert.Equal(admin.PersonalInformation.Email, dto.Email);
-        Assert.Equal(admin.PersonalInformation.PhoneNumber, dto.PhoneNumber);
+        Assert.Equal(admin.PersonalInformation.Name, dto.PersonalInformation.Name);
+        Assert.Equal(admin.PersonalInformation.Email, dto.PersonalInformation.Email);
+        Assert.Equal(admin.PersonalInformation.PhoneNumber, dto.PersonalInformation.PhoneNumber);
     }
 }

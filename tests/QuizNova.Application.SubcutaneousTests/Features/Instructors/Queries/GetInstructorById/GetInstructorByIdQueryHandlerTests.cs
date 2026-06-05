@@ -73,7 +73,7 @@ public class GetInstructorByIdQueryHandlerTests(CustomWebApplicationFactory fact
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value.Id.Should().Be(instructor.Id);
-        result.Value.Name.Should().Be("Existing Instructor");
-        result.Value.Email.Should().Be(instructor.PersonalInformation.Email);
+        result.Value.PersonalInformation.Name.Should().Be("Existing Instructor");
+        result.Value.PersonalInformation.Email.Should().Be(instructor.PersonalInformation.Email);
     }
 }

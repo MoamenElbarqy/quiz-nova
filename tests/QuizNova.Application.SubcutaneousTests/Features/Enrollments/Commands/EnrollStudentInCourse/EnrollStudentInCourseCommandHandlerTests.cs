@@ -8,6 +8,7 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
 using QuizNova.Application.Features.Students.Commands.CreateStudent;
+using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Identity;
@@ -27,10 +28,8 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
         var studentEmail = $"student_{Guid.NewGuid()}@example.com";
         var studentPhone = $"+1{Guid.NewGuid().ToString()[..10]}";
         var studentResult = await mediator.Send(new CreateStudentCommand(
-            Name: "Enroll Student",
-            Email: studentEmail,
+            PersonalInformation: new PersonalInformationDto("Enroll Student", studentEmail, studentPhone),
             Password: "SecurePass123!",
-            PhoneNumber: studentPhone,
             Role: nameof(UserRole.Student)));
         studentResult.IsSuccess.Should().BeTrue();
         var studentId = studentResult.Value.Id;
@@ -140,10 +139,8 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
         var studentEmail = $"student_{Guid.NewGuid()}@example.com";
         var studentPhone = $"+1{Guid.NewGuid().ToString()[..10]}";
         var studentResult = await mediator.Send(new CreateStudentCommand(
-            Name: "Student Completed",
-            Email: studentEmail,
+            PersonalInformation: new PersonalInformationDto("Student Completed", studentEmail, studentPhone),
             Password: "SecurePass123!",
-            PhoneNumber: studentPhone,
             Role: nameof(UserRole.Student)));
         studentResult.IsSuccess.Should().BeTrue();
         var studentId = studentResult.Value.Id;
@@ -186,10 +183,8 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
         var studentEmail = $"student_{Guid.NewGuid()}@example.com";
         var studentPhone = $"+1{Guid.NewGuid().ToString()[..10]}";
         var studentResult = await mediator.Send(new CreateStudentCommand(
-            Name: "Duplicate Enroll Student",
-            Email: studentEmail,
+            PersonalInformation: new PersonalInformationDto("Duplicate Enroll Student", studentEmail, studentPhone),
             Password: "SecurePass123!",
-            PhoneNumber: studentPhone,
             Role: nameof(UserRole.Student)));
         studentResult.IsSuccess.Should().BeTrue();
         var studentId = studentResult.Value.Id;
