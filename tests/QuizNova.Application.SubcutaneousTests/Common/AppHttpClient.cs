@@ -14,7 +14,7 @@ public class AppHttpClient(HttpClient httpClient) : IDisposable
     {
         var loginRequest = new LoginRequest(email, password, role);
 
-        var response = await httpClient.PostAsJsonAsync("/Auth/login", loginRequest);
+        var response = await httpClient.PostAsJsonAsync("/auth/login", loginRequest);
 
         if (!response.IsSuccessStatusCode)
         {

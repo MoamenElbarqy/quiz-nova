@@ -23,7 +23,7 @@ public class AuthControllerTests(CustomWebApplicationFactory factory) : IClassFi
         var request = new LoginRequest(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         // Act
-        var response = await _client.PostAsJsonAsync("/Auth/login", request);
+        var response = await _client.PostAsJsonAsync("/auth/login", request);
 
         // Assert
         if (response.StatusCode != HttpStatusCode.OK)
@@ -50,7 +50,7 @@ public class AuthControllerTests(CustomWebApplicationFactory factory) : IClassFi
         var request = new LoginRequest("nonexistent@quiznova.local", "WrongPassword123!", "Student");
 
         // Act
-        var response = await _client.PostAsJsonAsync("/Auth/login", request);
+        var response = await _client.PostAsJsonAsync("/auth/login", request);
 
         // Assert
         response.IsSuccessStatusCode.Should().BeFalse();
@@ -66,7 +66,7 @@ public class AuthControllerTests(CustomWebApplicationFactory factory) : IClassFi
 
         // we didn't put refresh token in the cookies 
         // Act
-        var response = await client.PostAsJsonAsync("/Auth/refresh", request);
+        var response = await client.PostAsJsonAsync("/auth/refresh", request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -118,13 +118,13 @@ public class AuthControllerTests(CustomWebApplicationFactory factory) : IClassFi
 
         // 1. Login to get a valid access token
         var loginRequest = new LoginRequest(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
-        var loginResponse = await client.PostAsJsonAsync("/Auth/login", loginRequest);
+        var loginResponse = await client.PostAsJsonAsync("/auth/login", loginRequest);
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<AuthDto>();
         var validAccessToken = loginResult!.Token.AccessToken;
 
         // 2. Refresh with fake cookie
         var request = new RefreshTokenRequest(validAccessToken);
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/Auth/refresh")
+        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/auth/refresh")
         {
             Content = JsonContent.Create(request),
         };
@@ -145,14 +145,14 @@ public class AuthControllerTests(CustomWebApplicationFactory factory) : IClassFi
 
         // 1. Login to get initial tokens
         var loginRequest = new LoginRequest(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
-        var loginResponse = await client.PostAsJsonAsync("/Auth/login", loginRequest);
+        var loginResponse = await client.PostAsJsonAsync("/auth/login", loginRequest);
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<AuthDto>();
         var validAccessToken = loginResult!.Token.AccessToken;
         var validRefreshToken = loginResult.Token.RefreshToken;
 
         // 2. Perform refresh using manual cookie
         var refreshRequest = new RefreshTokenRequest(validAccessToken);
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/Auth/refresh")
+        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/auth/refresh")
         {
             Content = JsonContent.Create(refreshRequest),
         };
@@ -179,13 +179,13 @@ public class AuthControllerTests(CustomWebApplicationFactory factory) : IClassFi
 
         // 1. Login to get initial tokens
         var loginRequest = new LoginRequest(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
-        var loginResponse = await client.PostAsJsonAsync("/Auth/login", loginRequest);
+        var loginResponse = await client.PostAsJsonAsync("/auth/login", loginRequest);
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<AuthDto>();
         var originalAccessToken = loginResult!.Token.AccessToken;
         var originalRefreshToken = loginResult.Token.RefreshToken;
 
         // 2. First refresh (consumes/revokes the originalRefreshToken)
-        var refreshRequest1 = new HttpRequestMessage(HttpMethod.Post, "/Auth/refresh")
+        var refreshRequest1 = new HttpRequestMessage(HttpMethod.Post, "/auth/refresh")
         {
             Content = JsonContent.Create(new RefreshTokenRequest(originalAccessToken)),
         };
@@ -194,7 +194,7 @@ public class AuthControllerTests(CustomWebApplicationFactory factory) : IClassFi
         response1.StatusCode.Should().Be(HttpStatusCode.OK);
 
         // 3. Second refresh using the same originalRefreshToken (replay attack scenario)
-        var refreshRequest2 = new HttpRequestMessage(HttpMethod.Post, "/Auth/refresh")
+        var refreshRequest2 = new HttpRequestMessage(HttpMethod.Post, "/auth/refresh")
         {
             Content = JsonContent.Create(new RefreshTokenRequest(originalAccessToken)),
         };

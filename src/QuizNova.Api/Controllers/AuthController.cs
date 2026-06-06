@@ -11,7 +11,7 @@ using QuizNova.Application.Features.Auth.DTOs;
 
 namespace QuizNova.Api.Controllers;
 
-[Route("[controller]")]
+[Route("auth")]
 [ApiController]
 [AllowAnonymous]
 public class AuthController(ISender sender) : ApiController
