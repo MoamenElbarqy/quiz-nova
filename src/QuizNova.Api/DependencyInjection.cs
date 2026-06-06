@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Options;
 
+using Npgsql;
+
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -112,6 +114,7 @@ public static class DependencyInjection
         {
             options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
         });
 
         return services;
@@ -165,6 +168,9 @@ public static class DependencyInjection
             {
                 // trace the incoming and outgoing HTTP requests
                 tracing.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation();
+
+                // trace PostgreSQL database queries
+                tracing.AddNpgsql();
 
                 // export the traces to the endpoint defined in OTEL_EXPORTER_OTLP_ENDPOINT defined in compose that will go to the seq
                 tracing.AddOtlpExporter();

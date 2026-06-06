@@ -18,6 +18,19 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     networks:
       - backend
+
+  db-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: quiznova-db-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+
   api:
     build:
       context: .

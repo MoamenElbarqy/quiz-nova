@@ -99,8 +99,7 @@ appsettings.Development.json
 /queries/
 /dataSources/
 /dataSources.local.xml
-/containers/
-
 # Playwright
+/containers/seq/
 **/test-results/
 **/playwright-report/
