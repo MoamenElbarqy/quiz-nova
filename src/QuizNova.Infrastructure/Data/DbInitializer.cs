@@ -3,6 +3,13 @@ using Microsoft.EntityFrameworkCore;
 
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
+using QuizNova.Domain.Entities.Enrollments;
+using QuizNova.Domain.Entities.Quizzes;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
+using QuizNova.Domain.Entities.Quizzes.Questions.Base;
+using QuizNova.Domain.Entities.Quizzes.Questions.ManuallyGradedQuestions;
 using QuizNova.Domain.Entities.Users.Admins;
 using QuizNova.Domain.Entities.Users.Instructors;
 using QuizNova.Domain.Entities.Users.Student;
@@ -65,6 +72,16 @@ public sealed class DbInitializer(
         }
 
         await dbContext.SaveChangesAsync(ct);
+
+        if (!await dbContext.Quizzes.AnyAsync(ct))
+        {
+            await SeedQuizzesAsync(ct);
+        }
+
+        if (!await dbContext.Enrollments.AnyAsync(ct))
+        {
+            await SeedEnrollmentsAsync(ct);
+        }
     }
 
     private async Task<Guid> SeedIdentityUserAsync(string email, string password, string role)
@@ -203,5 +220,159 @@ public sealed class DbInitializer(
         }
 
         return result.Value;
+    }
+
+    private async Task SeedQuizzesAsync(CancellationToken ct)
+    {
+        var course = await dbContext.Courses.FirstOrDefaultAsync(c => c.Name == "Backend Fundamentals", ct);
+        if (course is null)
+        {
+            return;
+        }
+
+        if (!course.InstructorId.HasValue || course.InstructorId.Value == Guid.Empty)
+        {
+            return;
+        }
+
+        var instructorId = course.InstructorId.Value;
+
+        var startsAt = DateTimeOffset.UtcNow.AddMinutes(-30);
+        var endsAt = DateTimeOffset.UtcNow.AddHours(3);
+
+        // 1. Auto-graded Only Quiz
+        var autoQuizId = Guid.NewGuid();
+        var autoQ1Id = Guid.NewGuid();
+        var autoQ2Id = Guid.NewGuid();
+        var autoQ3Id = Guid.NewGuid();
+
+        var q2Choice1Id = Guid.NewGuid();
+        var q2Choice2Id = Guid.NewGuid();
+        var q2Choice3Id = Guid.NewGuid();
+        var q2Choice4Id = Guid.NewGuid();
+        var q2Choices = new List<Choice>
+        {
+            EnsureSuccess(Choice.Create(q2Choice1Id, autoQ2Id, "public", 0), "q2 choice 1"),
+            EnsureSuccess(Choice.Create(q2Choice2Id, autoQ2Id, "private", 1), "q2 choice 2"),
+            EnsureSuccess(Choice.Create(q2Choice3Id, autoQ2Id, "internal", 2), "q2 choice 3"),
+            EnsureSuccess(Choice.Create(q2Choice4Id, autoQ2Id, "global", 3), "q2 choice 4"),
+        };
+
+        var q3Choice1Id = Guid.NewGuid();
+        var q3Choice2Id = Guid.NewGuid();
+        var q3Choice3Id = Guid.NewGuid();
+        var q3Choices = new List<Choice>
+        {
+            EnsureSuccess(Choice.Create(q3Choice1Id, autoQ3Id, "To compile C# code to IL", 0), "q3 choice 1"),
+            EnsureSuccess(Choice.Create(q3Choice2Id, autoQ3Id, "To perform Object-Relational Mapping (ORM)", 1),
+                "q3 choice 2"),
+            EnsureSuccess(Choice.Create(q3Choice3Id, autoQ3Id, "To design user interfaces", 2), "q3 choice 3"),
+        };
+
+        var autoQuestions = new List<Question>
+        {
+            EnsureSuccess(Tf.Create(autoQ1Id, autoQuizId, "TypeScript is a superset of JavaScript.", true, 0, 2),
+                "auto q1"),
+            EnsureSuccess(
+                Mcq.Create(autoQ2Id, autoQuizId, "Which of the following is not a C# access modifier?", q2Choice4Id, 1,
+                    4, q2Choices), "auto q2"),
+            EnsureSuccess(
+                Mcq.Create(autoQ3Id, autoQuizId, "What is the primary purpose of Entity Framework Core?", q3Choice2Id,
+                    2, 4, q3Choices), "auto q3"),
+        };
+
+        var autoQuiz =
+            EnsureSuccess(
+                Quiz.Create(autoQuizId, course.Id, instructorId, "Auto Graded Quiz", startsAt, endsAt,
+                    autoQuestions),
+                "auto quiz");
+        await dbContext.Quizzes.AddAsync(autoQuiz, ct);
+
+        // 2. Manually-graded Only Quiz
+        var manualQuizId = Guid.NewGuid();
+        var manualQ1Id = Guid.NewGuid();
+        var manualQ2Id = Guid.NewGuid();
+        var manualQ3Id = Guid.NewGuid();
+
+        var manualQuestions = new List<Question>
+        {
+            EnsureSuccess(
+                Essay.Create(manualQ1Id, manualQuizId,
+                    "Explain the difference between interface and abstract class in C#.",
+                    "An interface defines a contract with no implementation, while an abstract class can provide partial implementation and state.",
+                    0, 5), "manual q1"),
+            EnsureSuccess(
+                Essay.Create(manualQ2Id, manualQuizId, "Describe the three main stages of the HTTP Request Lifecycle.",
+                    "Request initiation/routing, processing/middleware pipeline, and response generation.", 1, 5),
+                "manual q2"),
+            EnsureSuccess(
+                Essay.Create(manualQ3Id, manualQuizId,
+                    "What is the Outbox Pattern and how does it guarantee eventual consistency?",
+                    "It persists domain events to an Outbox table in the same transaction as state changes, and a background worker publishes them reliably.",
+                    2, 5), "manual q3"),
+        };
+
+        var manualQuiz =
+            EnsureSuccess(
+                Quiz.Create(manualQuizId, course.Id, instructorId, "Manual Graded Quiz", startsAt, endsAt,
+                    manualQuestions), "manual quiz");
+        await dbContext.Quizzes.AddAsync(manualQuiz, ct);
+
+        // 3. Hybrid Graded Quiz
+        var hybridQuizId = Guid.NewGuid();
+        var hybridQ1Id = Guid.NewGuid();
+        var hybridQ2Id = Guid.NewGuid();
+        var hybridQ3Id = Guid.NewGuid();
+
+        var hybridQ1Choice1Id = Guid.NewGuid();
+        var hybridQ1Choice2Id = Guid.NewGuid();
+        var hybridQ1Choice3Id = Guid.NewGuid();
+        var hybridQ1Choices = new List<Choice>
+        {
+            EnsureSuccess(Choice.Create(hybridQ1Choice1Id, hybridQ1Id, "POST", 0), "hybrid q1 choice 1"),
+            EnsureSuccess(Choice.Create(hybridQ1Choice2Id, hybridQ1Id, "GET", 1), "hybrid q1 choice 2"),
+            EnsureSuccess(Choice.Create(hybridQ1Choice3Id, hybridQ1Id, "PATCH", 2), "hybrid q1 choice 3"),
+        };
+
+        var hybridQuestions = new List<Question>
+        {
+            EnsureSuccess(
+                Mcq.Create(hybridQ1Id, hybridQuizId, "Which HTTP method is idempotent?", hybridQ1Choice2Id, 0, 3,
+                    hybridQ1Choices), "hybrid q1"),
+            EnsureSuccess(
+                Tf.Create(hybridQ2Id, hybridQuizId, "In C#, a class can implement multiple interfaces.", true, 1, 2),
+                "hybrid q2"),
+            EnsureSuccess(
+                Essay.Create(hybridQ3Id, hybridQuizId, "Discuss the benefits of Dependency Injection in ASP.NET Core.",
+                    "Loose coupling, improved testability, and easier lifetime management of services.", 2, 5),
+                "hybrid q3"),
+        };
+
+        var hybridQuiz =
+            EnsureSuccess(
+                Quiz.Create(hybridQuizId, course.Id, instructorId, "Hybrid Graded Quiz", startsAt, endsAt,
+                    hybridQuestions), "hybrid quiz");
+        await dbContext.Quizzes.AddAsync(hybridQuiz, ct);
+
+        await dbContext.SaveChangesAsync(ct);
+    }
+
+    private async Task SeedEnrollmentsAsync(CancellationToken ct)
+    {
+        var students = await dbContext.Students.ToListAsync(ct);
+        var courses = await dbContext.Courses.ToListAsync(ct);
+
+        foreach (var student in students)
+        {
+            foreach (var course in courses)
+            {
+                var enrollment = EnsureSuccess(
+                    Enrollment.Create(Guid.NewGuid(), student.Id, course.Id, DateTimeOffset.UtcNow),
+                    $"enrollment for {student.PersonalInformation.Email} in {course.Name}");
+                await dbContext.Enrollments.AddAsync(enrollment, ct);
+            }
+        }
+
+        await dbContext.SaveChangesAsync(ct);
     }
 }
