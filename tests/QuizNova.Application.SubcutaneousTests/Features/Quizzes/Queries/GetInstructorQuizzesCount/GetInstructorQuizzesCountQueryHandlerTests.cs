@@ -14,7 +14,6 @@ public class GetInstructorQuizzesCountQueryHandlerTests(CustomWebApplicationFact
     : IClassFixture<CustomWebApplicationFactory>
 {
     // --- Validation tests ---
-
     [Fact]
     public async Task Handle_WithEmptyInstructorId_ShouldReturnValidationError()
     {
@@ -28,7 +27,6 @@ public class GetInstructorQuizzesCountQueryHandlerTests(CustomWebApplicationFact
     }
 
     // --- Domain tests ---
-
     [Fact]
     public async Task Handle_WithNonExistentInstructor_ShouldReturnZero()
     {
@@ -63,7 +61,7 @@ public class GetInstructorQuizzesCountQueryHandlerTests(CustomWebApplicationFact
         {
             new CreateTfCommand("Q1", 1, true),
             new CreateTfCommand("Q2", 1, false),
-            new CreateTfCommand("Q3", 1, true)
+            new CreateTfCommand("Q3", 1, true),
         };
 
         await mediator.Send(new CreateQuizCommand("Count Quiz 1", courseId, instructorId,

@@ -14,13 +14,11 @@ namespace QuizNova.Application.SubcutaneousTests.Features.Quizzes.Queries.GetStu
 public class GetStudentQuizzesQueryHandlerTests(CustomWebApplicationFactory factory)
     : IClassFixture<CustomWebApplicationFactory>
 {
-    // --- Validation tests ---
-
     [Fact]
     public async Task Handle_WithEmptyStudentId_ShouldReturnValidationError()
     {
         var mediator = factory.CreateMediator();
-        var query = new GetStudentQuizzesQuery(Guid.Empty, 1, 10, null);
+        var query = new GetStudentQuizzesQuery(Guid.Empty);
 
         var result = await mediator.Send(query);
 
@@ -29,65 +27,15 @@ public class GetStudentQuizzesQueryHandlerTests(CustomWebApplicationFactory fact
     }
 
     [Fact]
-    public async Task Handle_WithPageNumberLessThanOne_ShouldReturnValidationError()
-    {
-        var mediator = factory.CreateMediator();
-        var query = new GetStudentQuizzesQuery(Guid.NewGuid(), 0, 10, null);
-
-        var result = await mediator.Send(query);
-
-        result.IsError.Should().BeTrue();
-        result.Errors.Should().Contain(e => e.Code == "PageNumber");
-    }
-
-    [Fact]
-    public async Task Handle_WithPageSizeLessThanOne_ShouldReturnValidationError()
-    {
-        var mediator = factory.CreateMediator();
-        var query = new GetStudentQuizzesQuery(Guid.NewGuid(), 1, 0, null);
-
-        var result = await mediator.Send(query);
-
-        result.IsError.Should().BeTrue();
-        result.Errors.Should().Contain(e => e.Code == "PageSize");
-    }
-
-    [Fact]
-    public async Task Handle_WithPageSizeGreaterThan100_ShouldReturnValidationError()
-    {
-        var mediator = factory.CreateMediator();
-        var query = new GetStudentQuizzesQuery(Guid.NewGuid(), 1, 101, null);
-
-        var result = await mediator.Send(query);
-
-        result.IsError.Should().BeTrue();
-        result.Errors.Should().Contain(e => e.Code == "PageSize");
-    }
-
-    [Fact]
-    public async Task Handle_WithSearchTermExceedingLength_ShouldReturnValidationError()
-    {
-        var mediator = factory.CreateMediator();
-        var query = new GetStudentQuizzesQuery(Guid.NewGuid(), 1, 10, new string('a', 201));
-
-        var result = await mediator.Send(query);
-
-        result.IsError.Should().BeTrue();
-        result.Errors.Should().Contain(e => e.Code == "SearchTerm");
-    }
-
-    // --- Domain/Handler Tests ---
-
-    [Fact]
     public async Task Handle_WithValidStudentButNoEnrollments_ShouldReturnEmptyList()
     {
         var mediator = factory.CreateMediator();
-        var query = new GetStudentQuizzesQuery(Guid.NewGuid(), 1, 10, null);
+        var query = new GetStudentQuizzesQuery(Guid.NewGuid());
 
         var result = await mediator.Send(query);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeEmpty();
+        result.Value.Quizzes.Should().BeEmpty();
     }
 
     [Fact]
@@ -114,18 +62,18 @@ public class GetStudentQuizzesQueryHandlerTests(CustomWebApplicationFactory fact
         {
             new CreateTfCommand("Q1", 1, true),
             new CreateTfCommand("Q2", 1, false),
-            new CreateTfCommand("Q3", 1, true)
+            new CreateTfCommand("Q3", 1, true),
         };
         var quizTitle = $"Student Quiz {Guid.NewGuid()}";
         await mediator.Send(new CreateQuizCommand(quizTitle, courseId, instructorId,
             DateTimeOffset.UtcNow.AddDays(1), DateTimeOffset.UtcNow.AddDays(1).AddHours(1), questions));
 
-        var query = new GetStudentQuizzesQuery(studentId, 1, 10, null);
+        var query = new GetStudentQuizzesQuery(studentId);
 
         var result = await mediator.Send(query);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeEmpty();
-        result.Value.Should().Contain(q => q.Title == quizTitle);
+        result.Value.Quizzes.Should().NotBeEmpty();
+        result.Value.Quizzes.Should().Contain(q => q.Title == quizTitle);
     }
 }

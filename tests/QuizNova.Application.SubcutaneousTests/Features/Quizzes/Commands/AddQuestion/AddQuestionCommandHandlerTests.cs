@@ -19,7 +19,6 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
     private readonly CreateQuestionCommand _validQuestion = new CreateTfCommand("Valid Tf Question", 1, true);
 
     // --- Validation tests ---
-
     [Fact]
     public async Task Handle_WithEmptyQuizId_ShouldReturnValidationError()
     {
@@ -59,7 +58,6 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
     }
 
     // --- Domain tests ---
-
     [Fact]
     public async Task Handle_WithNonExistentQuiz_ShouldReturnQuizNotFoundError()
     {
@@ -141,7 +139,6 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
             // Add a single question to bypass the 'Must have at least 3 questions' logic temporarily or handle the fact that
             // it's already instantiated successfully. The Quiz.Create method actually doesn't restrict empty lists in creation
             // unless we enforce it in the handler/validator (which we do in CreateQuizCommandHandler, but here we instantiate directly).
-
             await dbContext.Quizzes.AddAsync(quiz);
             await dbContext.SaveChangesAsync();
             quizId = quiz.Id;

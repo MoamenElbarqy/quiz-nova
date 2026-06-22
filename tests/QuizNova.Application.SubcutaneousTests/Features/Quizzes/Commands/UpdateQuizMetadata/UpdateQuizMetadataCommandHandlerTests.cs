@@ -16,7 +16,6 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
     : IClassFixture<CustomWebApplicationFactory>
 {
     // --- Validation tests ---
-
     [Fact]
     public async Task Handle_WithEmptyQuizId_ShouldReturnValidationError()
     {
@@ -83,7 +82,6 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
     }
 
     // --- Domain tests ---
-
     [Fact]
     public async Task Handle_WithNonExistentQuiz_ShouldReturnQuizNotFoundError()
     {

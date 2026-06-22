@@ -1,8 +1,5 @@
 using FluentAssertions;
 
-using Microsoft.Extensions.DependencyInjection;
-
-using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesById;
 using QuizNova.Application.Features.Instructors.Commands.CreateInstructor;

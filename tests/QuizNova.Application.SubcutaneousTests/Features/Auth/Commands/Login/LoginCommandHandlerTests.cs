@@ -14,7 +14,6 @@ public class LoginCommandHandlerTests(CustomWebApplicationFactory factory)
     : IClassFixture<CustomWebApplicationFactory>
 {
     // --- Validation layer tests ---
-
     [Fact]
     public async Task Handle_WithAllEmptyFields_ShouldReturnValidationErrors()
     {
@@ -137,7 +136,6 @@ public class LoginCommandHandlerTests(CustomWebApplicationFactory factory)
     }
 
     // --- Handler layer tests ---
-
     [Fact]
     public async Task Handle_WithInvalidRole_ShouldReturnError()
     {

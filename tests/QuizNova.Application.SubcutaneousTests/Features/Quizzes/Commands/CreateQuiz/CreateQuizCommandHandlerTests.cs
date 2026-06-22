@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 
 using FluentAssertions;
 
@@ -24,7 +23,6 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
     };
 
     // --- Validation layer tests ---
-
     [Fact]
     public async Task Handle_WithEmptyTitle_ShouldReturnValidationError()
     {
@@ -146,7 +144,6 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
     }
 
     // --- Domain Rules / Handler level tests ---
-
     [Fact]
     public async Task Handle_WithFewerThan3Questions_ShouldReturnDomainError()
     {
@@ -270,7 +267,7 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var quiz = await dbContext.Quizzes
                 .Include(q => q.Questions)
-                .FirstOrDefaultAsync(q => q.Id == result.Value.Id);
+                .FirstOrDefaultAsync(q => q.Id == result.Value.QuizId);
 
             quiz.Should().NotBeNull();
             quiz!.Title.Should().Be("Brand New Quiz");
@@ -279,7 +276,6 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
     }
 
     // --- Authorization testing via HTTP pipeline ---
-
     [Fact]
     public async Task CreateQuiz_AsAdmin_ShouldReturnForbidden()
     {

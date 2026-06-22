@@ -15,32 +15,26 @@ public class GetAllQuizzesQueryHandlerTests(CustomWebApplicationFactory factory)
     : IClassFixture<CustomWebApplicationFactory>
 {
     // --- Validation tests ---
-
-    [Fact]
-    public async Task Handle_WithPageNumberLessThanOne_ShouldReturnValidationError()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task Handle_WithPageNumberLessThanOne_ShouldReturnValidationError(int pageNumber)
     {
         var mediator = factory.CreateMediator();
-        var query = new GetAllQuizzesQuery(0, 10, null, null, null, null, null);
+        var query = new GetAllQuizzesQuery(PageNumber: pageNumber);
         var result = await mediator.Send(query);
         result.IsError.Should().BeTrue();
         result.Errors.Should().Contain(e => e.Code == "PageNumber");
     }
 
-    [Fact]
-    public async Task Handle_WithPageSizeLessThanOne_ShouldReturnValidationError()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(101)]
+    public async Task Handle_WithInvalidPageSize_ShouldReturnValidationError(int pageSize)
     {
         var mediator = factory.CreateMediator();
-        var query = new GetAllQuizzesQuery(1, 0, null, null, null, null, null);
-        var result = await mediator.Send(query);
-        result.IsError.Should().BeTrue();
-        result.Errors.Should().Contain(e => e.Code == "PageSize");
-    }
-
-    [Fact]
-    public async Task Handle_WithPageSizeGreaterThan100_ShouldReturnValidationError()
-    {
-        var mediator = factory.CreateMediator();
-        var query = new GetAllQuizzesQuery(1, 101, null, null, null, null, null);
+        var query = new GetAllQuizzesQuery(PageSize: pageSize);
         var result = await mediator.Send(query);
         result.IsError.Should().BeTrue();
         result.Errors.Should().Contain(e => e.Code == "PageSize");
@@ -50,7 +44,7 @@ public class GetAllQuizzesQueryHandlerTests(CustomWebApplicationFactory factory)
     public async Task Handle_WithMarksLessThanZero_ShouldReturnValidationError()
     {
         var mediator = factory.CreateMediator();
-        var query = new GetAllQuizzesQuery(1, 10, null, -1, null, null, null);
+        var query = new GetAllQuizzesQuery(Marks: -1);
         var result = await mediator.Send(query);
         result.IsError.Should().BeTrue();
         result.Errors.Should().Contain(e => e.Code == "Marks");
@@ -60,14 +54,13 @@ public class GetAllQuizzesQueryHandlerTests(CustomWebApplicationFactory factory)
     public async Task Handle_WithSearchTermExceedingLength_ShouldReturnValidationError()
     {
         var mediator = factory.CreateMediator();
-        var query = new GetAllQuizzesQuery(1, 10, new string('a', 201), null, null, null, null);
+        var query = new GetAllQuizzesQuery(SearchTerm: new string('a', 201));
         var result = await mediator.Send(query);
         result.IsError.Should().BeTrue();
         result.Errors.Should().Contain(e => e.Code == "SearchTerm");
     }
 
     // --- Handler tests ---
-
     [Fact]
     public async Task Handle_WithDefaultPagination_ShouldReturnPaginatedList()
     {

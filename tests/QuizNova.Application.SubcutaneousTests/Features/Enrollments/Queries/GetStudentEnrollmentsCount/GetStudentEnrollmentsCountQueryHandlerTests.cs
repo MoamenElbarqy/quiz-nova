@@ -3,7 +3,6 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-using QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
 using QuizNova.Application.Features.Enrollments.Queries.GetStudentEnrollmentsCount;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Infrastructure.Data;
