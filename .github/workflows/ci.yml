@@ -65,6 +65,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Start services
         working-directory: .
         run: docker compose up -d db api client
@@ -76,14 +84,6 @@ jobs:
           echo "Waiting for Client..."
           timeout 120 bash -c 'until curl -sf http://localhost:4200; do sleep 3; done'
           echo "All services are ready."
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Install dependencies
-        run: npm ci
 
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
