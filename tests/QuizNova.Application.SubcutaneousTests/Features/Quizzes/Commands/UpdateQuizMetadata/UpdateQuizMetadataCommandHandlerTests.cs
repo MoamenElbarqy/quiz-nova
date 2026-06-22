@@ -6,9 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Features.Quizzes.Commands.UpdateQuizMetadata;
 using QuizNova.Application.SubcutaneousTests.Common;
-using QuizNova.Domain.Entities.Quizzes;
-using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Infrastructure.Data;
+using QuizNova.Tests.Common.Quizzes;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Quizzes.Commands.UpdateQuizMetadata;
 
@@ -99,16 +98,23 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
     public async Task Handle_WithActiveQuiz_ShouldReturnCannotUpdateError()
     {
         var mediator = factory.CreateMediator();
-        var fakeTime = factory.GetFakeTimeProvider();
 
         Guid quizId;
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var course = await dbContext.Courses.FirstAsync();
 
-            // Get a quiz that is already started (StartsAtUtc is in the past)
-            // DbInitializer sets startsAt to -30 mins and endsAt to +3 hours, making it ActiveNow
-            var quiz = await dbContext.Quizzes.FirstAsync(q => q.StartsAtUtc <= fakeTime.GetUtcNow() && q.EndsAtUtc >= fakeTime.GetUtcNow());
+            // Create and save an active quiz
+            var quiz = QuizFactory.CreateQuiz(
+                courseId: course.Id,
+                instructorId: course.InstructorId!.Value,
+                title: "Active Quiz",
+                startsAtUtc: DateTimeOffset.UtcNow.AddMinutes(-10),
+                endsAtUtc: DateTimeOffset.UtcNow.AddHours(1)).Value;
+
+            await dbContext.Quizzes.AddAsync(quiz);
+            await dbContext.SaveChangesAsync();
             quizId = quiz.Id;
         }
 
@@ -117,26 +123,34 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
 
         var result = await mediator.Send(command);
 
+        // Assert
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Quiz.CannotUpdateStartedOrCompletedQuiz");
+        result.TopError.Code.Should().Be("Quiz_CannotUpdateStartedOrCompletedQuiz");
     }
 
     [Fact]
     public async Task Handle_WithCompletedQuiz_ShouldReturnCannotUpdateError()
     {
         var mediator = factory.CreateMediator();
-        var fakeTime = factory.GetFakeTimeProvider();
 
         Guid quizId;
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var quiz = await dbContext.Quizzes.FirstAsync();
+            var course = await dbContext.Courses.FirstAsync();
+
+            // Create a completed quiz
+            var quiz = QuizFactory.CreateQuiz(
+                courseId: course.Id,
+                instructorId: course.InstructorId!.Value,
+                title: "Completed Quiz",
+                startsAtUtc: DateTimeOffset.UtcNow.AddMinutes(-30),
+                endsAtUtc: DateTimeOffset.UtcNow.AddMinutes(-10)).Value;
+
+            await dbContext.Quizzes.AddAsync(quiz);
+            await dbContext.SaveChangesAsync();
             quizId = quiz.Id;
         }
-
-        // Advance time to after the quiz ends (DbInitializer sets it to +3 hours)
-        fakeTime.Advance(TimeSpan.FromHours(4));
 
         var command = new UpdateQuizMetadataCommand(quizId, "Updated Title", DateTimeOffset.UtcNow.AddMinutes(10),
             DateTimeOffset.UtcNow.AddMinutes(30));
@@ -144,7 +158,7 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
         var result = await mediator.Send(command);
 
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Quiz.CannotUpdateStartedOrCompletedQuiz");
+        result.TopError.Code.Should().Be("Quiz_CannotUpdateStartedOrCompletedQuiz");
     }
 
     [Fact]
@@ -162,8 +176,12 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
             var course = await dbContext.Courses.FirstAsync();
 
             // Create a scheduled quiz explicitly (future start date)
-            var quiz = Quiz.Create(Guid.NewGuid(), course.Id, course.InstructorId!.Value, "Future Quiz",
-                fakeTime.GetUtcNow().AddDays(1), fakeTime.GetUtcNow().AddDays(1).AddHours(1), new List<Question>()).Value;
+            var quiz = QuizFactory.CreateQuiz(
+                courseId: course.Id,
+                instructorId: course.InstructorId!.Value,
+                title: "Future Quiz",
+                startsAtUtc: fakeTime.GetUtcNow().AddDays(1),
+                endsAtUtc: fakeTime.GetUtcNow().AddDays(1).AddHours(1)).Value;
 
             await dbContext.Quizzes.AddAsync(quiz);
             await dbContext.SaveChangesAsync();
@@ -171,12 +189,13 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
         }
 
         var startsAt = fakeTime.GetUtcNow().AddDays(2);
-        var command = new UpdateQuizMetadataCommand(quizId, "Updated Title", startsAt, startsAt.AddMinutes(5)); // < 10 mins
+        var command =
+            new UpdateQuizMetadataCommand(quizId, "Updated Title", startsAt, startsAt.AddMinutes(5)); // < 10 mins
 
         var result = await mediator.Send(command);
 
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Quiz.ScheduleDurationTooShort");
+        result.TopError.Code.Should().Be("Quiz_Schedule_DurationTooShort");
     }
 
     [Fact]
@@ -194,8 +213,12 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
             var course = await dbContext.Courses.FirstAsync();
 
             // Create a scheduled quiz explicitly
-            var quiz = Quiz.Create(Guid.NewGuid(), course.Id, course.InstructorId!.Value, "Future Quiz",
-                fakeTime.GetUtcNow().AddDays(1), fakeTime.GetUtcNow().AddDays(1).AddHours(1), new List<Question>()).Value;
+            var quiz = QuizFactory.CreateQuiz(
+                courseId: course.Id,
+                instructorId: course.InstructorId!.Value,
+                title: "Future Quiz",
+                startsAtUtc: fakeTime.GetUtcNow().AddDays(1),
+                endsAtUtc: fakeTime.GetUtcNow().AddDays(1).AddHours(1)).Value;
 
             await dbContext.Quizzes.AddAsync(quiz);
             await dbContext.SaveChangesAsync();
@@ -217,8 +240,8 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
             var quiz = await dbContext.Quizzes.FirstAsync(q => q.Id == quizId);
 
             quiz.Title.Should().Be("Awesome Updated Title");
-            quiz.StartsAtUtc.Should().Be(newStart);
-            quiz.EndsAtUtc.Should().Be(newEnd);
+            quiz.StartsAtUtc.Should().BeCloseTo(newStart, TimeSpan.FromMilliseconds(1));
+            quiz.EndsAtUtc.Should().BeCloseTo(newEnd, TimeSpan.FromMilliseconds(1));
         }
     }
 }

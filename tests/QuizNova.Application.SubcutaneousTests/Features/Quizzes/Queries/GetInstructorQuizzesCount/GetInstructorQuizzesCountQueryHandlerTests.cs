@@ -28,15 +28,15 @@ public class GetInstructorQuizzesCountQueryHandlerTests(CustomWebApplicationFact
 
     // --- Domain tests ---
     [Fact]
-    public async Task Handle_WithNonExistentInstructor_ShouldReturnZero()
+    public async Task Handle_WithNonExistentInstructor_ShouldReturnNotFoundError()
     {
         var mediator = factory.CreateMediator();
         var query = new GetInstructorQuizzesCountQuery(Guid.NewGuid());
 
         var result = await mediator.Send(query);
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.QuizzesCount.Should().Be(0);
+        result.IsError.Should().BeTrue();
+        result.Errors.Should().Contain(e => e.Code == "Instructor_NotFound");
     }
 
     [Fact]
@@ -59,9 +59,9 @@ public class GetInstructorQuizzesCountQueryHandlerTests(CustomWebApplicationFact
 
         var questions = new List<CreateQuestionCommand>
         {
-            new CreateTfCommand("Q1", 1, true),
-            new CreateTfCommand("Q2", 1, false),
-            new CreateTfCommand("Q3", 1, true),
+            new CreateTfCommand("Question 1", 1, true),
+            new CreateTfCommand("Question 2", 1, false),
+            new CreateTfCommand("Question 3", 1, true),
         };
 
         await mediator.Send(new CreateQuizCommand("Count Quiz 1", courseId, instructorId,

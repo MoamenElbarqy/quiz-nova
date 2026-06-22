@@ -30,6 +30,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
         .WithDatabase("postgres")
         .WithUsername("test_user")
         .WithPassword("test_password")
+        .WithCommand("-c", "max_connections=500")
         .Build();
 
     // for thread safty due we run the xunit in parallel mode so multiple tests start
@@ -64,7 +65,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
         {
             ConnectionString = baseConnectionString,
             ["Database"] = dbName,
-            ["Maximum Pool Size"] = 5,
+            ["Maximum Pool Size"] = 2,
             ["Minimum Pool Size"] = 0,
         };
         _connectionString = connBuilder.ConnectionString;
@@ -103,21 +104,19 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
 
         builder.ConfigureServices(services =>
         {
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(IUser));
-            if (descriptor != null)
+            var userDescriptors = services.Where(d => d.ServiceType == typeof(IUser)).ToList();
+            foreach (var d in userDescriptors)
             {
-                services.Remove(descriptor);
+                services.Remove(d);
             }
 
             services.AddScoped<IUser, TestCurrentUser>();
 
             // Replace TimeProvider.System with FakeTimeProvider for testable clock
-            var timeProviderDescriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(TimeProvider));
-            if (timeProviderDescriptor != null)
+            var timeProviderDescriptors = services.Where(d => d.ServiceType == typeof(TimeProvider)).ToList();
+            foreach (var d in timeProviderDescriptors)
             {
-                services.Remove(timeProviderDescriptor);
+                services.Remove(d);
             }
 
             services.AddSingleton<TimeProvider>(_fakeTimeProvider);

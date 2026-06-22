@@ -7,9 +7,8 @@ using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Features.Quizzes.Commands.AddQuestion;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.SubcutaneousTests.Common;
-using QuizNova.Domain.Entities.Quizzes;
-using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Infrastructure.Data;
+using QuizNova.Tests.Common.Quizzes;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Quizzes.Commands.AddQuestion;
 
@@ -41,7 +40,7 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
         var result = await mediator.Send(command);
 
         result.IsError.Should().BeTrue();
-        result.Errors.Should().Contain(e => e.Code == "Question.QuestionText");
+        result.Errors.Should().Contain(e => e.Code == "QuestionText");
     }
 
     [Fact]
@@ -54,7 +53,7 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
         var result = await mediator.Send(command);
 
         result.IsError.Should().BeTrue();
-        result.Errors.Should().Contain(e => e.Code == "Question.Marks");
+        result.Errors.Should().Contain(e => e.Code == "Marks");
     }
 
     // --- Domain tests ---
@@ -80,9 +79,17 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var course = await dbContext.Courses.FirstAsync();
 
-            // Find active quiz
-            var quiz = await dbContext.Quizzes.FirstAsync(q => q.StartsAtUtc <= fakeTime.GetUtcNow() && q.EndsAtUtc >= fakeTime.GetUtcNow());
+            var quiz = QuizFactory.CreateQuiz(
+                courseId: course.Id,
+                instructorId: course.InstructorId!.Value,
+                title: "Active Quiz",
+                startsAtUtc: fakeTime.GetUtcNow().AddMinutes(-10),
+                endsAtUtc: fakeTime.GetUtcNow().AddHours(1)).Value;
+
+            await dbContext.Quizzes.AddAsync(quiz);
+            await dbContext.SaveChangesAsync();
             quizId = quiz.Id;
         }
 
@@ -91,7 +98,7 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
         var result = await mediator.Send(command);
 
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Quiz.CannotUpdateStartedOrCompletedQuiz");
+        result.TopError.Code.Should().Be("Quiz_CannotUpdateStartedOrCompletedQuiz");
     }
 
     [Fact]
@@ -104,18 +111,28 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var quiz = await dbContext.Quizzes.FirstAsync();
+            var course = await dbContext.Courses.FirstAsync();
+
+            var quiz = QuizFactory.CreateQuiz(
+                courseId: course.Id,
+                instructorId: course.InstructorId!.Value,
+                title: "Completed Quiz",
+                startsAtUtc: fakeTime.GetUtcNow().AddMinutes(-10),
+                endsAtUtc: fakeTime.GetUtcNow().AddMinutes(30)).Value;
+
+            await dbContext.Quizzes.AddAsync(quiz);
+            await dbContext.SaveChangesAsync();
             quizId = quiz.Id;
         }
 
-        fakeTime.Advance(TimeSpan.FromHours(4)); // Move past EndsAtUtc
+        fakeTime.Advance(TimeSpan.FromHours(1)); // Move past EndsAtUtc
 
         var command = new AddQuestionCommand(quizId, _validQuestion);
 
         var result = await mediator.Send(command);
 
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Quiz.CannotUpdateStartedOrCompletedQuiz");
+        result.TopError.Code.Should().Be("Quiz_CannotUpdateStartedOrCompletedQuiz");
     }
 
     [Fact]
@@ -131,14 +148,13 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var course = await dbContext.Courses.FirstAsync();
 
-            var quizResult = Quiz.Create(Guid.NewGuid(), course.Id, course.InstructorId!.Value, "Future Quiz",
-                fakeTime.GetUtcNow().AddDays(1), fakeTime.GetUtcNow().AddDays(1).AddHours(1), new List<Question>());
+            var quiz = QuizFactory.CreateQuiz(
+                courseId: course.Id,
+                instructorId: course.InstructorId!.Value,
+                title: "Future Quiz",
+                startsAtUtc: fakeTime.GetUtcNow().AddDays(1),
+                endsAtUtc: fakeTime.GetUtcNow().AddDays(1).AddHours(1)).Value;
 
-            var quiz = quizResult.Value;
-
-            // Add a single question to bypass the 'Must have at least 3 questions' logic temporarily or handle the fact that
-            // it's already instantiated successfully. The Quiz.Create method actually doesn't restrict empty lists in creation
-            // unless we enforce it in the handler/validator (which we do in CreateQuizCommandHandler, but here we instantiate directly).
             await dbContext.Quizzes.AddAsync(quiz);
             await dbContext.SaveChangesAsync();
             quizId = quiz.Id;

@@ -154,13 +154,23 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
             new CreateTfCommand("Q2 Tf", 1, false),
         };
 
-        var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(), Guid.NewGuid(),
+        Guid courseId;
+        Guid instructorId;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var course = await dbContext.Courses.FirstAsync();
+            courseId = course.Id;
+            instructorId = course.InstructorId!.Value;
+        }
+
+        var command = new CreateQuizCommand("Valid Title", courseId, instructorId,
             DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30), questions);
 
         var result = await mediator.Send(command);
 
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Quiz.QuestionsRequired");
+        result.TopError.Code.Should().Be("Quiz_Questions_Required");
     }
 
     [Fact]

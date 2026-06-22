@@ -28,7 +28,7 @@ public class GetInstructorCoursesCountQueryHandlerTests(CustomWebApplicationFact
     }
 
     [Fact]
-    public async Task Handle_WithNonExistentInstructorId_ShouldReturnSuccessWithZeroCount()
+    public async Task Handle_WithNonExistentInstructorId_ShouldReturnNotFoundError()
     {
         // Arrange
         var mediator = factory.CreateMediator();
@@ -38,8 +38,8 @@ public class GetInstructorCoursesCountQueryHandlerTests(CustomWebApplicationFact
         var result = await mediator.Send(query);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.CoursesCount.Should().Be(0);
+        result.IsError.Should().BeTrue();
+        result.Errors.Should().Contain(e => e.Code == "Instructor_NotFound");
     }
 
     [Fact]

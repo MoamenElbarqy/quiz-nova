@@ -28,7 +28,7 @@ public class GetStudentEnrollmentsCountQueryHandlerTests(CustomWebApplicationFac
     }
 
     [Fact]
-    public async Task Handle_WithNonExistentStudentId_ShouldReturnSuccessWithZeroCount()
+    public async Task Handle_WithNonExistentStudentId_ShouldReturnNotFoundError()
     {
         // Arrange
         var mediator = factory.CreateMediator();
@@ -38,8 +38,8 @@ public class GetStudentEnrollmentsCountQueryHandlerTests(CustomWebApplicationFac
         var result = await mediator.Send(query);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.EnrollmentsCount.Should().Be(0);
+        result.IsError.Should().BeTrue();
+        result.Errors.Should().Contain(e => e.Code == "Student.NotFound");
     }
 
     [Fact]

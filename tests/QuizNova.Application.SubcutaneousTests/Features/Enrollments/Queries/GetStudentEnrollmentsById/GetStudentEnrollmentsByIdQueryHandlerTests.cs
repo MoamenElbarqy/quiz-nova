@@ -29,7 +29,7 @@ public class GetStudentEnrollmentsByIdQueryHandlerTests(CustomWebApplicationFact
     }
 
     [Fact]
-    public async Task Handle_WithNonExistentStudentId_ShouldReturnSuccessWithEmptyList()
+    public async Task Handle_WithNonExistentStudentId_ShouldReturnNotFoundError()
     {
         // Arrange
         var mediator = factory.CreateMediator();
@@ -39,8 +39,8 @@ public class GetStudentEnrollmentsByIdQueryHandlerTests(CustomWebApplicationFact
         var result = await mediator.Send(query);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeEmpty();
+        result.IsError.Should().BeTrue();
+        result.Errors.Should().Contain(e => e.Code == "Student.NotFound");
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public class GetStudentEnrollmentsByIdQueryHandlerTests(CustomWebApplicationFact
 
         // We know DbInitializer seeds enrollments for every student to every course
         // But just to ensure one exists specifically:
-        await mediator.Send(new EnrollStudentInCourseCommand(studentId, courseId));
+        await mediator.Send(new EnrollStudentInCourseCommand(courseId, studentId));
 
         // Act
         var result = await mediator.Send(new GetStudentEnrollmentsByIdQuery(studentId));

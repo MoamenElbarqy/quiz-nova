@@ -3,11 +3,13 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.Features.Quizzes.Queries.GetStudentQuizzes;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Infrastructure.Data;
+using QuizNova.Tests.Common.Users.Students;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Quizzes.Queries.GetStudentQuizzes;
 
@@ -30,7 +32,23 @@ public class GetStudentQuizzesQueryHandlerTests(CustomWebApplicationFactory fact
     public async Task Handle_WithValidStudentButNoEnrollments_ShouldReturnEmptyList()
     {
         var mediator = factory.CreateMediator();
-        var query = new GetStudentQuizzesQuery(Guid.NewGuid());
+
+        Guid studentId;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            var student = StudentFactory.CreateStudent(
+                personalInformation: Tests.Common.Users.UserPersonalInformation.PersonalInformationFactory
+                    .CreatePersonalInformation(
+                        name: "No Enrollments Student",
+                        email: $"student_{Guid.NewGuid()}@example.com")).Value;
+
+            await dbContext.Students.AddAsync(student);
+            await dbContext.SaveChangesAsync(CancellationToken.None);
+            studentId = student.Id;
+        }
+
+        var query = new GetStudentQuizzesQuery(studentId);
 
         var result = await mediator.Send(query);
 
@@ -56,17 +74,22 @@ public class GetStudentQuizzesQueryHandlerTests(CustomWebApplicationFactory fact
         }
 
         // Enroll student and create quiz
-        await mediator.Send(new EnrollStudentInCourseCommand(studentId, courseId));
+        var enrollResult = await mediator.Send(new EnrollStudentInCourseCommand(courseId, studentId));
+        if (enrollResult.IsError)
+        {
+            enrollResult.TopError.Code.Should().Be("Course_Student_Already_Enrolled");
+        }
 
         var questions = new List<CreateQuestionCommand>
         {
-            new CreateTfCommand("Q1", 1, true),
-            new CreateTfCommand("Q2", 1, false),
-            new CreateTfCommand("Q3", 1, true),
+            new CreateTfCommand("Question 1", 1, true),
+            new CreateTfCommand("Question 2", 1, false),
+            new CreateTfCommand("Question 3", 1, true),
         };
-        var quizTitle = $"Student Quiz {Guid.NewGuid()}";
-        await mediator.Send(new CreateQuizCommand(quizTitle, courseId, instructorId,
+        var quizTitle = $"Quiz {Guid.NewGuid().ToString()[..8]}";
+        var quizResult = await mediator.Send(new CreateQuizCommand(quizTitle, courseId, instructorId,
             DateTimeOffset.UtcNow.AddDays(1), DateTimeOffset.UtcNow.AddDays(1).AddHours(1), questions));
+        quizResult.IsSuccess.Should().BeTrue();
 
         var query = new GetStudentQuizzesQuery(studentId);
 

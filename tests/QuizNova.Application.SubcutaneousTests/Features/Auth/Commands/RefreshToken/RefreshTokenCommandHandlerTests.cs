@@ -180,7 +180,8 @@ public class RefreshTokenCommandHandlerTests(CustomWebApplicationFactory factory
         }
 
         // Act
-        var result = await mediator.Send(new RefreshTokenCommand(refreshToken, accessToken));
+        var actMediator = factory.CreateMediator();
+        var result = await actMediator.Send(new RefreshTokenCommand(refreshToken, accessToken));
 
         // Assert
         result.IsError.Should().BeTrue();
