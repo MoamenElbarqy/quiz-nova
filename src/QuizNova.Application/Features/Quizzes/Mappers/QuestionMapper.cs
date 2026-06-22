@@ -20,8 +20,7 @@ public static class QuestionMapper
                 Marks = mcq.Marks,
                 NumberOfChoices = mcq.NumberOfChoices,
                 CorrectChoiceId = mcq.CorrectChoiceId ?? Guid.Empty,
-                Choices = mcq.Choices
-                    .OrderBy(choice => choice.DisplayOrder)
+                Choices = mcq.Choices.OrderBy(choice => choice.DisplayOrder)
                     .Select(choice => new ChoiceDto
                     {
                         Id = choice.Id,

@@ -11,7 +11,8 @@ namespace QuizNova.Infrastructure.Identity;
 
 public sealed class IdentityService(
     UserManager<AppUser> userManager,
-    AppDbContext dbContext)
+    AppDbContext dbContext,
+    TimeProvider timeProvider)
     : IIdentityService
 {
     public async Task<Result<UserDto>> AuthenticateAsync(string email, string password)
@@ -133,7 +134,7 @@ public sealed class IdentityService(
             return ApplicationErrors.ExpiredOrRevokedRefreshToken;
         }
 
-        storedRefreshToken.RevokedOnUtc = DateTimeOffset.UtcNow;
+        storedRefreshToken.RevokedOnUtc = timeProvider.GetUtcNow();
         await dbContext.SaveChangesAsync(ct);
 
         return Result.Success;

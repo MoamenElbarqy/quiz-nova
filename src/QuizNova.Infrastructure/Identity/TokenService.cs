@@ -15,7 +15,8 @@ using QuizNova.Infrastructure.Settings;
 
 namespace QuizNova.Infrastructure.Identity;
 
-public sealed class TokenService(AppDbContext dbContext, IOptions<JwtSettings> jwtOptions) : ITokenService
+public sealed class TokenService(AppDbContext dbContext, IOptions<JwtSettings> jwtOptions, TimeProvider timeProvider)
+    : ITokenService
 {
     private const int DefaultAccessTokenExpiryInMinutes = 7;
     private const int DefaultRefreshTokenExpiryInDays = 7;
@@ -42,7 +43,7 @@ public sealed class TokenService(AppDbContext dbContext, IOptions<JwtSettings> j
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = BuildClaims(user);
-        var accessTokenExpiresOnUtc = DateTime.UtcNow.AddMinutes(accessTokenExpiryInMinutes);
+        var accessTokenExpiresOnUtc = timeProvider.GetUtcNow().UtcDateTime.AddMinutes(accessTokenExpiryInMinutes);
 
         var securityToken = new JwtSecurityToken(
             issuer: string.IsNullOrWhiteSpace(issuer) ? null : issuer,
@@ -53,7 +54,7 @@ public sealed class TokenService(AppDbContext dbContext, IOptions<JwtSettings> j
 
         var accessToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
         var refreshTokenValue = GenerateSecureRefreshToken();
-        var refreshTokenExpiresOnUtc = DateTimeOffset.UtcNow.AddDays(refreshTokenExpiryInDays);
+        var refreshTokenExpiresOnUtc = timeProvider.GetUtcNow().AddDays(refreshTokenExpiryInDays);
 
         var userRefreshToken = new UserRefreshToken
         {

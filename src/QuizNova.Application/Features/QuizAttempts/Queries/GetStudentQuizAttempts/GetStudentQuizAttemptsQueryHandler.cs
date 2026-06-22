@@ -8,6 +8,8 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.QuizAttempts.DTOs;
 using QuizNova.Application.Features.QuizAttempts.Mappers;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
+using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
 namespace QuizNova.Application.Features.QuizAttempts.Queries.GetStudentQuizAttempts;
 
@@ -34,8 +36,10 @@ public sealed class GetStudentQuizAttemptsQueryHandler(
             .AsNoTracking()
             .Where(quizAttempt => quizAttempt.StudentId == request.StudentId)
             .Include(quizAttempt => quizAttempt.Quiz)
-            .ThenInclude(quiz => quiz!.Questions)
+                .ThenInclude(quiz => quiz!.Questions)
+                    .ThenInclude((Question question) => (question as Mcq)!.Choices)
             .Include(quizAttempt => quizAttempt.StudentAnswers)
+            .AsSplitQuery()
             .ToListAsync(ct);
 
         var response = attempts

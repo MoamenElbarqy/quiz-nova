@@ -14,6 +14,60 @@ namespace QuizNova.Application.SubcutaneousTests.Features.Quizzes.Queries.GetAll
 public class GetAllQuizzesQueryHandlerTests(CustomWebApplicationFactory factory)
     : IClassFixture<CustomWebApplicationFactory>
 {
+    // --- Validation tests ---
+
+    [Fact]
+    public async Task Handle_WithPageNumberLessThanOne_ShouldReturnValidationError()
+    {
+        var mediator = factory.CreateMediator();
+        var query = new GetAllQuizzesQuery(0, 10, null, null, null, null, null);
+        var result = await mediator.Send(query);
+        result.IsError.Should().BeTrue();
+        result.Errors.Should().Contain(e => e.Code == "PageNumber");
+    }
+
+    [Fact]
+    public async Task Handle_WithPageSizeLessThanOne_ShouldReturnValidationError()
+    {
+        var mediator = factory.CreateMediator();
+        var query = new GetAllQuizzesQuery(1, 0, null, null, null, null, null);
+        var result = await mediator.Send(query);
+        result.IsError.Should().BeTrue();
+        result.Errors.Should().Contain(e => e.Code == "PageSize");
+    }
+
+    [Fact]
+    public async Task Handle_WithPageSizeGreaterThan100_ShouldReturnValidationError()
+    {
+        var mediator = factory.CreateMediator();
+        var query = new GetAllQuizzesQuery(1, 101, null, null, null, null, null);
+        var result = await mediator.Send(query);
+        result.IsError.Should().BeTrue();
+        result.Errors.Should().Contain(e => e.Code == "PageSize");
+    }
+
+    [Fact]
+    public async Task Handle_WithMarksLessThanZero_ShouldReturnValidationError()
+    {
+        var mediator = factory.CreateMediator();
+        var query = new GetAllQuizzesQuery(1, 10, null, -1, null, null, null);
+        var result = await mediator.Send(query);
+        result.IsError.Should().BeTrue();
+        result.Errors.Should().Contain(e => e.Code == "Marks");
+    }
+
+    [Fact]
+    public async Task Handle_WithSearchTermExceedingLength_ShouldReturnValidationError()
+    {
+        var mediator = factory.CreateMediator();
+        var query = new GetAllQuizzesQuery(1, 10, new string('a', 201), null, null, null, null);
+        var result = await mediator.Send(query);
+        result.IsError.Should().BeTrue();
+        result.Errors.Should().Contain(e => e.Code == "SearchTerm");
+    }
+
+    // --- Handler tests ---
+
     [Fact]
     public async Task Handle_WithDefaultPagination_ShouldReturnPaginatedList()
     {

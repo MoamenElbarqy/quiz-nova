@@ -10,6 +10,8 @@ using QuizNova.Application.Features.QuizAttempts.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
+using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
 namespace QuizNova.Application.Features.QuizAttempts.Queries.GetAllQuizzesAttempts;
 
@@ -18,7 +20,8 @@ public sealed class GetAllQuizzesAttemptsQueryHandler(
     ILogger<GetAllQuizzesAttemptsQueryHandler> logger)
     : IRequestHandler<GetAllQuizzesAttemptsQuery, Result<PaginatedList<QuizAttemptDto>>>
 {
-    public async Task<Result<PaginatedList<QuizAttemptDto>>> Handle(GetAllQuizzesAttemptsQuery request, CancellationToken ct)
+    public async Task<Result<PaginatedList<QuizAttemptDto>>> Handle(GetAllQuizzesAttemptsQuery request,
+        CancellationToken ct)
     {
         logger.LogInformation("Retrieving all quiz attempts");
 
@@ -36,8 +39,10 @@ public sealed class GetAllQuizzesAttemptsQueryHandler(
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
             .Include(quizAttempt => quizAttempt.Quiz)
-            .ThenInclude(quiz => quiz!.Questions)
+                .ThenInclude(quiz => quiz!.Questions)
+                    .ThenInclude((Question question) => (question as Mcq)!.Choices)
             .Include(quizAttempt => quizAttempt.StudentAnswers)
+            .AsSplitQuery()
             .ToListAsync(ct);
 
         var response = attempts
@@ -50,7 +55,8 @@ public sealed class GetAllQuizzesAttemptsQueryHandler(
             request.PageNumber,
             request.PageSize);
 
-        logger.LogInformation("Successfully retrieved {Count} quiz attempts for page {PageNumber}", response.Count, request.PageNumber);
+        logger.LogInformation("Successfully retrieved {Count} quiz attempts for page {PageNumber}", response.Count,
+            request.PageNumber);
 
         return paginatedResponse;
     }

@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddJwtAuthentication();
         services.ConfigureDataBase(configuration);
         services.ConfigureCaching(configuration);
+        services.AddSingleton(TimeProvider.System);
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<DbInitializer>();
@@ -84,10 +85,10 @@ public static class DependencyInjection
 
         services.AddIdentityCore<AppUser>(options =>
             {
-                options.Password.RequireDigit = false;
-                options.Password.RequireLowercase = false;
-                options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequireUppercase = false;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireNonAlphanumeric = true;
+                options.Password.RequireUppercase = true;
                 options.Password.RequiredLength = 8;
 
                 options.User.RequireUniqueEmail = true;

@@ -66,6 +66,18 @@ When changes are made to the `src/QuizNova.Client` directory, execute the follow
    npm run build
    ```
 
+## End-to-End Verification (Playwright)
+
+When validating user flows and visual correctness, execute within `src/QuizNova.Client`:
+
+1. **Run Chromium E2E Tests (No Video):**
+
+   ```bash
+   VIDEO=off npx playwright test --project=chromium
+   ```
+
+   _Note: In CI (GitHub Actions), video recording is automatically enabled to provide high-quality 1080p visual proof of functionality for recruiters and VCs._
+
 ## Guidelines
 
 - Always run these verifications before concluding a task that involved code changes.

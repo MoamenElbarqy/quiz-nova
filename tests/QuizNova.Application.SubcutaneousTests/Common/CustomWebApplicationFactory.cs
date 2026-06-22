@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Time.Testing;
 
 using QuizNova.Api;
 using QuizNova.Application.Common.Interfaces;
@@ -38,6 +39,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
         await DbContainer.StartAsync();
     });
 
+    private readonly FakeTimeProvider _fakeTimeProvider = new(DateTimeOffset.UtcNow);
+
     private string? _connectionString;
 
     public IMediator CreateMediator()
@@ -46,6 +49,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
 
         return serviceScope.ServiceProvider.GetRequiredService<IMediator>();
     }
+
+    public FakeTimeProvider GetFakeTimeProvider() => _fakeTimeProvider;
 
     public async Task InitializeAsync()
     {
@@ -106,6 +111,16 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
             }
 
             services.AddScoped<IUser, TestCurrentUser>();
+
+            // Replace TimeProvider.System with FakeTimeProvider for testable clock
+            var timeProviderDescriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(TimeProvider));
+            if (timeProviderDescriptor != null)
+            {
+                services.Remove(timeProviderDescriptor);
+            }
+
+            services.AddSingleton<TimeProvider>(_fakeTimeProvider);
         });
 
         builder.UseSetting("ConnectionStrings:DefaultConnection", _connectionString);

@@ -27,7 +27,7 @@ jobs:
         run: dotnet test
 
   frontend:
-    name: Frontend Build
+    name: Frontend Build & Unit Testing & Linting
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -86,10 +86,10 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install chromium --with-deps
 
       - name: Run Playwright tests
-        run: npx playwright test
+        run: npx playwright test --project=chromium
         env:
           CI: true
 

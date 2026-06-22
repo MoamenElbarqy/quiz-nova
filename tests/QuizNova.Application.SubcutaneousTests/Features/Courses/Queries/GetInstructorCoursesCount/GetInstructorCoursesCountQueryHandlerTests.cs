@@ -1,0 +1,70 @@
+using FluentAssertions;
+
+using QuizNova.Application.Features.Courses.Commands.CreateCourse;
+using QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesCount;
+using QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
+using QuizNova.Application.Features.Users.DTOs;
+using QuizNova.Application.SubcutaneousTests.Common;
+using QuizNova.Domain.Entities.Identity;
+
+namespace QuizNova.Application.SubcutaneousTests.Features.Courses.Queries.GetInstructorCoursesCount;
+
+public class GetInstructorCoursesCountQueryHandlerTests(CustomWebApplicationFactory factory)
+    : IClassFixture<CustomWebApplicationFactory>
+{
+    [Fact]
+    public async Task Handle_WithEmptyInstructorId_ShouldReturnValidationError()
+    {
+        // Arrange
+        var mediator = factory.CreateMediator();
+        var query = new GetInstructorCoursesCountQuery(Guid.Empty);
+
+        // Act
+        var result = await mediator.Send(query);
+
+        // Assert
+        result.IsError.Should().BeTrue();
+        result.Errors.Should().Contain(e => e.Code == "InstructorId");
+    }
+
+    [Fact]
+    public async Task Handle_WithNonExistentInstructorId_ShouldReturnSuccessWithZeroCount()
+    {
+        // Arrange
+        var mediator = factory.CreateMediator();
+        var query = new GetInstructorCoursesCountQuery(Guid.NewGuid());
+
+        // Act
+        var result = await mediator.Send(query);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.CoursesCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Handle_WithValidInstructorIdWithCourses_ShouldReturnCorrectCount()
+    {
+        // Arrange
+        var mediator = factory.CreateMediator();
+
+        var email = $"inst_{Guid.NewGuid()}@test.com";
+        var phone = $"+1{Guid.NewGuid().ToString()[..10]}";
+        var instructorResult = await mediator.Send(new CreateInstructorCommand(
+            PersonalInformation: new PersonalInformationDto("Count Instructor", email, phone),
+            Password: "SecurePass1!",
+            Role: nameof(UserRole.Instructor)));
+        instructorResult.IsSuccess.Should().BeTrue();
+        var instructorId = instructorResult.Value.Id;
+
+        await mediator.Send(new CreateCourseCommand("Count Course 1", instructorId, 50, 100));
+        await mediator.Send(new CreateCourseCommand("Count Course 2", instructorId, 50, 100));
+
+        // Act
+        var result = await mediator.Send(new GetInstructorCoursesCountQuery(instructorId));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.CoursesCount.Should().Be(2);
+    }
+}
