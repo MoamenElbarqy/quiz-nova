@@ -103,3 +103,7 @@ appsettings.Development.json
 /containers/seq/
 **/test-results/
 **/playwright-report/
+
+# Agent Tooling
+skills-lock.json
+.agents/
