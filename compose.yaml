@@ -46,7 +46,7 @@ services:
       ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       JwtSettings__Issuer: QuizNova.Api
       JwtSettings__Audience: QuizNova.Client
-      JwtSettings__Secret: QuizNova-Development-Secret-Key-Change-This-2026
+      JwtSettings__Secret: ${JWT_SECRET:-QuizNova-Development-Secret-Key-Change-This-2026}
       JwtSettings__ExpiryMinutes: 7
       AppSettings__Cors__PolicyName: "AngularClient"
       AppSettings__Cors__AllowedOrigins__0: "http://localhost:4200"

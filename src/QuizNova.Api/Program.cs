@@ -7,6 +7,8 @@ using Scalar.AspNetCore;
 
 using Serilog;
 
+Serilog.Debugging.SelfLog.Enable(msg => Console.WriteLine(msg));
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, loggerConfig) =>
