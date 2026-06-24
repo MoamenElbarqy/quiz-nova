@@ -7,7 +7,7 @@ using Scalar.AspNetCore;
 
 using Serilog;
 
-Serilog.Debugging.SelfLog.Enable(msg => Console.WriteLine(msg));
+Serilog.Debugging.SelfLog.Enable(msg => Console.Error.WriteLine(msg));
 
 var builder = WebApplication.CreateBuilder(args);
 
