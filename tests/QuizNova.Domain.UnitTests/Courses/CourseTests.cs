@@ -229,9 +229,7 @@ public class CourseTests
         Assert.True(result.IsSuccess);
         Assert.Equal(CourseStatus.Completed, course.Status);
 
-        var completedEvent = Assert.Single(course.DomainEvents);
-        var courseCompletedEvent = Assert.IsType<CourseCompletedEvent>(completedEvent);
-        Assert.Equal(course.Id, courseCompletedEvent.Id);
+        Assert.Empty(course.DomainEvents);
     }
 
     [Fact]
@@ -282,8 +280,6 @@ public class CourseTests
         // Assert
         Assert.True(result.IsSuccess);
 
-        var deletedEvent = Assert.Single(course.DomainEvents);
-        var courseDeletedEvent = Assert.IsType<CourseDeletedEvent>(deletedEvent);
-        Assert.Equal(course.Id, courseDeletedEvent.Id);
+        Assert.Empty(course.DomainEvents);
     }
 }

@@ -12,7 +12,8 @@ namespace QuizNova.Application.Features.Quizzes.Commands.UpdateQuestion;
 
 public sealed class UpdateQuestionCommandHandler(
     IAppDbContext dbContext,
-    ILogger<UpdateQuestionCommandHandler> logger)
+    ILogger<UpdateQuestionCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<UpdateMcqCommand, Result<Updated>>,
       IRequestHandler<UpdateTfCommand, Result<Updated>>,
       IRequestHandler<UpdateEssayCommand, Result<Updated>>
@@ -113,6 +114,7 @@ public sealed class UpdateQuestionCommandHandler(
         }
 
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["quizzes"], ct);
 
         logger.LogInformation(
             "Successfully updated question {QuestionId} in quiz {QuizId}",

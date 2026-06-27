@@ -11,7 +11,8 @@ namespace QuizNova.Application.Features.Quizzes.Commands.UpdateQuizMetadata;
 
 public sealed class UpdateQuizMetadataCommandHandler(
     IAppDbContext dbContext,
-    ILogger<UpdateQuizMetadataCommandHandler> logger)
+    ILogger<UpdateQuizMetadataCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<UpdateQuizMetadataCommand, Result<Updated>>
 {
     public async Task<Result<Updated>> Handle(UpdateQuizMetadataCommand request, CancellationToken ct)
@@ -42,6 +43,7 @@ public sealed class UpdateQuizMetadataCommandHandler(
         }
 
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["quizzes"], ct);
 
         logger.LogInformation("Successfully updated quiz metadata for quiz: {QuizId}", request.QuizId);
 

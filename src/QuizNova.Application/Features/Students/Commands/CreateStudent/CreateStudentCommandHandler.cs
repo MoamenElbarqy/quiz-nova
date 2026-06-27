@@ -17,7 +17,8 @@ namespace QuizNova.Application.Features.Students.Commands.CreateStudent;
 public sealed class CreateStudentCommandHandler(
     IAppDbContext dbContext,
     IIdentityService identityService,
-    ILogger<CreateStudentCommandHandler> logger)
+    ILogger<CreateStudentCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<CreateStudentCommand, Result<StudentDto>>
 {
     public async Task<Result<StudentDto>> Handle(CreateStudentCommand request, CancellationToken ct)
@@ -92,6 +93,7 @@ public sealed class CreateStudentCommandHandler(
 
         await dbContext.Students.AddAsync(createStudentResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["students"], ct);
 
         logger.LogInformation("Successfully created student {StudentId} with email {Email}",
             createStudentResult.Value.Id, request.PersonalInformation.Email);

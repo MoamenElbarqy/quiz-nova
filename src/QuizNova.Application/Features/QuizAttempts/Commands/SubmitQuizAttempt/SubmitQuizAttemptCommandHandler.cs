@@ -19,7 +19,8 @@ namespace QuizNova.Application.Features.QuizAttempts.Commands.SubmitQuizAttempt;
 public sealed class SubmitQuizAttemptCommandHandler(
     IAppDbContext dbContext,
     IUser user,
-    ILogger<SubmitQuizAttemptCommandHandler> logger)
+    ILogger<SubmitQuizAttemptCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<SubmitQuizAttemptCommand, Result<QuizAttemptDto>>
 {
     public async Task<Result<QuizAttemptDto>> Handle(SubmitQuizAttemptCommand request, CancellationToken ct)
@@ -64,7 +65,7 @@ public sealed class SubmitQuizAttemptCommandHandler(
             .AsNoTracking()
             .AnyAsync(
                 enrollment => enrollment.StudentId == studentId &&
-                                 enrollment.CourseId == quiz.CourseId,
+                              enrollment.CourseId == quiz.CourseId,
                 ct);
 
         if (!isStudentEnrolledInCourse)
@@ -163,6 +164,7 @@ public sealed class SubmitQuizAttemptCommandHandler(
 
         await dbContext.QuizAttempts.AddAsync(createAttemptResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["quiz-attempts", "quizzes"], ct);
 
         logger.LogInformation(
             "Successfully submitted quiz attempt {QuizAttemptId} for student {StudentId}. Score: {Score}",

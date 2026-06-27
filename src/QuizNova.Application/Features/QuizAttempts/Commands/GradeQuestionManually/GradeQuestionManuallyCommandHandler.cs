@@ -11,7 +11,8 @@ namespace QuizNova.Application.Features.QuizAttempts.Commands.GradeQuestionManua
 
 public sealed class GradeQuestionManuallyCommandHandler(
     IAppDbContext dbContext,
-    ILogger<GradeQuestionManuallyCommandHandler> logger)
+    ILogger<GradeQuestionManuallyCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<GradeQuestionManuallyCommand, Result<Updated>>
 {
     public async Task<Result<Updated>> Handle(GradeQuestionManuallyCommand request, CancellationToken ct)
@@ -47,6 +48,7 @@ public sealed class GradeQuestionManuallyCommandHandler(
         }
 
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["quiz-attempts"], ct);
 
         logger.LogInformation(
             "Successfully graded answer {AnswerId} with score {Score}",

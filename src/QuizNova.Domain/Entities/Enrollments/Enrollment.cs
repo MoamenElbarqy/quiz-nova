@@ -48,7 +48,6 @@ public class Enrollment : Entity
         }
 
         var enrollment = new Enrollment(id, studentId, courseId, enrolledOnUtc);
-        enrollment.AddDomainEvent(new EnrollmentCreatedEvent(studentId, courseId));
         return enrollment;
     }
 

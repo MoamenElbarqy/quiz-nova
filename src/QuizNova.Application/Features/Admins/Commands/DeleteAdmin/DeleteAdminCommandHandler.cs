@@ -11,7 +11,8 @@ namespace QuizNova.Application.Features.Admins.Commands.DeleteAdmin;
 
 public sealed class DeleteAdminCommandHandler(
     IAppDbContext dbContext,
-    ILogger<DeleteAdminCommandHandler> logger)
+    ILogger<DeleteAdminCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<DeleteAdminCommand, Result<Deleted>>
 {
     public async Task<Result<Deleted>> Handle(DeleteAdminCommand request, CancellationToken ct)
@@ -36,6 +37,7 @@ public sealed class DeleteAdminCommandHandler(
 
         dbContext.Admins.Remove(admin);
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["admins"], ct);
 
         logger.LogInformation("Successfully deleted admin {AdminId}", request.Id);
 

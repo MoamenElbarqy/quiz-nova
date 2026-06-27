@@ -11,7 +11,8 @@ namespace QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCour
 
 public sealed class EnrollStudentInCourseCommandHandler(
     IAppDbContext dbContext,
-    ILogger<EnrollStudentInCourseCommandHandler> logger)
+    ILogger<EnrollStudentInCourseCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<EnrollStudentInCourseCommand, Result<Created>>
 {
     public async Task<Result<Created>> Handle(EnrollStudentInCourseCommand request, CancellationToken ct)
@@ -48,6 +49,7 @@ public sealed class EnrollStudentInCourseCommandHandler(
 
         await dbContext.Enrollments.AddAsync(enrollmentResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["courses", "students"], ct);
 
         logger.LogInformation("Successfully enrolled student {StudentId} in course {CourseId}", request.StudentId,
             request.CourseId);

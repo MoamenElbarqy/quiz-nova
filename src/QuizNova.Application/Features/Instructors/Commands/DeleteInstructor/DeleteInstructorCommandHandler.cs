@@ -11,7 +11,8 @@ namespace QuizNova.Application.Features.Instructors.Commands.DeleteInstructor;
 
 public sealed class DeleteInstructorCommandHandler(
     IAppDbContext dbContext,
-    ILogger<DeleteInstructorCommandHandler> logger)
+    ILogger<DeleteInstructorCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<DeleteInstructorCommand, Result<Deleted>>
 {
     public async Task<Result<Deleted>> Handle(DeleteInstructorCommand request, CancellationToken ct)
@@ -36,6 +37,7 @@ public sealed class DeleteInstructorCommandHandler(
 
         dbContext.Instructors.Remove(instructor);
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["instructors"], ct);
 
         logger.LogInformation("Successfully deleted instructor {InstructorId}", request.Id);
 

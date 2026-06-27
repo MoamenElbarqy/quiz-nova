@@ -1,5 +1,4 @@
 using QuizNova.Domain.Entities.Users.Instructors;
-using QuizNova.Domain.Entities.Users.Instructors.Events;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 using QuizNova.Tests.Common.Users.Instructors;
 using QuizNova.Tests.Common.Users.UserPersonalInformation;
@@ -32,9 +31,7 @@ public class InstructorTests
         Assert.Equal("Valid Instructor Name", result.Value.PersonalInformation.Name);
         Assert.Equal("instructor@example.com", result.Value.PersonalInformation.Email);
 
-        var createdEvent = Assert.Single(result.Value.DomainEvents);
-        var instructorCreatedEvent = Assert.IsType<InstructorCreatedEvent>(createdEvent);
-        Assert.Equal(result.Value.Id, instructorCreatedEvent.Id);
+        Assert.Empty(result.Value.DomainEvents);
     }
 
     [Fact]
@@ -55,9 +52,7 @@ public class InstructorTests
         Assert.Equal("Updated Instructor Name", instructor.PersonalInformation.Name);
         Assert.Equal("updated.instructor@example.com", instructor.PersonalInformation.Email);
 
-        var updatedEvent = Assert.Single(instructor.DomainEvents);
-        var instructorUpdatedEvent = Assert.IsType<InstructorUpdatedEvent>(updatedEvent);
-        Assert.Equal(instructor.Id, instructorUpdatedEvent.Id);
+        Assert.Empty(instructor.DomainEvents);
     }
 
     [Fact]
@@ -73,8 +68,6 @@ public class InstructorTests
         // Assert
         Assert.True(result.IsSuccess);
 
-        var deletedEvent = Assert.Single(instructor.DomainEvents);
-        var instructorDeletedEvent = Assert.IsType<InstructorDeletedEvent>(deletedEvent);
-        Assert.Equal(instructor.Id, instructorDeletedEvent.Id);
+        Assert.Empty(instructor.DomainEvents);
     }
 }

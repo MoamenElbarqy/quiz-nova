@@ -162,14 +162,12 @@ public sealed class Course : Entity
 
     public Result<Deleted> Delete()
     {
-        AddDomainEvent(new CourseDeletedEvent(Id));
         return Result.Deleted;
     }
 
     public Result<Updated> MarkAsCompeleted()
     {
         Status = CourseStatus.Completed;
-        AddDomainEvent(new CourseCompletedEvent(Id));
         return Result.Updated;
     }
 }

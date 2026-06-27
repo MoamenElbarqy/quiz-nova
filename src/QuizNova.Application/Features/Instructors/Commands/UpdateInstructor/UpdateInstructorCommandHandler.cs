@@ -14,7 +14,8 @@ namespace QuizNova.Application.Features.Instructors.Commands.UpdateInstructor;
 
 public sealed class UpdateInstructorCommandHandler(
     IAppDbContext dbContext,
-    ILogger<UpdateInstructorCommandHandler> logger)
+    ILogger<UpdateInstructorCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<UpdateInstructorCommand, Result<InstructorDto>>
 {
     public async Task<Result<InstructorDto>> Handle(UpdateInstructorCommand request, CancellationToken ct)
@@ -69,6 +70,7 @@ public sealed class UpdateInstructorCommandHandler(
         }
 
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["instructors"], ct);
 
         logger.LogInformation("Successfully updated instructor {InstructorId}", request.Id);
 

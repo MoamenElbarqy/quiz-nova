@@ -1,5 +1,4 @@
 using QuizNova.Domain.Entities.Users.Admins;
-using QuizNova.Domain.Entities.Users.Admins.Events;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 using QuizNova.Tests.Common.Users.Admins;
 using QuizNova.Tests.Common.Users.UserPersonalInformation;
@@ -28,9 +27,7 @@ public class AdminTests
         Assert.Equal("Valid Admin Name", result.Value.PersonalInformation.Name);
         Assert.Equal("admin@example.com", result.Value.PersonalInformation.Email);
 
-        var createdEvent = Assert.Single(result.Value.DomainEvents);
-        var adminCreatedEvent = Assert.IsType<AdminCreatedEvent>(createdEvent);
-        Assert.Equal(result.Value.Id, adminCreatedEvent.Id);
+        Assert.Empty(result.Value.DomainEvents);
     }
 
     [Fact]
@@ -51,9 +48,7 @@ public class AdminTests
         Assert.Equal("Updated Admin Name", admin.PersonalInformation.Name);
         Assert.Equal("updated.admin@example.com", admin.PersonalInformation.Email);
 
-        var updatedEvent = Assert.Single(admin.DomainEvents);
-        var adminUpdatedEvent = Assert.IsType<AdminUpdatedEvent>(updatedEvent);
-        Assert.Equal(admin.Id, adminUpdatedEvent.Id);
+        Assert.Empty(admin.DomainEvents);
     }
 
     [Fact]
@@ -69,8 +64,6 @@ public class AdminTests
         // Assert
         Assert.True(result.IsSuccess);
 
-        var deletedEvent = Assert.Single(admin.DomainEvents);
-        var adminDeletedEvent = Assert.IsType<AdminDeletedEvent>(deletedEvent);
-        Assert.Equal(admin.Id, adminDeletedEvent.Id);
+        Assert.Empty(admin.DomainEvents);
     }
 }

@@ -1,5 +1,4 @@
 using QuizNova.Domain.Entities.Quizzes;
-using QuizNova.Domain.Entities.Quizzes.Events;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Tests.Common.Courses;
 using QuizNova.Tests.Common.Quizzes;
@@ -35,9 +34,7 @@ public class QuizTests
         Assert.Equal(title, result.Value.Title);
         Assert.Equal(3, result.Value.Questions.Count());
 
-        var quizEvent = Assert.Single(result.Value.DomainEvents);
-        var quizCreatedEvent = Assert.IsType<QuizCreatedEvent>(quizEvent);
-        Assert.Equal(id, quizCreatedEvent.Id);
+        Assert.Empty(result.Value.DomainEvents);
     }
 
     [Fact]

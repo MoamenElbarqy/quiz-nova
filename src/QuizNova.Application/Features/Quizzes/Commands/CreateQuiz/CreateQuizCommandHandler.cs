@@ -19,7 +19,8 @@ namespace QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 
 public sealed class CreateQuizCommandHandler(
     IAppDbContext dbContext,
-    ILogger<CreateQuizCommandHandler> logger)
+    ILogger<CreateQuizCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<CreateQuizCommand, Result<QuizDto>>
 {
     public async Task<Result<QuizDto>> Handle(CreateQuizCommand request, CancellationToken ct)
@@ -96,6 +97,7 @@ public sealed class CreateQuizCommandHandler(
 
         await dbContext.Quizzes.AddAsync(createQuizResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["quizzes"], ct);
 
         logger.LogInformation("Successfully created quiz {QuizId} with {QuestionCount} questions", quizId,
             questions.Count);

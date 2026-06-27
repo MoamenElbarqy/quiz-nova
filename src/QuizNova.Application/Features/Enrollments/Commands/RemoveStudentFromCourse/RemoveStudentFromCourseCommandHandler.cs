@@ -11,7 +11,8 @@ namespace QuizNova.Application.Features.Enrollments.Commands.RemoveStudentFromCo
 
 public sealed class RemoveStudentFromCourseCommandHandler(
     IAppDbContext dbContext,
-    ILogger<RemoveStudentFromCourseCommandHandler> logger)
+    ILogger<RemoveStudentFromCourseCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<RemoveStudentFromCourseCommand, Result<Deleted>>
 {
     public async Task<Result<Deleted>> Handle(RemoveStudentFromCourseCommand request, CancellationToken ct)
@@ -42,6 +43,7 @@ public sealed class RemoveStudentFromCourseCommandHandler(
 
         dbContext.Enrollments.Remove(enrollment);
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["courses", "students"], ct);
 
         logger.LogInformation("Successfully removed enrollment {EnrollmentId} for student {StudentId}", request.EnrollmentId,
             request.StudentId);

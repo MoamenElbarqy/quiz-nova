@@ -12,7 +12,8 @@ namespace QuizNova.Application.Features.Quizzes.Commands.DeleteQuestion;
 
 public sealed class DeleteQuestionCommandHandler(
     IAppDbContext dbContext,
-    ILogger<DeleteQuestionCommandHandler> logger)
+    ILogger<DeleteQuestionCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<DeleteQuestionCommand, Result<Deleted>>
 {
     public async Task<Result<Deleted>> Handle(DeleteQuestionCommand request, CancellationToken ct)
@@ -53,6 +54,7 @@ public sealed class DeleteQuestionCommandHandler(
 
         dbContext.Questions.Remove(question);
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["quizzes"], ct);
 
         logger.LogInformation(
             "Successfully deleted question {QuestionId} from quiz {QuizId}",

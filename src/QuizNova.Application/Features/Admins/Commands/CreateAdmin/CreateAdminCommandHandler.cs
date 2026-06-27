@@ -17,7 +17,8 @@ namespace QuizNova.Application.Features.Admins.Commands.CreateAdmin;
 public sealed class CreateAdminCommandHandler(
     IAppDbContext dbContext,
     IIdentityService identityService,
-    ILogger<CreateAdminCommandHandler> logger)
+    ILogger<CreateAdminCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<CreateAdminCommand, Result<AdminDto>>
 {
     public async Task<Result<AdminDto>> Handle(CreateAdminCommand request, CancellationToken ct)
@@ -94,6 +95,7 @@ public sealed class CreateAdminCommandHandler(
 
         await dbContext.Admins.AddAsync(createAdminResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["admins"], ct);
 
         logger.LogInformation("Successfully created admin {AdminId} with email {Email}", createAdminResult.Value.Id,
             request.PersonalInformation.Email);

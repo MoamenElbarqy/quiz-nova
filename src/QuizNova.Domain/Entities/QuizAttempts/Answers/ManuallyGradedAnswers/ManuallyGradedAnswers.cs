@@ -1,6 +1,5 @@
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers.Events;
 
 namespace QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
 
@@ -64,8 +63,6 @@ public abstract class ManuallyGradedAnswers : QuestionAnswer
 
         Score = score;
         GradedAt = DateTimeOffset.UtcNow;
-
-        AddDomainEvent(new QuestionGradedEvent(Id));
 
         return Result.Updated;
     }

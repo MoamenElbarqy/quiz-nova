@@ -14,7 +14,8 @@ namespace QuizNova.Application.Features.Admins.Commands.UpdateAdmin;
 
 public sealed class UpdateAdminCommandHandler(
     IAppDbContext dbContext,
-    ILogger<UpdateAdminCommandHandler> logger)
+    ILogger<UpdateAdminCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<UpdateAdminCommand, Result<AdminDto>>
 {
     public async Task<Result<AdminDto>> Handle(UpdateAdminCommand request, CancellationToken ct)
@@ -67,6 +68,7 @@ public sealed class UpdateAdminCommandHandler(
         }
 
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["admins"], ct);
 
         logger.LogInformation("Successfully updated admin {AdminId}", request.Id);
 

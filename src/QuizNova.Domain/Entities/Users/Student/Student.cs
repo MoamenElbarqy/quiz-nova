@@ -2,7 +2,6 @@ using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Enrollments;
 using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.QuizAttempts;
-using QuizNova.Domain.Entities.Users.Student.Events;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Domain.Entities.Users.Student;
@@ -44,21 +43,18 @@ public class Student : User
             personalInformation,
             courseEnrollments,
             quizAttempts);
-        student.AddDomainEvent(new StudentCreatedEvent(id));
         return student;
     }
 
     public Result<Updated> Update(PersonalInformation personalInformation)
     {
         PersonalInformation = personalInformation;
-        AddDomainEvent(new StudentUpdatedEvent(Id));
 
         return Result.Updated;
     }
 
     public Result<Deleted> Delete()
     {
-        AddDomainEvent(new StudentDeletedEvent(Id));
         return Result.Deleted;
     }
 }

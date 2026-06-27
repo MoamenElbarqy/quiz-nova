@@ -14,7 +14,8 @@ namespace QuizNova.Application.Features.Courses.Commands.CreateCourse;
 
 public sealed class CreateCourseCommandHandler(
     IAppDbContext dbContext,
-    ILogger<CreateCourseCommandHandler> logger)
+    ILogger<CreateCourseCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<CreateCourseCommand, Result<CourseDto>>
 {
     public async Task<Result<CourseDto>> Handle(CreateCourseCommand request, CancellationToken ct)
@@ -42,6 +43,7 @@ public sealed class CreateCourseCommandHandler(
 
         await dbContext.Courses.AddAsync(createCourseResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["courses"], ct);
 
         logger.LogInformation("Successfully created course {CourseId}", createCourseResult.Value.Id);
 

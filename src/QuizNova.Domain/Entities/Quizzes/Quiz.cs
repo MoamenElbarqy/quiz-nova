@@ -10,7 +10,6 @@ using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.TrueFalseA
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers.EssayAnswer;
 using QuizNova.Domain.Entities.Quizzes.Enums;
-using QuizNova.Domain.Entities.Quizzes.Events;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
@@ -153,8 +152,6 @@ public class Quiz : Entity
             startsAtUtc,
             endsAtUtc,
             questions);
-
-        quiz.AddDomainEvent(new QuizCreatedEvent(id));
 
         return quiz;
     }

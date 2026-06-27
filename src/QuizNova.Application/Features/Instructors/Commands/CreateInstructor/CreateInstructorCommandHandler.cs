@@ -17,7 +17,8 @@ namespace QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
 public sealed class CreateInstructorCommandHandler(
     IAppDbContext dbContext,
     IIdentityService identityService,
-    ILogger<CreateInstructorCommandHandler> logger)
+    ILogger<CreateInstructorCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<CreateInstructorCommand, Result<InstructorDto>>
 {
     public async Task<Result<InstructorDto>> Handle(CreateInstructorCommand request, CancellationToken ct)
@@ -98,6 +99,7 @@ public sealed class CreateInstructorCommandHandler(
 
         await dbContext.Instructors.AddAsync(createInstructorResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["instructors"], ct);
 
         logger.LogInformation("Successfully created instructor {InstructorId} with email {Email}",
             createInstructorResult.Value.Id,

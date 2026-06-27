@@ -11,7 +11,8 @@ namespace QuizNova.Application.Features.Courses.Commands.DeleteCourseById;
 
 public sealed class DeleteCourseByIdCommandHandler(
     IAppDbContext dbContext,
-    ILogger<DeleteCourseByIdCommandHandler> logger)
+    ILogger<DeleteCourseByIdCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<DeleteCourseByIdCommand, Result<Deleted>>
 {
     public async Task<Result<Deleted>> Handle(DeleteCourseByIdCommand request, CancellationToken ct)
@@ -36,6 +37,7 @@ public sealed class DeleteCourseByIdCommandHandler(
 
         dbContext.Courses.Remove(course);
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["courses"], ct);
 
         logger.LogInformation("Successfully deleted course {CourseId}", request.CourseId);
 

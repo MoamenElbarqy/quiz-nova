@@ -11,7 +11,8 @@ namespace QuizNova.Application.Features.Quizzes.Commands.UpdateQuizCourseId;
 
 public sealed class UpdateQuizCourseIdCommandHandler(
     IAppDbContext dbContext,
-    ILogger<UpdateQuizCourseIdCommandHandler> logger)
+    ILogger<UpdateQuizCourseIdCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<UpdateQuizCourseIdCommand, Result<Updated>>
 {
     public async Task<Result<Updated>> Handle(UpdateQuizCourseIdCommand request, CancellationToken ct)
@@ -52,6 +53,7 @@ public sealed class UpdateQuizCourseIdCommandHandler(
         }
 
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["quizzes", "courses"], ct);
 
         logger.LogInformation(
             "Successfully updated course ID for quiz {QuizId} to {NewCourseId}",

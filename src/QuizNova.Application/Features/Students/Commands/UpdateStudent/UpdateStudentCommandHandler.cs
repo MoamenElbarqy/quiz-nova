@@ -14,7 +14,8 @@ namespace QuizNova.Application.Features.Students.Commands.UpdateStudent;
 
 public sealed class UpdateStudentCommandHandler(
     IAppDbContext dbContext,
-    ILogger<UpdateStudentCommandHandler> logger)
+    ILogger<UpdateStudentCommandHandler> logger,
+    ICacheInvalidator cacheInvalidator)
     : IRequestHandler<UpdateStudentCommand, Result<StudentDto>>
 {
     public async Task<Result<StudentDto>> Handle(UpdateStudentCommand request, CancellationToken ct)
@@ -72,6 +73,7 @@ public sealed class UpdateStudentCommandHandler(
 
         dbContext.Students.Update(student);
         await dbContext.SaveChangesAsync(ct);
+        await cacheInvalidator.InvalidateAsync(["students"], ct);
 
         logger.LogInformation("Successfully updated student {StudentId}", request.Id);
 
