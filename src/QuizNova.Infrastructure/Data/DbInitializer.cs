@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
+using Npgsql;
+
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Enrollments;
@@ -26,6 +28,8 @@ public sealed class DbInitializer(
     public async Task InitializeAsync(CancellationToken ct = default)
     {
         await dbContext.Database.MigrateAsync(ct);
+
+        await EnsureOutboxTriggerAsync(ct);
 
         // Seed Roles
         var roles = new[] { "Admin", "Instructor", "Student" };
@@ -374,5 +378,40 @@ public sealed class DbInitializer(
         }
 
         await dbContext.SaveChangesAsync(ct);
+    }
+
+    private async Task EnsureOutboxTriggerAsync(CancellationToken ct)
+    {
+        await using var connection = new NpgsqlConnection(dbContext.Database.GetConnectionString());
+        await connection.OpenAsync(ct);
+
+        await using var createFunction = connection.CreateCommand();
+        createFunction.CommandText = """
+            CREATE OR REPLACE FUNCTION notify_outbox_insert()
+            RETURNS trigger
+            LANGUAGE plpgsql
+            AS $$
+            BEGIN
+                PERFORM pg_notify('outbox_channel', NEW."Id"::text);
+                RETURN NEW;
+            END;
+            $$;
+            """;
+        await createFunction.ExecuteNonQueryAsync(ct);
+
+        await using var dropTrigger = connection.CreateCommand();
+        dropTrigger.CommandText = """
+            DROP TRIGGER IF EXISTS outbox_insert_trigger ON "OutboxMessages";
+            """;
+        await dropTrigger.ExecuteNonQueryAsync(ct);
+
+        await using var createTrigger = connection.CreateCommand();
+        createTrigger.CommandText = """
+            CREATE TRIGGER outbox_insert_trigger
+                AFTER INSERT ON "OutboxMessages"
+                FOR EACH ROW
+                EXECUTE FUNCTION notify_outbox_insert();
+            """;
+        await createTrigger.ExecuteNonQueryAsync(ct);
     }
 }

@@ -32,7 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<DbInitializer>();
-        services.AddHostedService<ProcessOutboxMessagesJob>();
+        services.AddHostedService<OutboxProcessorJob>();
         return services;
     }
 
