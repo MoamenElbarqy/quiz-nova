@@ -2,6 +2,7 @@ using MediatR;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Application.Common.Errors;
@@ -26,6 +27,7 @@ public class AuthController(ISender sender) : ApiController
         "Validates the provided email and password, then returns an access token response and sets a secure refresh token cookie.")]
     [EndpointName("Login")]
     [AllowAnonymous]
+    [EnableRateLimiting("Auth")]
     public async Task<ActionResult<AuthDto>> Login(LoginRequest request)
     {
         var loginResult = await sender.Send(new LoginCommand(request.Email, request.Password, request.Role));

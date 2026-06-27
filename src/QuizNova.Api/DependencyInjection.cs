@@ -1,9 +1,11 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 
 using Asp.Versioning;
 
 using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Options;
 
@@ -35,6 +37,39 @@ public static class DependencyInjection
         {
             options.AddBasePolicy(builder =>
                 builder.Expire(TimeSpan.FromSeconds(30)));
+        });
+
+        services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+            options.AddConcurrencyLimiter("Global", limiter =>
+            {
+                limiter.PermitLimit = 50;
+                limiter.QueueLimit = 100;
+                limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+            });
+
+            options.AddTokenBucketLimiter("SubmitQuiz", limiter =>
+            {
+                limiter.TokenLimit = 200;
+                limiter.ReplenishmentPeriod = TimeSpan.FromSeconds(1);
+                limiter.TokensPerPeriod = 50;
+                limiter.QueueLimit = 1000;
+                limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                limiter.AutoReplenishment = true;
+            });
+
+            options.AddPolicy("Auth", ctx =>
+                RateLimitPartition.GetSlidingWindowLimiter(
+                    ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new SlidingWindowRateLimiterOptions
+                    {
+                        Window = TimeSpan.FromMinutes(1),
+                        PermitLimit = 5,
+                        SegmentsPerWindow = 6,
+                        QueueLimit = 0,
+                    }));
         });
 
         services.AddConfiguredCors();

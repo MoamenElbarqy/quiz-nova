@@ -7,7 +7,7 @@ using Scalar.AspNetCore;
 
 using Serilog;
 
-Serilog.Debugging.SelfLog.Enable(msg => Console.Error.WriteLine(msg));
+Serilog.Debugging.SelfLog.Enable(msg => Console.WriteLine(msg));
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +33,8 @@ app.UseCors(appSettings.Cors.PolicyName);
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseRateLimiter();
 
 if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("AutoMigrateDb"))
 {

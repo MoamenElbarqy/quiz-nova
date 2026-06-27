@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.AspNetCore.RateLimiting;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Mappers;
@@ -65,6 +66,7 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [EndpointName("SubmitQuizAttempt")]
     [HttpPost("students/{studentId:guid}/quiz-attempts")]
     [Authorize(Roles = nameof(UserRole.Student))]
+    [EnableRateLimiting("SubmitQuiz")]
     [ProducesResponseType(typeof(QuizAttemptDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
