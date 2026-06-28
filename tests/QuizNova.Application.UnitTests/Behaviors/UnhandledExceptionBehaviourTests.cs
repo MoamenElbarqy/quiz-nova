@@ -60,5 +60,5 @@ public class UnhandledExceptionBehaviourTests
             Arg.Any<Func<object, Exception?, string>>());
     }
 
-    private class DummyRequest;
+    public class DummyRequest;
 }

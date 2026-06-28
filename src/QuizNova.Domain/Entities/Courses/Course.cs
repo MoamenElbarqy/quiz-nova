@@ -49,7 +49,7 @@ public sealed class Course : Entity
 
     public int MinimumPassingMarks { get; private set; }
 
-    public int MaximumMarks { get; }
+    public int MaximumMarks { get; private set; }
 
     // Remaining marks available to create quizzes in this course.
     public int RemainingMarks => MaximumMarks - Quizzes.Sum(q => q.Marks);

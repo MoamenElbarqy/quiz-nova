@@ -103,9 +103,9 @@ public class CachingBehaviorTests
         Assert.Empty(setCalls); // no call to SetAsync<Result<string>>
     }
 
-    private class NonCachedQuery;
+    public class NonCachedQuery;
 
-    private class CachedQuery : ICachedQuery
+    public class CachedQuery : ICachedQuery
     {
         public string CacheKey => "test-key";
         public TimeSpan Expiration => TimeSpan.FromMinutes(5);
