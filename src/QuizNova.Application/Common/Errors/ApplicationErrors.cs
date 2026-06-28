@@ -151,4 +151,14 @@ public static class ApplicationErrors
         Error.NotFound(
             code: "Enrollment.NotFound",
             description: $"Enrollment with ID '{enrollmentId}' was not found.");
+
+    public static Error CourseChatRoomNotFound(Guid roomId) =>
+        Error.NotFound(
+            code: "CourseChatRoom.NotFound",
+            description: $"Course chat room with ID '{roomId}' was not found.");
+
+    public static Error MessageNotFound(Guid messageId) =>
+        Error.NotFound(
+            code: "Message.NotFound",
+            description: $"Message with ID '{messageId}' was not found.");
 }

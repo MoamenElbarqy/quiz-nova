@@ -2,22 +2,12 @@ using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 
 namespace QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
 
-public abstract class AutoGradedAnswer : QuestionAnswer
+public abstract class AutoGradedAnswer(
+    Guid id,
+    Guid studentId,
+    Guid questionId,
+    Guid quizAttemptId,
+    bool isCorrect) : QuestionAnswer(id, studentId, questionId, quizAttemptId)
 {
-    public bool IsCorrect { get; private set; }
-
-    protected AutoGradedAnswer(
-        Guid id,
-        Guid studentId,
-        Guid questionId,
-        Guid quizAttemptId,
-        bool isCorrect)
-        : base(id, studentId, questionId, quizAttemptId)
-    {
-        IsCorrect = isCorrect;
-    }
-
-    // private AutoGradedAnswer()
-    // {
-    // }
+    public bool IsCorrect { get; private set; } = isCorrect;
 }

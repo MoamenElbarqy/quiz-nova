@@ -18,14 +18,7 @@ public class PaginatedList<T>
         TotalCount = totalCount;
         Items = items;
 
-        if (pageSize <= 0)
-        {
-            TotalPages = 1;
-        }
-        else
-        {
-            TotalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize));
-        }
+        TotalPages = pageSize <= 0 ? 1 : Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize));
     }
 
     public bool HasPreviousPage => PageNumber > 1;

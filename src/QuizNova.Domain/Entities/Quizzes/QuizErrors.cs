@@ -22,9 +22,6 @@ public static class QuizErrors
     public static readonly Error QuestionsRequired =
         Error.Validation("Quiz_Questions_Required", "At least 3 questions are required to instantiate a quiz.");
 
-    public static readonly Error CannotUpdateStartedQuiz =
-        Error.Validation("Quiz_CannotUpdateStartedQuiz", "Cannot update a quiz that has already started.");
-
     public static Error QuestionBelongsToDifferentQuiz(Guid questionId) =>
         Error.Validation(
             "Quiz_Question_BelongsToDifferentQuiz",

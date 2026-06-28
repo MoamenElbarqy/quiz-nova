@@ -196,7 +196,7 @@ public class EnrollmentControllerTests(CustomWebApplicationFactory factory) : IC
 
         var enrollments = await response.Content.ReadFromJsonAsync<List<EnrollmentDto>>();
         enrollments.Should().NotBeNull();
-        enrollments!.Count.Should().BeGreaterThan(0);
+        enrollments.Count.Should().BeGreaterThan(0);
 
         var enrollment = enrollments[0];
         enrollment.CourseId.Should().NotBeEmpty();

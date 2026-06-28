@@ -81,7 +81,7 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
 
         var result = await response.Content.ReadFromJsonAsync<PaginatedList<PendingManualAnswersDto>>();
         result.Should().NotBeNull();
-        result!.Items.Should().NotBeEmpty();
+        result.Items.Should().NotBeEmpty();
     }
 
     [Theory]

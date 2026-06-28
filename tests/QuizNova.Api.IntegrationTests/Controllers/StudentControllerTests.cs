@@ -164,7 +164,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
 
         var result = await response.Content.ReadFromJsonAsync<StudentDto>();
         result.Should().NotBeNull();
-        result!.PersonalInformation.Email.Should().Be(request.Email);
+        result.PersonalInformation.Email.Should().Be(request.Email);
         result.PersonalInformation.Name.Should().Be(request.Name);
     }
 
@@ -232,7 +232,7 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
 
         var result = await response.Content.ReadFromJsonAsync<StudentDto>();
         result.Should().NotBeNull();
-        result!.PersonalInformation.Name.Should().Be(request.Name);
+        result.PersonalInformation.Name.Should().Be(request.Name);
         result.PersonalInformation.Email.Should().Be(request.Email);
     }
 

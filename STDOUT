@@ -1,0 +1,297 @@
+Solution QuizNova.slnx
+    Project QuizNova.Api
+      src\QuizNova.Api\AssemblyMarker.cs:3 Class 'AssemblyMarker' is never instantiated
+      src\QuizNova.Api\AssemblyMarker.cs:4 Redundant empty class declaration body
+      src\QuizNova.Api\DependencyInjection.cs:28 Method 'AddApi' return value is never used
+      src\QuizNova.Api\DTOs\Requests\CreateQuizRequest.cs:24 Positional property 'QuizNova.Api.DTOs.Requests.CreateMcqRequest.NumberOfChoices' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Api\DTOs\Requests\CreateQuizRequest.cs:41 Record 'CreateChoiceRequest' is never instantiated
+      src\QuizNova.Api\DTOs\Requests\ReactOnAMessageRequest.cs:8 Convert into primary constructor
+      src\QuizNova.Api\DTOs\Requests\SendMessageRequest.cs:9 Convert into primary constructor
+      src\QuizNova.Api\Endpoints\AdminEndpoints.cs:18 Method 'MapAdminEndpoints' return value is never used
+      src\QuizNova.Api\Endpoints\AdminEndpoints.cs:37 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\AdminEndpoints.cs:49 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\AdminEndpoints.cs:62 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\AdminEndpoints.cs:75 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\AuthEndpoints.cs:15 Method 'MapAuthEndpoints' return value is never used
+      src\QuizNova.Api\Endpoints\AuthEndpoints.cs:38 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\AuthEndpoints.cs:63 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\CollegeEndpoints.cs:13 Method 'MapCollegeEndpoints' return value is never used
+      src\QuizNova.Api\Endpoints\CollegeEndpoints.cs:31 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\CourseEndpoints.cs:21 Method 'MapCourseEndpoints' return value is never used
+      src\QuizNova.Api\Endpoints\CourseEndpoints.cs:48 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\CourseEndpoints.cs:62 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\CourseEndpoints.cs:77 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\CourseEndpoints.cs:91 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\CourseEndpoints.cs:121 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\CourseEndpoints.cs:135 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\EndpointExtensions.cs:3 Class 'EndpointExtensions' is never used
+      src\QuizNova.Api\Endpoints\EndpointExtensions.cs:5 Method 'MapAllEndpoints' is never used
+      src\QuizNova.Api\Endpoints\EnrollmentEndpoints.cs:17 Method 'MapEnrollmentEndpoints' return value is never used
+      src\QuizNova.Api\Endpoints\EnrollmentEndpoints.cs:66 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\EnrollmentEndpoints.cs:80 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\GradingEndpoints.cs:16 Method 'MapGradingEndpoints' return value is never used
+      src\QuizNova.Api\Endpoints\GradingEndpoints.cs:35 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\InstructorEndpoints.cs:18 Method 'MapInstructorEndpoints' return value is never used
+      src\QuizNova.Api\Endpoints\InstructorEndpoints.cs:38 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\InstructorEndpoints.cs:51 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\InstructorEndpoints.cs:65 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\InstructorEndpoints.cs:79 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\QuizAttemptEndpoints.cs:19 Method 'MapQuizAttemptEndpoints' return value is never used
+      src\QuizNova.Api\Endpoints\QuizAttemptEndpoints.cs:36 Parameter 'studentId' is never used
+      src\QuizNova.Api\Endpoints\QuizAttemptEndpoints.cs:45 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\QuizAttemptEndpoints.cs:60 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\QuizAttemptEndpoints.cs:77 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\QuizAttemptEndpoints.cs:92 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\QuizAttemptEndpoints.cs:107 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\QuizAttemptEndpoints.cs:122 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\QuizEndpoints.cs:26 Method 'MapQuizEndpoints' return value is never used
+      src\QuizNova.Api\Endpoints\QuizEndpoints.cs:46 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\QuizEndpoints.cs:61 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\QuizEndpoints.cs:75 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\QuizEndpoints.cs:90 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\QuizEndpoints.cs:145 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\QuizEndpoints.cs:239 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\StudentEndpoints.cs:18 Method 'MapStudentEndpoints' return value is never used
+      src\QuizNova.Api\Endpoints\StudentEndpoints.cs:38 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\StudentEndpoints.cs:51 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\StudentEndpoints.cs:65 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Endpoints\StudentEndpoints.cs:79 The parameter 'statusCode' has the same default value
+      src\QuizNova.Api\Hubs\ChatHub.cs:45 Method 'LeaveRoom' is never used
+      src\QuizNova.Api\Program.cs:10 Convert into method group
+    
+    Project QuizNova.Api.IntegrationTests
+      tests\QuizNova.Api.IntegrationTests\Common\AppHttpClient.cs:12 Method 'GenerateTokenAsync' can be made private
+      tests\QuizNova.Api.IntegrationTests\Common\AppHttpClient.cs:33 Method 'SetAuthToken' can be made private
+      tests\QuizNova.Api.IntegrationTests\Common\AppHttpClient.cs:38 Method 'ClearAuthToken' is never used
+      tests\QuizNova.Api.IntegrationTests\Common\CustomWebApplicationFactory.cs:13 Class 'CustomWebApplicationFactory' is never instantiated
+      tests\QuizNova.Api.IntegrationTests\Common\CustomWebApplicationFactory.cs:31 Method 'CreateMediator' is never used
+      tests\QuizNova.Api.IntegrationTests\Common\CustomWebApplicationFactory.cs:63 Method 'CreateManualClient' can be made private
+      tests\QuizNova.Api.IntegrationTests\Controllers\AdminControllerTests.cs:173 The nullable warning suppression expression is redundant
+      tests\QuizNova.Api.IntegrationTests\Controllers\AdminControllerTests.cs:223 The nullable warning suppression expression is redundant
+      tests\QuizNova.Api.IntegrationTests\Controllers\EnrollmentControllerTests.cs:199 The nullable warning suppression expression is redundant
+      tests\QuizNova.Api.IntegrationTests\Controllers\GradingControllerTests.cs:84 The nullable warning suppression expression is redundant
+      tests\QuizNova.Api.IntegrationTests\Controllers\InstructorControllerTests.cs:167 The nullable warning suppression expression is redundant
+      tests\QuizNova.Api.IntegrationTests\Controllers\InstructorControllerTests.cs:233 The nullable warning suppression expression is redundant
+      tests\QuizNova.Api.IntegrationTests\Controllers\QuizControllerTests.cs:128 The nullable warning suppression expression is redundant
+      tests\QuizNova.Api.IntegrationTests\Controllers\StudentControllerTests.cs:167 The nullable warning suppression expression is redundant
+      tests\QuizNova.Api.IntegrationTests\Controllers\StudentControllerTests.cs:235 The nullable warning suppression expression is redundant
+    
+    Project QuizNova.Application
+      src\QuizNova.Application\Common\Errors\ApplicationErrors.cs:160 Method 'UserNotFoundWithId' is never used
+      src\QuizNova.Application\Common\Interfaces\ICachedQuery.cs:14 The type parameter 'TResponse' could be declared as covariant
+      src\QuizNova.Application\Common\Interfaces\IIdentityService.cs:10 Parameter 'name' is not used in any of the implementations
+      src\QuizNova.Application\Common\Interfaces\IIdentityService.cs:10 Parameter 'ct' is not used in any of the implementations
+      src\QuizNova.Application\Common\Models\PaginatedList.cs:21 Convert into '?:' expression
+      src\QuizNova.Application\DependencyInjection.cs:7 Namespace does not correspond to file location, must be: 'QuizNova.Application'
+      src\QuizNova.Application\DependencyInjection.cs:11 Method 'AddApplication' return value is never used
+      src\QuizNova.Application\Features\Admins\Commands\CreateAdmin\CreateAdminCommandValidator.cs:7 Class 'CreateAdminCommandValidator' is never used
+      src\QuizNova.Application\Features\Admins\Commands\DeleteAdmin\DeleteAdminCommandValidator.cs:5 Class 'DeleteAdminCommandValidator' is never used
+      src\QuizNova.Application\Features\Admins\Commands\UpdateAdmin\UpdateAdminCommandValidator.cs:5 Class 'UpdateAdminCommandValidator' is never used
+      src\QuizNova.Application\Features\Admins\Queries\GetAdminById\GetAdminByIdQueryValidator.cs:5 Class 'GetAdminByIdQueryValidator' is never used
+      src\QuizNova.Application\Features\Admins\Queries\GetAllAdmins\GetAllAdminsQueryValidator.cs:5 Class 'GetAllAdminsQueryValidator' is never used
+      src\QuizNova.Application\Features\Auth\Commands\Login\LoginCommandValidator.cs:5 Class 'LoginCommandValidator' is never used
+      src\QuizNova.Application\Features\Auth\Commands\RefreshToken\RefreshTokenCommandValidator.cs:5 Class 'RefreshTokenCommandValidator' is never used
+      src\QuizNova.Application\Features\Auth\DTOs\TokenDto.cs:5 Property can be made init-only
+      src\QuizNova.Application\Features\Auth\DTOs\TokenDto.cs:7 Property can be made init-only
+      src\QuizNova.Application\Features\Auth\DTOs\TokenDto.cs:9 Property can be made init-only
+      src\QuizNova.Application\Features\CourseChats\DTOs\MessageDto.cs:6 Positional property 'QuizNova.Application.Features.CourseChats.DTOs.MessageDto.Id' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\CourseChats\DTOs\MessageDto.cs:7 Positional property 'QuizNova.Application.Features.CourseChats.DTOs.MessageDto.RoomId' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\CourseChats\DTOs\MessageDto.cs:8 Positional property 'QuizNova.Application.Features.CourseChats.DTOs.MessageDto.SenderId' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\CourseChats\DTOs\MessageDto.cs:9 Positional property 'QuizNova.Application.Features.CourseChats.DTOs.MessageDto.ReplyOnId' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\CourseChats\DTOs\MessageDto.cs:10 Positional property 'QuizNova.Application.Features.CourseChats.DTOs.MessageDto.CreatedAt' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\CourseChats\DTOs\ReactDto.cs:4 Positional property 'QuizNova.Application.Features.CourseChats.DTOs.ReactDto.Id' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\CourseChats\DTOs\ReactDto.cs:8 Positional property 'QuizNova.Application.Features.CourseChats.DTOs.ReactDto.CreatedAt' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\Courses\Commands\CreateCourse\CreateCourseCommandValidator.cs:5 Class 'CreateCourseCommandValidator' is never used
+      src\QuizNova.Application\Features\Courses\Commands\DeleteCourseById\DeleteCourseByIdCommandValidator.cs:5 Class 'DeleteCourseByIdCommandValidator' is never used
+      src\QuizNova.Application\Features\Courses\Commands\UpdateCourseInstructor\UpdateCourseInstructorCommandValidator.cs:5 Class 'UpdateCourseInstructorCommandValidator' is never used
+      src\QuizNova.Application\Features\Courses\Queries\GetAllCourses\GetAllCoursesQueryValidator.cs:5 Class 'GetAllCoursesQueryValidator' is never used
+      src\QuizNova.Application\Features\Courses\Queries\GetCourseById\GetCourseByIdQueryValidator.cs:5 Class 'GetCourseByIdQueryValidator' is never used
+      src\QuizNova.Application\Features\Courses\Queries\GetInstructorCoursesById\GetInstructorCoursesByIdQueryValidator.cs:5 Class 'GetInstructorCoursesByIdQueryValidator' is never used
+      src\QuizNova.Application\Features\Courses\Queries\GetInstructorCoursesCount\GetInstructorCoursesCountQueryValidator.cs:5 Class 'GetInstructorCoursesCountQueryValidator' is never used
+      src\QuizNova.Application\Features\Enrollments\Commands\EnrollStudentInCourse\EnrollStudentInCourseCommandValidator.cs:5 Class 'EnrollStudentInCourseCommandValidator' is never used
+      src\QuizNova.Application\Features\Enrollments\Commands\RemoveStudentFromCourse\RemoveStudentFromCourseCommandValidator.cs:5 Class 'RemoveStudentFromCourseCommandValidator' is never used
+      src\QuizNova.Application\Features\Enrollments\DTOs\EnrollmentDto.cs:4 Positional property 'QuizNova.Application.Features.Enrollments.DTOs.EnrollmentInstructorDto.InstructorId' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\Enrollments\DTOs\EnrollmentDto.cs:5 Positional property 'QuizNova.Application.Features.Enrollments.DTOs.EnrollmentInstructorDto.Name' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\Enrollments\DTOs\EnrollmentDto.cs:9 Positional property 'QuizNova.Application.Features.Enrollments.DTOs.EnrollmentStudentDto.Name' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\Enrollments\DTOs\EnrollmentDto.cs:10 Positional property 'QuizNova.Application.Features.Enrollments.DTOs.EnrollmentStudentDto.QuizzesTaken' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\Enrollments\DTOs\EnrollmentDto.cs:13 Positional property 'QuizNova.Application.Features.Enrollments.DTOs.EnrollmentDto.Id' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\Enrollments\DTOs\EnrollmentDto.cs:18 Positional property 'QuizNova.Application.Features.Enrollments.DTOs.EnrollmentDto.EnrolledOnUtc' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\Enrollments\Queries\GetStudentEnrollmentsById\GetStudentEnrollmentsByIdQueryValidator.cs:5 Class 'GetStudentEnrollmentsByIdQueryValidator' is never used
+      src\QuizNova.Application\Features\Enrollments\Queries\GetStudentEnrollmentsCount\GetStudentEnrollmentsCountQueryValidator.cs:5 Class 'GetStudentEnrollmentsCountQueryValidator' is never used
+      src\QuizNova.Application\Features\Instructors\Commands\CreateInstructor\CreateInstructorCommandValidator.cs:7 Class 'CreateInstructorCommandValidator' is never used
+      src\QuizNova.Application\Features\Instructors\Commands\DeleteInstructor\DeleteInstructorCommandValidator.cs:5 Class 'DeleteInstructorCommandValidator' is never used
+      src\QuizNova.Application\Features\Instructors\Commands\UpdateInstructor\UpdateInstructorCommandValidator.cs:5 Class 'UpdateInstructorCommandValidator' is never used
+      src\QuizNova.Application\Features\Instructors\Queries\GetAllInstructors\GetAllInstructorsQueryValidator.cs:5 Class 'GetAllInstructorsQueryValidator' is never used
+      src\QuizNova.Application\Features\Instructors\Queries\GetInstructorById\GetInstructorByIdQueryValidator.cs:5 Class 'GetInstructorByIdQueryValidator' is never used
+      src\QuizNova.Application\Features\QuizAttempts\Commands\GradeQuestion\GradeQuestionCommandValidator.cs:5 Class 'GradeQuestionCommandValidator' is never used
+      src\QuizNova.Application\Features\QuizAttempts\Commands\GradeQuestionManually\GradeQuestionManuallyCommand.cs:7 Record 'GradeQuestionManuallyCommand' is never instantiated
+      src\QuizNova.Application\Features\QuizAttempts\Commands\GradeQuestionManually\GradeQuestionManuallyCommandValidator.cs:5 Class 'GradeQuestionManuallyCommandValidator' is never used
+      src\QuizNova.Application\Features\QuizAttempts\Commands\SubmitQuizAttempt\SubmitQuizAttemptCommandValidator.cs:5 Class 'SubmitQuizAttemptCommandValidator' is never used
+      src\QuizNova.Application\Features\QuizAttempts\Commands\SubmitQuizAttempt\SubmitQuizAttemptCommandValidator.cs:30 Type argument specification is redundant
+      src\QuizNova.Application\Features\QuizAttempts\Commands\SubmitQuizAttempt\SubmitQuizAttemptCommandValidator.cs:31 Type argument specification is redundant
+      src\QuizNova.Application\Features\QuizAttempts\Commands\SubmitQuizAttempt\SubmitQuizAttemptCommandValidator.cs:32 Type argument specification is redundant
+      src\QuizNova.Application\Features\QuizAttempts\Commands\SubmitQuizAttempt\SubmitQuizAttemptCommandValidator.cs:59 Empty constructor is redundant. The compiler generates the same by default.
+      src\QuizNova.Application\Features\QuizAttempts\DTOs\PendingManualAnswerDto.cs:5 Positional property 'QuizNova.Application.Features.QuizAttempts.DTOs.PendingManualAnswersDto.StudentId' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\QuizAttempts\DTOs\PendingManualAnswerDto.cs:6 Positional property 'QuizNova.Application.Features.QuizAttempts.DTOs.PendingManualAnswersDto.StudentName' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\QuizAttempts\DTOs\PendingManualAnswerDto.cs:7 Positional property 'QuizNova.Application.Features.QuizAttempts.DTOs.PendingManualAnswersDto.CourseName' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\QuizAttempts\DTOs\PendingManualAnswerDto.cs:8 Positional property 'QuizNova.Application.Features.QuizAttempts.DTOs.PendingManualAnswersDto.QuizTitle' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\QuizAttempts\DTOs\PendingManualAnswerDto.cs:9 Positional property 'QuizNova.Application.Features.QuizAttempts.DTOs.PendingManualAnswersDto.SubmittedAt' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\QuizAttempts\DTOs\PendingManualAnswerDto.cs:10 Positional property 'QuizNova.Application.Features.QuizAttempts.DTOs.PendingManualAnswersDto.UngradedCount' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\QuizAttempts\DTOs\QuestionAnswerDto.cs:11 Positional property 'QuizNova.Application.Features.QuizAttempts.DTOs.QuestionAnswerDto.AnswerId' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\QuizAttempts\DTOs\QuestionAnswerDto.cs:14 Positional property 'QuizNova.Application.Features.QuizAttempts.DTOs.QuestionAnswerDto.AnswerType' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\QuizAttempts\DTOs\QuestionAnswerDto.cs:34 Positional property 'QuizNova.Application.Features.QuizAttempts.DTOs.McqAnswerDto.SelectedChoiceId' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\QuizAttempts\DTOs\QuestionAnswerDto.cs:44 Positional property 'QuizNova.Application.Features.QuizAttempts.DTOs.TfAnswerDto.StudentChoice' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\QuizAttempts\DTOs\QuestionAnswerDto.cs:52 Positional property 'QuizNova.Application.Features.QuizAttempts.DTOs.ManuallyGradedAnswerDto.Score' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\QuizAttempts\DTOs\QuestionAnswerDto.cs:53 Positional property 'QuizNova.Application.Features.QuizAttempts.DTOs.ManuallyGradedAnswerDto.StudentResponse' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\QuizAttempts\DTOs\QuestionAnswerDto.cs:54 Positional property 'QuizNova.Application.Features.QuizAttempts.DTOs.ManuallyGradedAnswerDto.Feedback' is never accessed (except in implicit Equals/ToString implementations)
+      src\QuizNova.Application\Features\QuizAttempts\Queries\GetAllQuizzesAttempts\GetAllQuizzesAttemptsQueryValidator.cs:5 Class 'GetAllQuizzesAttemptsQueryValidator' is never used
+      src\QuizNova.Application\Features\QuizAttempts\Queries\GetPendingManualAnswers\GetPendingManualAnswersQueryValidator.cs:5 Class 'GetPendingManualAnswersQueryValidator' is never used
+      src\QuizNova.Application\Features\QuizAttempts\Queries\GetQuizAttemptById\GetQuizAttemptByIdQueryValidator.cs:5 Class 'GetQuizAttemptByIdQueryValidator' is never used
+      src\QuizNova.Application\Features\QuizAttempts\Queries\GetStudentQuizAttempts\GetStudentQuizAttemptsQueryValidator.cs:5 Class 'GetStudentQuizAttemptsQueryValidator' is never used
+      src\QuizNova.Application\Features\QuizAttempts\Queries\GetStudentQuizAttemptsCount\GetStudentQuizAttemptsCountQueryValidator.cs:5 Class 'GetStudentQuizAttemptsCountQueryValidator' is never used
+      src\QuizNova.Application\Features\Quizzes\Commands\AddQuestion\AddQuestionCommandValidator.cs:7 Class 'AddQuestionCommandValidator' is never used
+      src\QuizNova.Application\Features\Quizzes\Commands\CreateQuiz\CreateQuizCommandValidator.cs:5 Class 'CreateQuizCommandValidator' is never used
+      src\QuizNova.Application\Features\Quizzes\Commands\DeleteQuestion\DeleteQuestionCommandValidator.cs:5 Class 'DeleteQuestionCommandValidator' is never used
+      src\QuizNova.Application\Features\Quizzes\Commands\UpdateQuestion\UpdateQuestionCommandValidator.cs:27 Class 'UpdateMcqCommandValidator' is never used
+      src\QuizNova.Application\Features\Quizzes\Commands\UpdateQuestion\UpdateQuestionCommandValidator.cs:47 Class 'UpdateTfCommandValidator' is never used
+      src\QuizNova.Application\Features\Quizzes\Commands\UpdateQuestion\UpdateQuestionCommandValidator.cs:55 Class 'UpdateEssayCommandValidator' is never used
+      src\QuizNova.Application\Features\Quizzes\Commands\UpdateQuizCourseId\UpdateQuizCourseIdCommandValidator.cs:5 Class 'UpdateQuizCourseIdCommandValidator' is never used
+      src\QuizNova.Application\Features\Quizzes\Commands\UpdateQuizMetadata\UpdateQuizMetadataCommandValidator.cs:5 Class 'UpdateQuizMetadataCommandValidator' is never used
+      src\QuizNova.Application\Features\Quizzes\DTOs\QuestionDto.cs:36 Auto-property accessor 'AnswerReference.get' is never used
+      src\QuizNova.Application\Features\Quizzes\Queries\GetAllQuizzes\GetAllQuizzesQueryValidator.cs:5 Class 'GetAllQuizzesQueryValidator' is never used
+      src\QuizNova.Application\Features\Quizzes\Queries\GetInstructorQuizzesCount\GetInstructorQuizzesCountQueryValidator.cs:5 Class 'GetInstructorQuizzesCountQueryValidator' is never used
+      src\QuizNova.Application\Features\Quizzes\Queries\GetQuizById\GetQuizByIdQueryValidator.cs:5 Class 'GetQuizByIdQueryValidator' is never used
+      src\QuizNova.Application\Features\Quizzes\Queries\GetStudentQuizzes\GetStudentQuizzesQueryValidator.cs:5 Class 'GetStudentQuizzesQueryValidator' is never used
+      src\QuizNova.Application\Features\Students\Commands\CreateStudent\CreateStudentCommandValidator.cs:7 Class 'CreateStudentCommandValidator' is never used
+      src\QuizNova.Application\Features\Students\Commands\DeleteStudent\DeleteStudentCommandValidator.cs:5 Class 'DeleteStudentCommandValidator' is never used
+      src\QuizNova.Application\Features\Students\Commands\UpdateStudent\UpdateStudentCommandValidator.cs:5 Class 'UpdateStudentCommandValidator' is never used
+      src\QuizNova.Application\Features\Students\Queries\GetAllStudents\GetAllStudentsQueryHandler.cs:64 Merge into pattern
+      src\QuizNova.Application\Features\Students\Queries\GetAllStudents\GetAllStudentsQueryValidator.cs:5 Class 'GetAllStudentsQueryValidator' is never used
+      src\QuizNova.Application\Features\Students\Queries\GetStudentById\GetStudentByIdQueryValidator.cs:5 Class 'GetStudentByIdQueryValidator' is never used
+    
+    Project QuizNova.Application.SubcutaneousTests
+      tests\QuizNova.Application.SubcutaneousTests\Common\AppHttpClient.cs:13 Method 'GenerateTokenAsync' can be made private
+      tests\QuizNova.Application.SubcutaneousTests\Common\AppHttpClient.cs:34 Method 'SetAuthToken' can be made private
+      tests\QuizNova.Application.SubcutaneousTests\Common\AppHttpClient.cs:39 Method 'ClearAuthToken' is never used
+      tests\QuizNova.Application.SubcutaneousTests\Common\AppHttpClient.cs:57 Method 'SendAsync' is never used
+      tests\QuizNova.Application.SubcutaneousTests\Common\AppHttpClient.cs:74 Method 'PutAsJsonAsync' is never used
+      tests\QuizNova.Application.SubcutaneousTests\Common\AppHttpClient.cs:84 Method 'DeleteAsync' is never used
+      tests\QuizNova.Application.SubcutaneousTests\Common\AppHttpClient.cs:91 Method 'PatchAsJsonAsync' is never used
+      tests\QuizNova.Application.SubcutaneousTests\Common\CustomWebApplicationFactory.cs:19 Class 'CustomWebApplicationFactory' is never instantiated
+      tests\QuizNova.Application.SubcutaneousTests\Common\CustomWebApplicationFactory.cs:81 Method 'CreateManualClient' can be made private
+      tests\QuizNova.Application.SubcutaneousTests\Features\Auth\Commands\Login\LoginCommandHandlerTests.cs:176 The nullable warning suppression expression is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\Auth\Commands\RefreshToken\RefreshTokenCommandHandlerTests.cs:69 The nullable warning suppression expression is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\Auth\Commands\RefreshToken\RefreshTokenCommandHandlerTests.cs:74 The nullable warning suppression expression is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\CourseChats\ChatHubTests.cs:23 Replace with primary constructor parameter
+      tests\QuizNova.Application.SubcutaneousTests\Features\CourseChats\CourseChatJoinFlowTests.cs:55 The nullable warning suppression expression is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\CourseChats\CourseChatJoinFlowTests.cs:74 Qualifier is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\CourseChats\CourseChatJoinFlowTests.cs:78 Qualifier is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\CourseChats\CourseChatJoinFlowTests.cs:81 Qualifier is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\CourseChats\CourseChatJoinFlowTests.cs:106 The nullable warning suppression expression is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\CourseChats\CourseChatJoinFlowTests.cs:124 Qualifier is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\CourseChats\CourseChatJoinFlowTests.cs:128 Qualifier is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\CourseChats\CourseChatJoinFlowTests.cs:131 Qualifier is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\CourseChats\CourseChatJoinFlowTests.cs:173 The nullable warning suppression expression is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\Courses\Commands\CreateCourse\CreateCourseCommandHandlerTests.cs:47 The nullable warning suppression expression is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\Courses\Commands\CreateCourse\CreateCourseCommandHandlerTests.cs:153 The nullable warning suppression expression is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\Courses\Commands\CreateCourse\CreateCourseCommandHandlerTests.cs:180 The nullable warning suppression expression is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\Courses\Commands\CreateCourse\CreateCourseCommandHandlerTests.cs:281 The nullable warning suppression expression is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\Courses\Commands\CreateCourse\CreateCourseCommandHandlerTests.cs:342 The nullable warning suppression expression is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\Courses\Commands\UpdateCourseInstructor\UpdateCourseInstructorCommandHandlerTests.cs:115 The nullable warning suppression expression is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\Courses\Commands\UpdateCourseInstructor\UpdateCourseInstructorCommandHandlerTests.cs:157 The nullable warning suppression expression is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\Enrollments\Commands\RemoveStudentFromCourse\RemoveStudentFromCourseCommandHandlerTests.cs:158 The nullable warning suppression expression is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\QuizAttempts\Queries\GetStudentQuizAttempts\GetStudentQuizAttemptsQueryHandlerTests.cs:71 Use 'CancellationToken.None' instead of 'default'
+      tests\QuizNova.Application.SubcutaneousTests\Features\Quizzes\Commands\CreateQuiz\CreateQuizCommandHandlerTests.cs:18 Use collection expression
+      tests\QuizNova.Application.SubcutaneousTests\Features\Quizzes\Commands\CreateQuiz\CreateQuizCommandHandlerTests.cs:283 The nullable warning suppression expression is redundant
+      tests\QuizNova.Application.SubcutaneousTests\Features\Quizzes\Queries\GetQuizById\GetQuizByIdQueryHandlerTests.cs:65 Use 'CancellationToken.None' instead of 'default'
+    
+    Project QuizNova.Application.UnitTests
+      tests\QuizNova.Application.UnitTests\Behaviors\CashingBehaviorTests.cs:106 Class 'NonCachedQuery' can be made private
+      tests\QuizNova.Application.UnitTests\Behaviors\CashingBehaviorTests.cs:108 Class 'CachedQuery' can be made private
+      tests\QuizNova.Application.UnitTests\Behaviors\LoggingBehaviourTests.cs:68 Class 'DummyRequest' can be made private
+      tests\QuizNova.Application.UnitTests\Behaviors\PerformanceBehaviour.cs:11 Class 'PerformanceBehaviour' is never used
+      tests\QuizNova.Application.UnitTests\Behaviors\UnhandledExceptionBehaviourTests.cs:63 Class 'DummyRequest' can be made private
+    
+    Project QuizNova.Domain
+      src\QuizNova.Domain\Common\Entity.cs:23 Method 'AddDomainEvent' can be made protected
+      src\QuizNova.Domain\Common\Entity.cs:28 Method 'RemoveDomainEvent' is never used
+      src\QuizNova.Domain\Common\OutboxMessage.cs:5 Property can be made init-only
+      src\QuizNova.Domain\Common\OutboxMessage.cs:6 Property can be made init-only
+      src\QuizNova.Domain\Common\OutboxMessage.cs:7 Property can be made init-only
+      src\QuizNova.Domain\Common\OutboxMessage.cs:8 Property can be made init-only
+      src\QuizNova.Domain\Common\Results\Abstractions\IResult.cs:5 Only implementations of property 'Errors' are used
+      src\QuizNova.Domain\Common\Results\Abstractions\IResult.cs:12 Only implementations of property 'Value' are used
+      src\QuizNova.Domain\Common\Results\Result.cs:25 Replace with 'field' keyword
+      src\QuizNova.Domain\Common\Results\Result.cs:25 Initializing field by default value is redundant
+      src\QuizNova.Domain\Common\Results\Result.cs:27 Initializing field by default value is redundant
+      src\QuizNova.Domain\Entities\CourseChats\CourseChatRoom.cs:12 Constructor 'CourseChatRoom' is never used
+      src\QuizNova.Domain\Entities\CourseChats\Message.cs:15 Constructor 'Message' is never used
+      src\QuizNova.Domain\Entities\CourseChats\Message.cs:50 Property can be made init-only
+      src\QuizNova.Domain\Entities\CourseChats\React.cs:9 Constructor 'React' is never used
+      src\QuizNova.Domain\Entities\Courses\Course.cs:20 Constructor 'Course' is never used
+      src\QuizNova.Domain\Entities\Courses\Course.cs:52 Auto-property can be made get-only
+      src\QuizNova.Domain\Entities\Courses\Course.cs:57 Get-only auto-property 'Instructor' is never assigned
+      src\QuizNova.Domain\Entities\Courses\CourseErrors.cs:7 Field 'IdRequired' is never used
+      src\QuizNova.Domain\Entities\Courses\CourseErrors.cs:10 Field 'InvalidIdFormat' is never used
+      src\QuizNova.Domain\Entities\Courses\CourseErrors.cs:16 Field 'InvalidInstructorIdFormat' is never used
+      src\QuizNova.Domain\Entities\Enrollments\Enrollment.cs:21 Constructor 'Enrollment' is never used
+      src\QuizNova.Domain\Entities\QuizAttempts\Answers\AutoGradedAnswers\AutoGradedAnswers.cs:9 Convert into primary constructor
+      src\QuizNova.Domain\Entities\QuizAttempts\Answers\AutoGradedAnswers\McqAnswer\McqAnswer.cs:13 Constructor 'McqAnswer' is never used
+      src\QuizNova.Domain\Entities\QuizAttempts\Answers\AutoGradedAnswers\TrueFalseAnswer\TfAnswer.cs:13 Constructor 'TfAnswer' is never used
+      src\QuizNova.Domain\Entities\QuizAttempts\Answers\AutoGradedAnswers\TrueFalseAnswer\TfAnswerErrors.cs:3 Class 'TfAnswerErrors' is never used
+      src\QuizNova.Domain\Entities\QuizAttempts\Answers\AutoGradedAnswers\TrueFalseAnswer\TfAnswerErrors.cs:4 Redundant empty class declaration body
+      src\QuizNova.Domain\Entities\QuizAttempts\Answers\Base\QuestionAnswer.cs:62 Class 'QuestionAnswer' is never used
+      src\QuizNova.Domain\Entities\QuizAttempts\Answers\Base\QuestionAnswer.cs:64 Property 'Question' is never used
+      src\QuizNova.Domain\Entities\QuizAttempts\Answers\Base\QuestionAnswerErrors.cs:16 Field 'SelectedChoiceIdRequired' is never used
+      src\QuizNova.Domain\Entities\QuizAttempts\Answers\ManuallyGradedAnswers\EssayAnswer\EssayAnswer.cs:10 Constructor 'EssayAnswer' is never used
+      src\QuizNova.Domain\Entities\QuizAttempts\QuizAttempt.cs:16 Constructor 'QuizAttempt' is never used
+      src\QuizNova.Domain\Entities\QuizAttempts\QuizAttempt.cs:54 Merge into pattern
+      src\QuizNova.Domain\Entities\Quizzes\Questions\AutoGradedQuestions\AutoGradedQuestion.cs:9 Only overrides of property 'CorrectionCondition' are used
+      src\QuizNova.Domain\Entities\Quizzes\Questions\AutoGradedQuestions\Mcq\Choices\Choice.cs:20 Constructor 'Choice' is never used
+      src\QuizNova.Domain\Entities\Quizzes\Questions\AutoGradedQuestions\Mcq\Mcq.cs:15 Constructor 'Mcq' is never used
+      src\QuizNova.Domain\Entities\Quizzes\Questions\AutoGradedQuestions\TrueFalse\Tf.cs:15 Constructor 'Tf' is never used
+      src\QuizNova.Domain\Entities\Quizzes\Questions\AutoGradedQuestions\TrueFalse\TfErrors.cs:3 Class 'TfErrors' is never used
+      src\QuizNova.Domain\Entities\Quizzes\Questions\AutoGradedQuestions\TrueFalse\TfErrors.cs:4 Redundant empty class declaration body
+      src\QuizNova.Domain\Entities\Quizzes\Questions\Base\Question.cs:31 Auto-property can be made get-only
+      src\QuizNova.Domain\Entities\Quizzes\Questions\Base\Question.cs:108 Only overrides of method 'Solve' are used
+      src\QuizNova.Domain\Entities\Quizzes\Questions\ManuallyGradedQuestions\Essay.cs:15 Constructor 'Essay' is never used
+      src\QuizNova.Domain\Entities\Quizzes\Questions\ManuallyGradedQuestions\ManuallyGradedQuestion.cs:12 Method 'SetScore' is never used
+      src\QuizNova.Domain\Entities\Quizzes\Quiz.cs:27 Constructor 'Quiz' is never used
+      src\QuizNova.Domain\Entities\Quizzes\QuizErrors.cs:25 Field 'CannotUpdateStartedQuiz' is never used
+      src\QuizNova.Domain\Entities\Users\Admins\Admin.cs:9 Constructor 'Admin' is never used
+      src\QuizNova.Domain\Entities\Users\Instructors\Instructor.cs:15 Constructor 'Instructor' is never used
+      src\QuizNova.Domain\Entities\Users\Student\Student.cs:14 Constructor 'Student' is never used
+      src\QuizNova.Domain\Entities\Users\UserPersonalInformation\PersonalInformation.cs:8 Constructor 'PersonalInformation' is never used
+      src\QuizNova.Domain\Entities\Users\UserPersonalInformation\PersonalInformationErrors.cs:7 Field 'Required' is never used
+      src\QuizNova.Domain\Entities\Users\UserPersonalInformation\PersonalInformationErrors.cs:28 Field 'RoleInvalid' is never used
+    
+    Project QuizNova.Domain.UnitTests
+      tests\QuizNova.Domain.UnitTests\Courses\CourseTests.cs:15 Local variable 'id' is never used
+      tests\QuizNova.Domain.UnitTests\Users\PersonalInformationTests.cs:116 Convert into method call with '?:' expression inside
+    
+    Project QuizNova.Infrastructure
+      src\QuizNova.Infrastructure\DependencyInjection.cs:19 Namespace does not correspond to file location, must be: 'QuizNova.Infrastructure'
+      src\QuizNova.Infrastructure\DependencyInjection.cs:23 Method 'AddInfrastructure' return value is never used
+      src\QuizNova.Infrastructure\Identity\AppUser.cs:7 Property 'RefreshTokens' is never used
+      src\QuizNova.Infrastructure\Identity\UserRefreshToken.cs:5 Property can be made init-only
+      src\QuizNova.Infrastructure\Identity\UserRefreshToken.cs:7 Property can be made init-only
+      src\QuizNova.Infrastructure\Identity\UserRefreshToken.cs:9 Property can be made init-only
+      src\QuizNova.Infrastructure\Identity\UserRefreshToken.cs:11 Property can be made init-only
+      src\QuizNova.Infrastructure\Identity\UserRefreshToken.cs:19 Property can be made init-only
+      src\QuizNova.Infrastructure\settings\AppSettings.cs:9 Auto-property can be made get-only
+      src\QuizNova.Infrastructure\settings\AppSettings.cs:19 Auto-property accessor 'PolicyName.set' is never used
+      src\QuizNova.Infrastructure\settings\AppSettings.cs:21 Auto-property can be made get-only
+      src\QuizNova.Infrastructure\settings\JwtSettings.cs:7 Auto-property accessor 'Issuer.init' is never used
+      src\QuizNova.Infrastructure\settings\JwtSettings.cs:9 Auto-property accessor 'Audience.init' is never used
+      src\QuizNova.Infrastructure\settings\JwtSettings.cs:11 Auto-property accessor 'Secret.init' is never used
+      src\QuizNova.Infrastructure\settings\JwtSettings.cs:13 Auto-property accessor 'ExpiryMinutes.init' is never used
+    
+    Project QuizNova.Tests.Common
+      tests\QuizNova.Tests.Common\Quizzes\Questions\QuestionFactory.cs:62 Method 'CreateEssayQuestion' is never used
+      tests\QuizNova.Tests.Common\Security\TestUsers.cs:38 Property 'Instructor2' is never used
+      tests\QuizNova.Tests.Common\Security\UserFactory.cs:5 Class 'UserFactory' is never used
+      tests\QuizNova.Tests.Common\Security\UserFactory.cs:7 Method 'CreateUser' is never used
+      tests\QuizNova.Tests.Common\Users\Admins\AdminFactory.cs:14 Convert into '??='
+      tests\QuizNova.Tests.Common\Users\Student\StudentFactory.cs:8 Namespace does not correspond to file location, must be: 'QuizNova.Tests.Common.Users.Student'
+    
+  

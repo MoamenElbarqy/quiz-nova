@@ -44,13 +44,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
 
     private string? _connectionString;
 
-    public IMediator CreateMediator()
-    {
-        var serviceScope = Services.CreateScope();
-
-        return serviceScope.ServiceProvider.GetRequiredService<IMediator>();
-    }
-
     public FakeTimeProvider GetFakeTimeProvider() => _fakeTimeProvider;
 
     public async Task InitializeAsync()
@@ -78,13 +71,11 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
         return Task.CompletedTask;
     }
 
-    public HttpClient CreateManualClient()
+    public IMediator CreateMediator()
     {
-        return CreateClient(new WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false, // disable the client from following the redirect response
-            HandleCookies = false, // disable the client from sending the cookie header every time when we set
-        });
+        var serviceScope = Services.CreateScope();
+
+        return serviceScope.ServiceProvider.GetRequiredService<IMediator>();
     }
 
     public AppHttpClient CreateAppHttpClient()
@@ -124,8 +115,18 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
 
         builder.UseSetting("ConnectionStrings:DefaultConnection", _connectionString);
         builder.UseSetting("AutoMigrateDb", "true");
+        builder.UseSetting("DisableRateLimiting", "true");
         builder.UseSetting("JwtSettings:Secret", "QuizNova-Development-Secret-Key-Change-This-2026-Super-Long-Key");
         builder.UseSetting("JwtSettings:Issuer", "QuizNova.Api");
         builder.UseSetting("JwtSettings:Audience", "QuizNova.Client");
+    }
+
+    private HttpClient CreateManualClient()
+    {
+        return CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false, // disable the client from following the redirect response
+            HandleCookies = false, // disable the client from sending the cookie header every time when we set
+        });
     }
 }

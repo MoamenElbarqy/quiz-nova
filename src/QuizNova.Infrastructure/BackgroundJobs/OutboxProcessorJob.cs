@@ -1,4 +1,5 @@
 using System.Data;
+using System.Diagnostics.Metrics;
 using System.Text.Json;
 
 using MediatR;
@@ -23,6 +24,14 @@ public class OutboxProcessorJob(
 {
     private const string Channel = "outbox_channel";
     private static readonly TimeSpan NotificationTimeout = TimeSpan.FromSeconds(30);
+
+    private static readonly Meter Meter = new("QuizNova.Infrastructure.Outbox");
+    private static readonly Counter<int> MessagesProcessed = Meter.CreateCounter<int>("outbox.messages.processed");
+    private static readonly Counter<int> MessagesFailed = Meter.CreateCounter<int>("outbox.messages.failed");
+    private static readonly Counter<int> NotificationsReceived = Meter.CreateCounter<int>("outbox.notifications.received");
+    private static readonly Counter<int> FallbackPolls = Meter.CreateCounter<int>("outbox.fallback.polls");
+    private static readonly Histogram<double> ProcessingLatencyMs = Meter.CreateHistogram<double>("outbox.processing.latency_ms",
+        unit: "ms", description: "Time between event creation and successful processing");
 
     private readonly SemaphoreSlim _signal = new(0, 1);
 
@@ -66,6 +75,8 @@ public class OutboxProcessorJob(
 
         conn.Notification += (_, _) =>
         {
+            NotificationsReceived.Add(1);
+
             try
             {
                 _signal.Release();
@@ -89,9 +100,14 @@ public class OutboxProcessorJob(
                     break;
                 }
 
-                if (!hasSignal && conn.State != ConnectionState.Open)
+                if (!hasSignal)
                 {
-                    break;
+                    FallbackPolls.Add(1);
+
+                    if (conn.State != ConnectionState.Open)
+                    {
+                        break;
+                    }
                 }
 
                 await ProcessNextMessageAsync(ct);
@@ -131,6 +147,8 @@ public class OutboxProcessorJob(
             return;
         }
 
+        var occurredOnUtc = message.OccurredOnUtc;
+
         try
         {
             var assembly = typeof(DomainEvent).Assembly;
@@ -148,12 +166,17 @@ public class OutboxProcessorJob(
             }
 
             message.ProcessedOnUtc = DateTime.UtcNow;
+
+            MessagesProcessed.Add(1);
+            ProcessingLatencyMs.Record((DateTime.UtcNow - occurredOnUtc).TotalMilliseconds);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to process outbox message {MessageId}", message.Id);
             message.ProcessedOnUtc = DateTime.UtcNow;
             message.Error = ex.ToString();
+
+            MessagesFailed.Add(1);
         }
 
         await dbContext.SaveChangesAsync(ct);

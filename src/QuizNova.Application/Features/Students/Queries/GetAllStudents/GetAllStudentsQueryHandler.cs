@@ -61,7 +61,7 @@ public sealed class GetAllStudentsQueryHandler(
                 request.EnrolledCoursesCount.Value);
         }
 
-        if (request.CourseId.HasValue && request.IsEnrolledInCourse.HasValue)
+        if (request is { CourseId: not null, IsEnrolledInCourse: not null })
         {
             query = request.IsEnrolledInCourse.Value
                 ? query.Where(student =>

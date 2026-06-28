@@ -15,12 +15,12 @@ namespace QuizNova.Application.SubcutaneousTests.Features.Quizzes.Commands.Creat
 public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
     : IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly List<CreateQuestionCommand> _validQuestions = new()
-    {
+    private readonly List<CreateQuestionCommand> _validQuestions =
+    [
         new CreateTfCommand("Q1 Tf", 1, true),
         new CreateTfCommand("Q2 Tf", 1, false),
         new CreateTfCommand("Q3 Tf", 1, true),
-    };
+    ];
 
     // --- Validation layer tests ---
     [Fact]
@@ -280,7 +280,7 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
                 .FirstOrDefaultAsync(q => q.Id == result.Value.QuizId);
 
             quiz.Should().NotBeNull();
-            quiz!.Title.Should().Be("Brand New Quiz");
+            quiz.Title.Should().Be("Brand New Quiz");
             quiz.Questions.Should().HaveCount(3);
         }
     }

@@ -2,7 +2,6 @@ using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
-using QuizNova.Domain.Entities.Quizzes.Questions.ManuallyGradedQuestions;
 
 namespace QuizNova.Tests.Common.Quizzes.Questions;
 
@@ -59,20 +58,4 @@ public static class QuestionFactory
             choices);
     }
 
-    public static Result<Essay> CreateEssayQuestion(
-        Guid? id = null,
-        Guid? quizId = null,
-        string questionText = "Write a brief essay about C# Clean Architecture.",
-        string? answerReference = "Reference answer text outlining architectural layers.",
-        int displayOrder = 1,
-        int marks = 10)
-    {
-        return Essay.Create(
-            id ?? Guid.NewGuid(),
-            quizId ?? Guid.NewGuid(),
-            questionText,
-            answerReference,
-            displayOrder,
-            marks);
-    }
 }

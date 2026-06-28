@@ -65,5 +65,5 @@ public class LoggingBehaviourTests
             Arg.Any<Func<object, Exception?, string>>());
     }
 
-    public class DummyRequest;
+    private class DummyRequest;
 }

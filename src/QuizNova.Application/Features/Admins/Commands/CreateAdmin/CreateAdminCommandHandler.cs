@@ -55,9 +55,7 @@ public sealed class CreateAdminCommandHandler(
         var identityResult = await identityService.RegisterUserAsync(
             request.PersonalInformation.Email,
             request.Password,
-            request.PersonalInformation.Name,
-            nameof(UserRole.Admin),
-            ct);
+            nameof(UserRole.Admin));
 
         if (identityResult.IsError)
         {

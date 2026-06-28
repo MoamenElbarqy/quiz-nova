@@ -7,7 +7,7 @@ public interface IIdentityService
 {
     Task<Result<UserDto>> AuthenticateAsync(string email, string password);
 
-    Task<Result<string>> RegisterUserAsync(string email, string password, string name, string role, CancellationToken ct);
+    Task<Result<string>> RegisterUserAsync(string email, string password, string role);
 
     Task<Result<UserDto>> GetUserByIdAsync(string userId);
 

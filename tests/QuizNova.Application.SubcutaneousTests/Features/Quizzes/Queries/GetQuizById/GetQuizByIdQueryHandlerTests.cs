@@ -62,7 +62,7 @@ public class GetQuizByIdQueryHandlerTests(CustomWebApplicationFactory factory)
             dbContext.Instructors.Add(instructor);
             dbContext.Courses.Add(course);
             dbContext.Quizzes.Add(quiz);
-            await dbContext.SaveChangesAsync(default);
+            await dbContext.SaveChangesAsync(CancellationToken.None);
         }
 
         var query = new GetQuizByIdQuery(quiz.Id);

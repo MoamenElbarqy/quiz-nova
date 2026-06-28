@@ -155,7 +155,7 @@ public class RemoveStudentFromCourseCommandHandlerTests(CustomWebApplicationFact
             var enrollment = await dbContext.Enrollments
                 .FirstOrDefaultAsync(e => e.StudentId == studentId && e.CourseId == courseId);
             enrollment.Should().NotBeNull();
-            enrollmentId = enrollment!.Id;
+            enrollmentId = enrollment.Id;
         }
 
         var removeCommand = new RemoveStudentFromCourseCommand(enrollmentId, studentId);

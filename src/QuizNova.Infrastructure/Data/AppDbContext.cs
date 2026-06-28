@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common;
+using QuizNova.Domain.Entities.CourseChats;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Enrollments;
 using QuizNova.Domain.Entities.QuizAttempts;
@@ -54,6 +55,10 @@ public class AppDbContext(
     public DbSet<Admin> Admins => Set<Admin>();
 
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
+
+    public DbSet<CourseChatRoom> CourseChatRooms => Set<CourseChatRoom>();
+
+    public DbSet<Message> CourseChatRoomMessages => Set<Message>();
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
@@ -115,7 +120,6 @@ public class AppDbContext(
             .SelectMany(e => e.DomainEvents)
             .ToList();
 
-        // Convert domain events into Outbox Messages
         var outboxMessages = domainEvents.Select(domainEvent => new OutboxMessage
         {
             Id = Guid.NewGuid(),
@@ -124,10 +128,8 @@ public class AppDbContext(
             Content = JsonSerializer.Serialize(domainEvent, domainEvent.GetType()),
         }).ToList();
 
-        // Save outbox messages to the database
         await OutboxMessages.AddRangeAsync(outboxMessages, ct);
 
-        // Clear events from domain entities
         foreach (var entity in domainEntities)
         {
             entity.ClearDomainEvents();

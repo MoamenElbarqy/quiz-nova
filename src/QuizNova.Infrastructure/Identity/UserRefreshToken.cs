@@ -2,13 +2,13 @@ namespace QuizNova.Infrastructure.Identity;
 
 public class UserRefreshToken
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
 
-    public string Token { get; set; } = null!;
+    public string Token { get; init; } = null!;
 
-    public string UserId { get; set; } = null!;
+    public string UserId { get; init; } = null!;
 
-    public DateTimeOffset ExpiresOnUtc { get; set; }
+    public DateTimeOffset ExpiresOnUtc { get; init; }
 
     public DateTimeOffset? RevokedOnUtc { get; set; }
 
@@ -16,5 +16,5 @@ public class UserRefreshToken
 
     public bool IsActive => RevokedOnUtc == null && !IsExpired;
 
-    public AppUser User { get; set; } = null!;
+    public AppUser User { get; init; } = null!;
 }

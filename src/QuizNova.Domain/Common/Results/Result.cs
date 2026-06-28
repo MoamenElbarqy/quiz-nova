@@ -22,9 +22,9 @@ public static class Result
 
 public sealed class Result<TValue> : IResult<TValue>
 {
-    private readonly TValue? _value = default;
+    private readonly TValue? _value;
 
-    private readonly List<Error>? _errors = null;
+    private readonly List<Error>? _errors;
 
     [JsonConstructor]
     [EditorBrowsable(EditorBrowsableState.Never)]

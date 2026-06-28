@@ -26,7 +26,8 @@ namespace QuizNova.Api;
 public static class DependencyInjection
 {
     public static IServiceCollection AddApi(
-        this IServiceCollection services)
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
         services.AddControllerWithJsonConfiguration();
         services.AddCustomVersioning();
@@ -42,6 +43,14 @@ public static class DependencyInjection
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+            if (configuration.GetValue<bool>("DisableRateLimiting"))
+            {
+                options.AddPolicy("Global", _ => RateLimitPartition.GetNoLimiter("global"));
+                options.AddPolicy("SubmitQuiz", _ => RateLimitPartition.GetNoLimiter("submitquiz"));
+                options.AddPolicy("Auth", _ => RateLimitPartition.GetNoLimiter("auth"));
+                return;
+            }
 
             options.AddConcurrencyLimiter("Global", limiter =>
             {
@@ -150,6 +159,13 @@ public static class DependencyInjection
             options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
+        });
+
+        services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+            options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            options.SerializerOptions.AllowOutOfOrderMetadataProperties = true;
         });
 
         return services;

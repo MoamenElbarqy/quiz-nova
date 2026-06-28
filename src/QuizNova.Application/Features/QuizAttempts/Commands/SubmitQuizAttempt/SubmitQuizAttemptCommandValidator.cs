@@ -27,9 +27,8 @@ public sealed class SubmitQuizAttemptCommandValidator : AbstractValidator<Submit
         RuleForEach(command => command.QuestionAnswers)
             .SetInheritanceValidator(v =>
             {
-                v.Add<SubmitEssayAnswerCommand>(new SubmitEssayAnswerCommandValidator());
-                v.Add<SubmitMcqAnswerCommand>(new SubmitMcqAnswerCommandValidator());
-                v.Add<SubmitTfAnswerCommand>(new SubmitTfAnswerCommandValidator());
+                v.Add(new SubmitEssayAnswerCommandValidator());
+                v.Add(new SubmitMcqAnswerCommandValidator());
             });
     }
 }
@@ -54,9 +53,4 @@ public sealed class SubmitMcqAnswerCommandValidator : AbstractValidator<SubmitMc
     }
 }
 
-public sealed class SubmitTfAnswerCommandValidator : AbstractValidator<SubmitTfAnswerCommand>
-{
-    public SubmitTfAnswerCommandValidator()
-    {
-    }
-}
+

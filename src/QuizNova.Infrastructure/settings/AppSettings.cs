@@ -16,7 +16,7 @@ public class CorsSettings
     {
     }
 
-    public required string PolicyName { get; set; }
+    public required string PolicyName { get; init; }
 
-    public string[] AllowedOrigins { get; set; } = Array.Empty<string>();
+    public string[] AllowedOrigins { get; init; } = [];
 }

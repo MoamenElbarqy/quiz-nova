@@ -10,7 +10,37 @@ public class AppHttpClient(HttpClient httpClient) : IDisposable
 {
     private string? _token;
 
-    public async Task<string> GenerateTokenAsync(string email, string password, string role)
+    public async Task AuthenticateAsync(string email, string password, string role)
+    {
+        var token = await GenerateTokenAsync(email, password, role);
+        SetAuthToken(token);
+    }
+
+    public async Task<HttpResponseMessage> GetAsync(string requestUri, CancellationToken ct = default)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        ApplyAuthorizationHeader(request);
+        return await httpClient.SendAsync(request, ct);
+    }
+
+    public async Task<HttpResponseMessage> PostAsJsonAsync<T>(string requestUri, T value,
+        CancellationToken ct = default)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
+        {
+            Content = JsonContent.Create(value),
+        };
+        ApplyAuthorizationHeader(request);
+        return await httpClient.SendAsync(request, ct);
+    }
+
+    public void Dispose()
+    {
+        httpClient.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
+    private async Task<string> GenerateTokenAsync(string email, string password, string role)
     {
         var loginRequest = new LoginRequest(email, password, role);
 
@@ -31,78 +61,9 @@ public class AppHttpClient(HttpClient httpClient) : IDisposable
         return authDto.Token.AccessToken;
     }
 
-    public void SetAuthToken(string token)
+    private void SetAuthToken(string token)
     {
         _token = token;
-    }
-
-    public void ClearAuthToken()
-    {
-        _token = null;
-    }
-
-    public async Task AuthenticateAsync(string email, string password, string role)
-    {
-        var token = await GenerateTokenAsync(email, password, role);
-        SetAuthToken(token);
-    }
-
-    public async Task<HttpResponseMessage> GetAsync(string requestUri, CancellationToken ct = default)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-        ApplyAuthorizationHeader(request);
-        return await httpClient.SendAsync(request, ct);
-    }
-
-    public async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct = default)
-    {
-        ApplyAuthorizationHeader(request);
-        return await httpClient.SendAsync(request, ct);
-    }
-
-    public async Task<HttpResponseMessage> PostAsJsonAsync<T>(string requestUri, T value,
-        CancellationToken ct = default)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
-        {
-            Content = JsonContent.Create(value),
-        };
-        ApplyAuthorizationHeader(request);
-        return await httpClient.SendAsync(request, ct);
-    }
-
-    public async Task<HttpResponseMessage> PutAsJsonAsync<T>(string requestUri, T value, CancellationToken ct = default)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Put, requestUri)
-        {
-            Content = JsonContent.Create(value),
-        };
-        ApplyAuthorizationHeader(request);
-        return await httpClient.SendAsync(request, ct);
-    }
-
-    public async Task<HttpResponseMessage> DeleteAsync(string requestUri, CancellationToken ct = default)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Delete, requestUri);
-        ApplyAuthorizationHeader(request);
-        return await httpClient.SendAsync(request, ct);
-    }
-
-    public async Task<HttpResponseMessage> PatchAsJsonAsync<T>(string requestUri, T value,
-        CancellationToken ct = default)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Patch, requestUri)
-        {
-            Content = JsonContent.Create(value),
-        };
-        ApplyAuthorizationHeader(request);
-        return await httpClient.SendAsync(request, ct);
-    }
-
-    public void Dispose()
-    {
-        httpClient.Dispose();
-        GC.SuppressFinalize(this);
     }
 
     private void ApplyAuthorizationHeader(HttpRequestMessage request)

@@ -56,9 +56,7 @@ public sealed class CreateInstructorCommandHandler(
         var identityResult = await identityService.RegisterUserAsync(
             request.PersonalInformation.Email,
             request.Password,
-            request.PersonalInformation.Name,
-            nameof(UserRole.Instructor),
-            ct);
+            nameof(UserRole.Instructor));
 
         if (identityResult.IsError)
         {

@@ -170,7 +170,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
 
         var admin = await response.Content.ReadFromJsonAsync<AdminDto>();
         admin.Should().NotBeNull();
-        admin!.PersonalInformation.Email.Should().Be(request.Email);
+        admin.PersonalInformation.Email.Should().Be(request.Email);
         admin.PersonalInformation.Name.Should().Be(request.Name);
     }
 
@@ -220,7 +220,7 @@ public class AdminControllerTests(CustomWebApplicationFactory factory) : IClassF
 
         var admin = await response.Content.ReadFromJsonAsync<AdminDto>();
         admin.Should().NotBeNull();
-        admin!.PersonalInformation.Name.Should().Be(request.Name);
+        admin.PersonalInformation.Name.Should().Be(request.Name);
         admin.PersonalInformation.PhoneNumber.Should().Be(request.PhoneNumber);
     }
 

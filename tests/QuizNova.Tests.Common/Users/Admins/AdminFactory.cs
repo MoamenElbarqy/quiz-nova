@@ -11,10 +11,7 @@ public static class AdminFactory
         Guid? id = null,
         PersonalInformation? personalInformation = null)
     {
-        if (personalInformation == null)
-        {
-            personalInformation = PersonalInformationFactory.CreatePersonalInformation(name: "Test Admin", email: "admin@example.com");
-        }
+        personalInformation ??= PersonalInformationFactory.CreatePersonalInformation(name: "Test Admin", email: "admin@example.com");
 
         return Admin.Create(
             id ?? Guid.NewGuid(),

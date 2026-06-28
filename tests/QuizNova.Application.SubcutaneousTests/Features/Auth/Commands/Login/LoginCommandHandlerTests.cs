@@ -173,7 +173,7 @@ public class LoginCommandHandlerTests(CustomWebApplicationFactory factory)
         var storedToken = await dbContext.UserRefreshTokens
             .FirstOrDefaultAsync(rt => rt.Token == result.Value.Token.RefreshToken);
         storedToken.Should().NotBeNull();
-        storedToken!.RevokedOnUtc.Should().BeNull("because the token should still be active");
+        storedToken.RevokedOnUtc.Should().BeNull("because the token should still be active");
     }
 
     [Fact]

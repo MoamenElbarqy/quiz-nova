@@ -4,9 +4,6 @@ namespace QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 public static class PersonalInformationErrors
 {
-    public static readonly Error Required =
-        Error.Validation("PersonalInformation_Required", "Personal information is required.");
-
     public static readonly Error NameRequired =
         Error.Validation("PersonalInformation_Name_Required", "Name is required.");
 
@@ -25,6 +22,4 @@ public static class PersonalInformationErrors
     public static readonly Error PhoneNumberInvalid =
         Error.Validation("PersonalInformation_PhoneNumber_Invalid", "Phone number is invalid.");
 
-    public static readonly Error RoleInvalid =
-        Error.Validation("PersonalInformation_Role_Invalid", "Role value is invalid.");
 }

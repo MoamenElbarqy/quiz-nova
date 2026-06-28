@@ -113,14 +113,11 @@ public class PersonalInformationTests
         // Assert
         Assert.True(result.IsError);
 
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            Assert.Equal(PersonalInformationErrors.EmailRequired, result.TopError);
-        }
-        else
-        {
-            Assert.Equal(PersonalInformationErrors.EmailInvalid, result.TopError);
-        }
+        Assert.Equal(
+            string.IsNullOrWhiteSpace(email)
+                ? PersonalInformationErrors.EmailRequired
+                : PersonalInformationErrors.EmailInvalid,
+            result.TopError);
     }
 
     [Theory]

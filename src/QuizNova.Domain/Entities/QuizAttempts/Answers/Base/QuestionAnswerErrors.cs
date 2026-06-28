@@ -13,6 +13,4 @@ public static class QuestionAnswerErrors
     public static readonly Error QuizAttemptIdRequired =
         Error.Validation("QuestionAnswer_QuizAttemptId_Required", "Quiz attempt ID is required.");
 
-    public static readonly Error SelectedChoiceIdRequired =
-        Error.Validation("QuestionAnswer_SelectedChoiceId_Required", "Selected choice ID is required.");
 }

@@ -44,7 +44,7 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
             .FirstOrDefaultAsync(c => c.Id == result.Value.Id);
 
         courseInDb.Should().NotBeNull();
-        courseInDb!.Name.Should().Be("Valid Course Name");
+        courseInDb.Name.Should().Be("Valid Course Name");
         courseInDb.MinimumPassingMarks.Should().Be(50);
         courseInDb.MaximumMarks.Should().Be(100);
     }
@@ -150,7 +150,7 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
         var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.Id);
         courseInDb.Should().NotBeNull();
-        courseInDb!.Name.Should().Be("ABC");
+        courseInDb.Name.Should().Be("ABC");
     }
 
     [Fact]
@@ -177,7 +177,7 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
         var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.Id);
         courseInDb.Should().NotBeNull();
-        courseInDb!.Name.Should().Be(longName);
+        courseInDb.Name.Should().Be(longName);
     }
 
     [Fact]
@@ -278,7 +278,7 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
         var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.Id);
         courseInDb.Should().NotBeNull();
-        courseInDb!.MinimumPassingMarks.Should().Be(100);
+        courseInDb.MinimumPassingMarks.Should().Be(100);
         courseInDb.MaximumMarks.Should().Be(100);
     }
 
@@ -339,6 +339,6 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
         var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.Id);
         courseInDb.Should().NotBeNull();
-        courseInDb!.InstructorId.Should().Be(instructorId);
+        courseInDb.InstructorId.Should().Be(instructorId);
     }
 }

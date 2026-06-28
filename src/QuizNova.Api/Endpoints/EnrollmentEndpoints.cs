@@ -1,0 +1,86 @@
+using MediatR;
+
+using Microsoft.AspNetCore.Authorization;
+
+using QuizNova.Api.DTOs.Requests;
+using QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
+using QuizNova.Application.Features.Enrollments.Commands.RemoveStudentFromCourse;
+using QuizNova.Application.Features.Enrollments.DTOs;
+using QuizNova.Application.Features.Enrollments.Queries.GetStudentEnrollmentsById;
+using QuizNova.Application.Features.Enrollments.Queries.GetStudentEnrollmentsCount;
+using QuizNova.Domain.Entities.Identity;
+
+namespace QuizNova.Api.Endpoints;
+
+public static class EnrollmentEndpoints
+{
+    public static IEndpointRouteBuilder MapEnrollmentEndpoints(this IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("students")
+            .RequireAuthorization()
+            .RequireRateLimiting("Global")
+            .WithTags("enrollments")
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
+
+        // POST students/{studentId:guid}/enrollments
+        group.MapPost("{studentId:guid}/enrollments", async (ISender sender, Guid studentId, EnrollStudentInCourseRequest request) =>
+        {
+            var result = await sender.Send(new EnrollStudentInCourseCommand(request.CourseId, studentId));
+            return result.ToNoContent();
+        })
+        .WithName("EnrollStudentInCourse")
+        .WithSummary("Enrolls a student in a course.")
+        .WithDescription("Creates a course enrollment for the specified student.")
+        .RequireAuthorization(new AuthorizeAttribute { Roles = nameof(UserRole.Admin) })
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status403Forbidden)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
+        // DELETE students/{studentId:guid}/enrollments/{enrollmentId:guid}
+        group.MapDelete("{studentId:guid}/enrollments/{enrollmentId:guid}", async (ISender sender, Guid studentId, Guid enrollmentId) =>
+        {
+            var result = await sender.Send(new RemoveStudentFromCourseCommand(enrollmentId, studentId));
+            return result.ToNoContent();
+        })
+        .WithName("RemoveStudentFromCourse")
+        .WithSummary("Removes a student from a course.")
+        .WithDescription("Deletes a course enrollment for the specified student.")
+        .RequireAuthorization(new AuthorizeAttribute { Roles = nameof(UserRole.Admin) })
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status403Forbidden)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
+        // GET students/{studentId:guid}/enrollments
+        group.MapGet("{studentId:guid}/enrollments", async (ISender sender, Guid studentId) =>
+        {
+            var result = await sender.Send(new GetStudentEnrollmentsByIdQuery(studentId));
+            return result.ToOk();
+        })
+        .WithName("GetStudentEnrollments")
+        .WithSummary("Retrieves student enrollments.")
+        .WithDescription("Returns the enrollments for a specific student.")
+        .CacheOutput(policy => policy.Tag("enrollments"))
+        .Produces<List<EnrollmentDto>>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
+        // GET students/{studentId:guid}/enrollments/count
+        group.MapGet("{studentId:guid}/enrollments/count", async (ISender sender, Guid studentId) =>
+        {
+            var result = await sender.Send(new GetStudentEnrollmentsCountQuery(studentId));
+            return result.ToOk();
+        })
+        .WithName("GetStudentEnrollmentsCount")
+        .WithSummary("Retrieves student enrollment counts.")
+        .WithDescription("Returns student enrollment count based on the student ID.")
+        .CacheOutput(policy => policy.Tag("enrollments"))
+        .Produces<EnrollmentCountDto>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
+        return app;
+    }
+}

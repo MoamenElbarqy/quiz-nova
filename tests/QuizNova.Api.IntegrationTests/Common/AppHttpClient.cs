@@ -9,37 +9,6 @@ public class AppHttpClient(HttpClient httpClient) : IDisposable
 {
     private string? _token;
 
-    public async Task<string> GenerateTokenAsync(string email, string password, string role)
-    {
-        var loginRequest = new LoginRequest(email, password, role);
-
-        var response = await httpClient.PostAsJsonAsync("/Auth/login", loginRequest);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new InvalidOperationException(
-                $"Token generation failed with HTTP status {response.StatusCode}");
-        }
-
-        var authDto = await response.Content.ReadFromJsonAsync<AuthDto>();
-        if (authDto?.Token.AccessToken is null)
-        {
-            throw new InvalidOperationException("Response did not contain a valid Access Token.");
-        }
-
-        return authDto.Token.AccessToken;
-    }
-
-    public void SetAuthToken(string token)
-    {
-        _token = token;
-    }
-
-    public void ClearAuthToken()
-    {
-        _token = null;
-    }
-
     public async Task AuthenticateAsync(string email, string password, string role)
     {
         var token = await GenerateTokenAsync(email, password, role);
@@ -102,6 +71,32 @@ public class AppHttpClient(HttpClient httpClient) : IDisposable
     {
         httpClient.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    private async Task<string> GenerateTokenAsync(string email, string password, string role)
+    {
+        var loginRequest = new LoginRequest(email, password, role);
+
+        var response = await httpClient.PostAsJsonAsync("/Auth/login", loginRequest);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException(
+                $"Token generation failed with HTTP status {response.StatusCode}");
+        }
+
+        var authDto = await response.Content.ReadFromJsonAsync<AuthDto>();
+        if (authDto?.Token.AccessToken is null)
+        {
+            throw new InvalidOperationException("Response did not contain a valid Access Token.");
+        }
+
+        return authDto.Token.AccessToken;
+    }
+
+    private void SetAuthToken(string token)
+    {
+        _token = token;
     }
 
     private void ApplyAuthorizationHeader(HttpRequestMessage request)

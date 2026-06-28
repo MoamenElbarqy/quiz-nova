@@ -125,7 +125,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
 
         var countDto = await response.Content.ReadFromJsonAsync<QuizzesCountDto>();
         countDto.Should().NotBeNull();
-        countDto!.QuizzesCount.Should().BeGreaterThanOrEqualTo(0);
+        countDto.QuizzesCount.Should().BeGreaterThanOrEqualTo(0);
     }
 
     [Fact]

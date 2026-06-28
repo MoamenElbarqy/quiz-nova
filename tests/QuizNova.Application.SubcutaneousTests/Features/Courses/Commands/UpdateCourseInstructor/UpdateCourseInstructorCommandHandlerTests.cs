@@ -112,7 +112,7 @@ public class UpdateCourseInstructorCommandHandlerTests(CustomWebApplicationFacto
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
         var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
         courseInDb.Should().NotBeNull();
-        courseInDb!.InstructorId.Should().Be(instructorId);
+        courseInDb.InstructorId.Should().Be(instructorId);
     }
 
     [Fact]
@@ -154,7 +154,7 @@ public class UpdateCourseInstructorCommandHandlerTests(CustomWebApplicationFacto
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
         var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
         courseInDb.Should().NotBeNull();
-        courseInDb!.InstructorId.Should().BeNull();
+        courseInDb.InstructorId.Should().BeNull();
     }
 
     [Fact]

@@ -19,6 +19,10 @@ public abstract class QuestionAnswer : Entity
 
     public Question? Question { get; init; }
 
+    protected QuestionAnswer()
+    {
+    }
+
     protected QuestionAnswer(
         Guid id,
         Guid studentId,
@@ -29,10 +33,6 @@ public abstract class QuestionAnswer : Entity
         StudentId = studentId;
         QuestionId = questionId;
         QuizAttemptId = quizAttemptId;
-    }
-
-    protected QuestionAnswer()
-    {
     }
 
     protected static Result<Validated> ValidateCommon(
@@ -61,16 +61,7 @@ public abstract class QuestionAnswer : Entity
 
 public abstract class QuestionAnswer<TAnswer> : QuestionAnswer
 {
-    public new Question<TAnswer>? Question { get; init; }
-
-    protected QuestionAnswer(
-        Guid id,
-        Guid studentId,
-        Guid questionId,
-        Guid quizAttemptId)
-        : base(id, studentId, questionId, quizAttemptId)
-    {
-    }
+    public Question<TAnswer>? Question { get; init; }
 
     protected QuestionAnswer()
     {

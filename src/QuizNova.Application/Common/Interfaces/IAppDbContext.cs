@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
+using QuizNova.Domain.Entities.CourseChats;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Enrollments;
 using QuizNova.Domain.Entities.QuizAttempts;
@@ -36,6 +37,10 @@ public interface IAppDbContext
     public DbSet<ManuallyGradedAnswers> ManuallyGradedAnswers { get; }
 
     public DbSet<Enrollment> Enrollments { get; }
+
+    public DbSet<CourseChatRoom> CourseChatRooms { get; }
+
+    public DbSet<Message> CourseChatRoomMessages { get; }
 
     Task<int> SaveChangesAsync(CancellationToken ct);
 }

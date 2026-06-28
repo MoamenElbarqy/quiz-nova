@@ -40,9 +40,7 @@ public sealed class IdentityService(
     public async Task<Result<string>> RegisterUserAsync(
         string email,
         string password,
-        string name,
-        string role,
-        CancellationToken ct)
+        string role)
     {
         var existingUser = await userManager.FindByEmailAsync(email);
         if (existingUser is not null)

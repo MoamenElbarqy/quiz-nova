@@ -7,7 +7,7 @@ using Scalar.AspNetCore;
 
 using Serilog;
 
-Serilog.Debugging.SelfLog.Enable(msg => Console.WriteLine(msg));
+Serilog.Debugging.SelfLog.Enable(Console.WriteLine);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +18,7 @@ builder.Services.AddApplication();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
-builder.Services.AddApi();
+builder.Services.AddApi(builder.Configuration);
 
 var app = builder.Build();
 
@@ -65,4 +65,5 @@ app.MapPrometheusScrapingEndpoint();
 
 app.MapControllers();
 
+// app.MapAllEndpoints();
 app.Run();

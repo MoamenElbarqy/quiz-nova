@@ -49,9 +49,7 @@ public sealed class CreateStudentCommandHandler(
         var identityResult = await identityService.RegisterUserAsync(
             request.PersonalInformation.Email,
             request.Password,
-            request.PersonalInformation.Name,
-            nameof(UserRole.Student),
-            ct);
+            nameof(UserRole.Student));
 
         if (identityResult.IsError)
         {

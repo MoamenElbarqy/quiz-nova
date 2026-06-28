@@ -12,7 +12,6 @@ public class CourseTests
     public void Create_ShouldSuccess_WithValidData()
     {
         // Arrange
-        var id = Guid.NewGuid();
         var instructorId = Guid.NewGuid();
         var name = "Database Systems";
 

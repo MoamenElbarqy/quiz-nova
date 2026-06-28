@@ -66,12 +66,12 @@ public class RefreshTokenCommandHandlerTests(CustomWebApplicationFactory factory
         var oldToken = await dbContext.UserRefreshTokens
             .FirstOrDefaultAsync(rt => rt.Token == originalRefreshToken);
         oldToken.Should().NotBeNull();
-        oldToken!.RevokedOnUtc.Should().NotBeNull("because the old token should be revoked");
+        oldToken.RevokedOnUtc.Should().NotBeNull("because the old token should be revoked");
 
         var newToken = await dbContext.UserRefreshTokens
             .FirstOrDefaultAsync(rt => rt.Token == refreshResult.Value.RefreshToken);
         newToken.Should().NotBeNull();
-        newToken!.RevokedOnUtc.Should().BeNull("because the new token should still be active");
+        newToken.RevokedOnUtc.Should().BeNull("because the new token should still be active");
     }
 
     [Fact]

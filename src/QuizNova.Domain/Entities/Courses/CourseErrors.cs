@@ -4,17 +4,8 @@ namespace QuizNova.Domain.Entities.Courses;
 
 public static class CourseErrors
 {
-    public static readonly Error IdRequired =
-        Error.Validation("Course.Id.Required", "Course Id is required.");
-
-    public static readonly Error InvalidIdFormat =
-        Error.Validation("Course.Id.InvalidFormat", "Course Id format is invalid.");
-
     public static readonly Error InstructorIdRequired =
         Error.Validation("Course_InstructorId_Required", "Instructor ID is required.");
-
-    public static readonly Error InvalidInstructorIdFormat =
-        Error.Validation("Course.InstructorId.InvalidFormat", "Instructor ID format is invalid.");
 
     public static readonly Error NameRequired =
         Error.Validation("Course_Name_Required", "Course name is required.");
