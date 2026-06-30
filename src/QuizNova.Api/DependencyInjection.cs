@@ -5,6 +5,7 @@ using System.Threading.RateLimiting;
 using Asp.Versioning;
 
 using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Options;
@@ -30,6 +31,12 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.AddControllerWithJsonConfiguration();
+        services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor;
+            options.KnownIPNetworks.Clear();
+            options.KnownProxies.Clear();
+        });
         services.AddCustomVersioning();
         services.AddApiDocumentation();
         services.AddAppOpenTelemetry();

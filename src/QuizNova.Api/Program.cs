@@ -22,6 +22,8 @@ builder.Services.AddApi(builder.Configuration);
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
+
 app.UseResponseCompression();
 
 app.UseExceptionHandler();
