@@ -15,6 +15,7 @@ using QuizNova.Application.Features.Quizzes.Commands.UpdateQuizCourseId;
 using QuizNova.Application.Features.Quizzes.Commands.UpdateQuizMetadata;
 using QuizNova.Application.Features.Quizzes.DTOs;
 using QuizNova.Application.Features.Quizzes.Queries.GetAllQuizzes;
+using QuizNova.Application.Features.Quizzes.Queries.GetInstructorQuizzes;
 using QuizNova.Application.Features.Quizzes.Queries.GetInstructorQuizzesCount;
 using QuizNova.Application.Features.Quizzes.Queries.GetQuizById;
 using QuizNova.Application.Features.Quizzes.Queries.GetStudentQuizzes;
@@ -273,6 +274,25 @@ public sealed class QuizController(ISender sender) : ApiController
     public async Task<ActionResult<StudentQuizzesDto>> GetStudentQuizzes([FromRoute] Guid id)
     {
         var result = await sender.Send(new GetStudentQuizzesQuery(id));
+
+        return result.Match(
+            Ok,
+            Problem);
+    }
+
+    [EndpointSummary("Retrieves quizzes created by an instructor.")]
+    [EndpointDescription("Returns quizzes associated with the specified instructor identifier.")]
+    [EndpointName("GetInstructorQuizzes")]
+    [OutputCache(Tags = ["instructors", "quizzes"])]
+    [HttpGet("/instructors/{id:guid}/quizzes")]
+    [Authorize(Roles = nameof(UserRole.Instructor))]
+    [ProducesResponseType(typeof(List<QuizDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<List<QuizDto>>> GetInstructorQuizzes([FromRoute] Guid id)
+    {
+        var result = await sender.Send(new GetInstructorQuizzesQuery(id));
 
         return result.Match(
             Ok,
