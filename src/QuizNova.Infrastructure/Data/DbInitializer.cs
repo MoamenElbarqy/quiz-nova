@@ -5,6 +5,7 @@ using Npgsql;
 
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
+using QuizNova.Domain.Entities.Enrollments;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
@@ -363,7 +364,9 @@ public sealed class DbInitializer(
     private async Task SeedEnrollmentsAsync(CancellationToken ct)
     {
         var students = await dbContext.Students.ToListAsync(ct);
-        var courses = await dbContext.Courses.ToListAsync(ct);
+        var courses = await dbContext.Courses
+            .Include(c => c.Enrollments)
+            .ToListAsync(ct);
 
         foreach (var student in students)
         {
