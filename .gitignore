@@ -108,3 +108,23 @@ appsettings.Development.json
 skills-lock.json
 .agents/
 grafana-env.txt
+
+# Impeccable Skill (UI/Design)
+.impeccable/
+.impeccable/hook.cache.json
+.github/hooks/impeccable.json
+impeccable-*
+impeccable/
+*.impeccable
+.design/
+design-artifacts/
+
+# Product Documentation
+Product.md
+PRODUCT.md
+*Product*.md
+
+# Design Documentation
+Design.md
+DESIGN.md
+*Design*.md
