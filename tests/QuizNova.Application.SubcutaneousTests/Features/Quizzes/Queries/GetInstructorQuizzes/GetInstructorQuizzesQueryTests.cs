@@ -56,6 +56,7 @@ public class GetInstructorQuizzesQueryTests(CustomWebApplicationFactory factory)
         {
             new CreateTfCommand("Question 1", 1, true),
             new CreateTfCommand("Question 2", 2, false),
+            new CreateTfCommand("Question 3", 3, true),
         };
         var quizTitle = $"Quiz {Guid.NewGuid().ToString()[..8]}";
         var quizResult = await mediator.Send(new CreateQuizCommand(quizTitle, courseId, instructorId,

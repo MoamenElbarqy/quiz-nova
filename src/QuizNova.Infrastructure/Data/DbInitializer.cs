@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.CourseChats;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Enrollments;
 using QuizNova.Domain.Entities.Quizzes;
@@ -76,6 +77,11 @@ public sealed class DbInitializer(
         }
 
         await dbContext.SaveChangesAsync(ct);
+
+        if (!await dbContext.CourseChatRooms.AnyAsync(ct))
+        {
+            await SeedCourseChatRoomsAsync(ct);
+        }
 
         if (!await dbContext.Quizzes.AnyAsync(ct))
         {
@@ -364,17 +370,32 @@ public sealed class DbInitializer(
     private async Task SeedEnrollmentsAsync(CancellationToken ct)
     {
         var students = await dbContext.Students.ToListAsync(ct);
-        var courses = await dbContext.Courses
-            .Include(c => c.Enrollments)
-            .ToListAsync(ct);
+        var courses = await dbContext.Courses.ToListAsync(ct);
 
         foreach (var student in students)
         {
             foreach (var course in courses)
             {
-                EnsureSuccess(
-                    course.Enroll(student),
+                var enrollment = EnsureSuccess(
+                    Enrollment.Create(Guid.NewGuid(), student.Id, course.Id, DateTimeOffset.UtcNow),
                     $"enrollment for {student.PersonalInformation.Email} in {course.Name}");
+                dbContext.Enrollments.Add(enrollment);
+            }
+        }
+
+        await dbContext.SaveChangesAsync(ct);
+    }
+
+    private async Task SeedCourseChatRoomsAsync(CancellationToken ct)
+    {
+        var courses = await dbContext.Courses.ToListAsync(ct);
+
+        foreach (var course in courses)
+        {
+            var chatRoomResult = CourseChatRoom.Create(course.Id, course.InstructorId);
+            if (chatRoomResult.IsSuccess)
+            {
+                await dbContext.CourseChatRooms.AddAsync(chatRoomResult.Value, ct);
             }
         }
 
