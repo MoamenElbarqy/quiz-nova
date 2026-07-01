@@ -17,7 +17,7 @@ public sealed class RemoveStudentFromCourseChatRoomOnEnrollmentDeletedHandler(
     {
         logger.LogInformation("Removing student {StudentId} from chatroom of course {CourseId}", notification.StudentId, notification.CourseId);
 
-        var student = await dbContext.Users
+        var student = await dbContext.Students
             .FirstOrDefaultAsync(u => u.Id == notification.StudentId, ct);
 
         if (student is null)

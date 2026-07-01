@@ -8,6 +8,7 @@ public static class EndpointExtensions
         app.MapAuthEndpoints();
         app.MapCollegeEndpoints();
         app.MapCourseEndpoints();
+        app.MapCourseChatEndpoints();
         app.MapEnrollmentEndpoints();
         app.MapGradingEndpoints();
         app.MapInstructorEndpoints();

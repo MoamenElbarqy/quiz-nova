@@ -14,6 +14,7 @@ public sealed class CourseChatRoomConfiguration : IEntityTypeConfiguration<Cours
 
         builder.Property(c => c.Status)
             .HasDefaultValue(ChatStatus.OpenForAny)
+            .HasSentinel((ChatStatus)0)
             .IsRequired();
 
         builder.HasIndex(c => c.CourseId).IsUnique();

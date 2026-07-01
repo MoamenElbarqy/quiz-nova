@@ -93,6 +93,7 @@ public static class DependencyInjection
         services.AddProblemDetails();
         services.AddAuthorization();
 
+        services.AddSignalR();
         services.AddCustomResponseCompression();
         services.AddIdentityInfrastructure();
         return services;

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 
 using QuizNova.Api;
+using QuizNova.Api.Hubs;
 using QuizNova.Infrastructure.Settings;
 
 using Scalar.AspNetCore;
@@ -23,6 +24,8 @@ builder.Services.AddApi(builder.Configuration);
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+
+app.UseWebSockets();
 
 app.UseResponseCompression();
 
@@ -66,6 +69,8 @@ else
 app.MapPrometheusScrapingEndpoint();
 
 app.MapControllers();
+
+app.MapHub<ChatHub>("/chat");
 
 // app.MapAllEndpoints();
 app.Run();

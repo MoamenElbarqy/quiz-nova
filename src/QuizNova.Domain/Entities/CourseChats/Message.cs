@@ -72,6 +72,21 @@ public sealed class Message : Entity
             return CourseChatErrors.ContentRequired;
         }
 
+        string? text = null;
+        if (content.RootElement.ValueKind == JsonValueKind.String)
+        {
+            text = content.RootElement.GetString();
+        }
+        else if (content.RootElement.ValueKind == JsonValueKind.Object && content.RootElement.TryGetProperty("text", out var textProp))
+        {
+            text = textProp.GetString();
+        }
+
+        if (string.IsNullOrWhiteSpace(text) || text.Length < 1 || text.Length > 500)
+        {
+            return CourseChatErrors.MessageLengthInvalid;
+        }
+
         var message = new Message(
             Guid.NewGuid(),
             roomId,

@@ -70,10 +70,39 @@ public class MessageTests
     }
 
     [Fact]
+    public void Create_ShouldFail_WithMessageContentTooLong()
+    {
+        // Arrange
+        var content = JsonDocument.Parse("{\"text\":\"" + new string('a', 501) + "\"}");
+
+        // Act
+        var result = Message.Create(Guid.NewGuid(), Guid.NewGuid(), null, content);
+
+        // Assert
+        Assert.True(result.IsError);
+        Assert.Equal("Message.LengthInvalid", result.TopError.Code);
+    }
+
+    [Fact]
+    public void Create_ShouldFail_WithMessageContentEmpty()
+    {
+        // Arrange
+        var content = JsonDocument.Parse("{\"text\":\"\"}");
+
+        // Act
+        var result = Message.Create(Guid.NewGuid(), Guid.NewGuid(), null, content);
+
+        // Assert
+        Assert.True(result.IsError);
+        Assert.Equal("Message.LengthInvalid", result.TopError.Code);
+    }
+
+    [Fact]
     public void AddReaction_ShouldAddReaction_WhenNotExists()
     {
         // Arrange
-        var message = Message.Create(Guid.NewGuid(), Guid.NewGuid(), null, JsonDocument.Parse("{}")).Value;
+        var message = Message.Create(Guid.NewGuid(), Guid.NewGuid(), null, JsonDocument.Parse("{\"text\":\"hello\"}"))
+            .Value;
         var react = React.Create(message.Id, Guid.NewGuid(), "👍").Value;
 
         // Act
@@ -89,7 +118,8 @@ public class MessageTests
     public void RemoveReaction_ShouldRemoveReaction_WhenExists()
     {
         // Arrange
-        var message = Message.Create(Guid.NewGuid(), Guid.NewGuid(), null, JsonDocument.Parse("{}")).Value;
+        var message = Message.Create(Guid.NewGuid(), Guid.NewGuid(), null, JsonDocument.Parse("{\"text\":\"hello\"}"))
+            .Value;
         var react = React.Create(message.Id, Guid.NewGuid(), "👍").Value;
         message.AddReaction(react);
 
@@ -105,7 +135,8 @@ public class MessageTests
     public void RemoveReaction_ShouldFail_WhenNotExists()
     {
         // Arrange
-        var message = Message.Create(Guid.NewGuid(), Guid.NewGuid(), null, JsonDocument.Parse("{}")).Value;
+        var message = Message.Create(Guid.NewGuid(), Guid.NewGuid(), null, JsonDocument.Parse("{\"text\":\"hello\"}"))
+            .Value;
 
         // Act
         var result = message.RemoveReaction(Guid.NewGuid());
@@ -113,5 +144,38 @@ public class MessageTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal("React.ReactionNotFound", result.TopError.Code);
+    }
+
+    [Fact]
+    public void ReactCreate_ShouldSuccess_WithSurrogatePairEmoji()
+    {
+        // Act
+        var result = React.Create(Guid.NewGuid(), Guid.NewGuid(), "😀");
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Equal("😀", result.Value.Emoji);
+    }
+
+    [Fact]
+    public void ReactCreate_ShouldFail_WithMultipleEmojis()
+    {
+        // Act
+        var result = React.Create(Guid.NewGuid(), Guid.NewGuid(), "👍😀");
+
+        // Assert
+        Assert.True(result.IsError);
+        Assert.Equal("React.EmojiInvalid", result.TopError.Code);
+    }
+
+    [Fact]
+    public void ReactCreate_ShouldFail_WithEmptyEmoji()
+    {
+        // Act
+        var result = React.Create(Guid.NewGuid(), Guid.NewGuid(), string.Empty);
+
+        // Assert
+        Assert.True(result.IsError);
+        Assert.Equal("React.EmojiRequired", result.TopError.Code);
     }
 }

@@ -45,4 +45,10 @@ public static class CourseChatErrors
 
     public static readonly Error ReactionNotFound =
         Error.NotFound("React.ReactionNotFound", "Reaction was not found.");
+
+    public static readonly Error MessageLengthInvalid =
+        Error.Validation("Message.LengthInvalid", "Message must be between 1 and 500 characters.");
+
+    public static readonly Error EmojiInvalid =
+        Error.Validation("React.EmojiInvalid", "Emoji must be exactly one character.");
 }

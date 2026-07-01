@@ -5,7 +5,6 @@ using Npgsql;
 
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
-using QuizNova.Domain.Entities.Enrollments;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
@@ -370,10 +369,9 @@ public sealed class DbInitializer(
         {
             foreach (var course in courses)
             {
-                var enrollment = EnsureSuccess(
-                    Enrollment.Create(Guid.NewGuid(), student.Id, course.Id, DateTimeOffset.UtcNow),
+                EnsureSuccess(
+                    course.Enroll(student),
                     $"enrollment for {student.PersonalInformation.Email} in {course.Name}");
-                await dbContext.Enrollments.AddAsync(enrollment, ct);
             }
         }
 

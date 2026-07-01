@@ -73,12 +73,11 @@ public static class AuthEndpoints
             throw new InvalidOperationException("Refresh token is required to set authentication cookie.");
         }
 
-        var isHttps = context.Request.IsHttps;
         context.Response.Cookies.Append(RefreshTokenCookieName, refreshToken, new CookieOptions
         {
             HttpOnly = true,
-            Secure = isHttps,
-            SameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax,
+            Secure = context.Request.IsHttps,
+            SameSite = SameSiteMode.None,
             Expires = DateTime.UtcNow.AddDays(7),
             Path = "/",
             MaxAge = TimeSpan.FromDays(7),

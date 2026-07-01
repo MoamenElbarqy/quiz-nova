@@ -7,6 +7,7 @@ using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.CourseChats.DTOs;
 using QuizNova.Application.Features.CourseChats.Mappers;
+using QuizNova.Application.Features.Users.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.CourseChats;
 
@@ -34,7 +35,23 @@ public class ChatHub(IAppDbContext dbContext, IUser currentUser) : Hub
 
         if (!room.CanJoin(userId))
         {
-            return CourseChatErrors.CannotJoin;
+            var isCourseInstructor = await dbContext.Courses
+                .AnyAsync(c => c.Id == room.CourseId && c.InstructorId == userId);
+
+            if (isCourseInstructor)
+            {
+                // proceed
+            }
+            else
+            {
+                var isEnrolled = await dbContext.Enrollments
+                    .AnyAsync(e => e.CourseId == room.CourseId && e.StudentId == userId);
+
+                if (!isEnrolled)
+                {
+                    return CourseChatErrors.CannotJoin;
+                }
+            }
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString());
@@ -79,7 +96,13 @@ public class ChatHub(IAppDbContext dbContext, IUser currentUser) : Hub
         await dbContext.CourseChatRoomMessages.AddAsync(message);
         await dbContext.SaveChangesAsync(CancellationToken.None);
 
-        var messageDto = message.ToDto();
+        var senderUser = await dbContext.Users
+            .AsNoTracking()
+            .FirstAsync(u => u.Id == userId);
+
+        var senderDto = senderUser.ToDto();
+
+        var messageDto = message.ToDto(senderDto, []);
         await Clients.Group(roomId.ToString()).SendAsync("ReceiveMessage", messageDto);
 
         return messageDto;

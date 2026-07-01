@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Users;
@@ -46,6 +48,12 @@ public sealed class React : Entity
         if (string.IsNullOrWhiteSpace(emoji))
         {
             return CourseChatErrors.EmojiRequired;
+        }
+
+        var stringInfo = new StringInfo(emoji);
+        if (stringInfo.LengthInTextElements != 1)
+        {
+            return CourseChatErrors.EmojiInvalid;
         }
 
         return new React(Guid.NewGuid(), messageId, reactorId, emoji);

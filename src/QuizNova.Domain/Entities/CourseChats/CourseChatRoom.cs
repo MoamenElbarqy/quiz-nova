@@ -1,12 +1,12 @@
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Users;
+using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Domain.Entities.CourseChats;
 
 public sealed class CourseChatRoom : Entity
 {
-    private readonly List<User> _students;
+    private readonly List<Student> _students;
     private readonly List<Message> _messages;
 
     private CourseChatRoom()
@@ -18,7 +18,7 @@ public sealed class CourseChatRoom : Entity
         Guid courseId,
         Guid? instructorId,
         ChatStatus status,
-        List<User> students,
+        List<Student> students,
         List<Message> messages)
         : base(id)
     {
@@ -35,7 +35,7 @@ public sealed class CourseChatRoom : Entity
 
     public ChatStatus Status { get; private set; }
 
-    public IEnumerable<User> Students => _students.AsReadOnly();
+    public IEnumerable<Student> Students => _students.AsReadOnly();
 
     public IEnumerable<Message> Messages => _messages.AsReadOnly();
 
@@ -68,7 +68,7 @@ public sealed class CourseChatRoom : Entity
         return Result.Updated;
     }
 
-    public Result<Updated> AddStudent(User student)
+    public Result<Updated> AddStudent(Student student)
     {
         if (_students.Any(s => s.Id == student.Id))
         {
@@ -79,7 +79,7 @@ public sealed class CourseChatRoom : Entity
         return Result.Updated;
     }
 
-    public Result<Updated> RemoveStudent(User student)
+    public Result<Updated> RemoveStudent(Student student)
     {
         var existing = _students.FirstOrDefault(s => s.Id == student.Id);
         if (existing == null)
