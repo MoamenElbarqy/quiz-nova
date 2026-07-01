@@ -14,6 +14,7 @@ using QuizNova.Application.Features.Quizzes.Commands.UpdateQuizCourseId;
 using QuizNova.Application.Features.Quizzes.Commands.UpdateQuizMetadata;
 using QuizNova.Application.Features.Quizzes.DTOs;
 using QuizNova.Application.Features.Quizzes.Queries.GetAllQuizzes;
+using QuizNova.Application.Features.Quizzes.Queries.GetInstructorQuizzes;
 using QuizNova.Application.Features.Quizzes.Queries.GetInstructorQuizzesCount;
 using QuizNova.Application.Features.Quizzes.Queries.GetQuizById;
 using QuizNova.Application.Features.Quizzes.Queries.GetStudentQuizzes;
@@ -237,6 +238,26 @@ public static class QuizEndpoints
         .RequireRateLimiting("Global")
         .WithTags("quizzes")
         .Produces<StudentQuizzesDto>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status403Forbidden)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status500InternalServerError);
+
+        // GET instructors/{id:guid}/quizzes
+        app.MapGet("instructors/{id:guid}/quizzes", async (ISender sender, Guid id) =>
+        {
+            var result = await sender.Send(new GetInstructorQuizzesQuery(id));
+            return result.ToOk();
+        })
+        .WithName("GetInstructorQuizzes")
+        .WithSummary("Retrieves quizzes created by an instructor.")
+        .WithDescription("Returns quizzes associated with the specified instructor identifier.")
+        .CacheOutput(policy => policy.Tag("instructors").Tag("quizzes"))
+        .RequireAuthorization(new AuthorizeAttribute { Roles = nameof(UserRole.Instructor) })
+        .RequireRateLimiting("Global")
+        .WithTags("quizzes")
+        .Produces<List<QuizDto>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status403Forbidden)

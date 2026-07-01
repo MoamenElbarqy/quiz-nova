@@ -32,21 +32,25 @@ public sealed class CreateQuizCommandHandler(
 
         var quizId = Guid.NewGuid();
 
-        if (!await dbContext.Courses.AnyAsync(course => course.Id == request.CourseId, ct))
+        var course = await dbContext.Courses
+            .FirstOrDefaultAsync(course => course.Id == request.CourseId, ct);
+
+        if (course is null)
         {
             logger.LogWarning("Quiz creation failed: Course {CourseId} not found", request.CourseId);
             return ApplicationErrors.QuizCourseNotFound(request.CourseId);
         }
 
-        if (!await dbContext.Instructors.AnyAsync(instructor => instructor.Id == request.InstructorId, ct))
+        var instructor = await dbContext.Instructors
+            .FirstOrDefaultAsync(instructor => instructor.Id == request.InstructorId, ct);
+
+        if (instructor is null)
         {
             logger.LogWarning("Quiz creation failed: Instructor {InstructorId} not found", request.InstructorId);
             return ApplicationErrors.QuizInstructorNotFound(request.InstructorId);
         }
 
-        if (!await dbContext.Courses.AnyAsync(
-                course => course.Id == request.CourseId && course.InstructorId == request.InstructorId,
-                ct))
+        if (course.InstructorId != request.InstructorId)
         {
             logger.LogWarning(
                 "Quiz creation failed: Instructor {InstructorId} is not assigned to course {CourseId}",
@@ -95,14 +99,16 @@ public sealed class CreateQuizCommandHandler(
             return createQuizResult.TopError;
         }
 
-        await dbContext.Quizzes.AddAsync(createQuizResult.Value, ct);
+        var quiz = createQuizResult.Value;
+
+        await dbContext.Quizzes.AddAsync(quiz, ct);
         await dbContext.SaveChangesAsync(ct);
         await cacheInvalidator.InvalidateAsync(["quizzes"], ct);
 
         logger.LogInformation("Successfully created quiz {QuizId} with {QuestionCount} questions", quizId,
             questions.Count);
 
-        return createQuizResult.Value.ToQuizDto();
+        return quiz.ToQuizDto(course.Name, instructor.PersonalInformation.Name);
     }
 
     private Result<Question> CreateQuestion(

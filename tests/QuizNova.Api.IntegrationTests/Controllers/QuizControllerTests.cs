@@ -331,6 +331,43 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
         quizzes.Should().NotBeNull();
     }
 
+    [Fact]
+    public async Task GetInstructorQuizzes_WhenUnauthenticated_ReturnsUnauthorized()
+    {
+        using var client = factory.CreateAppHttpClient();
+
+        var response = await client.GetAsync($"/instructors/{Guid.NewGuid()}/quizzes");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetInstructorQuizzes_WhenStudent_ReturnsForbidden()
+    {
+        using var client = factory.CreateAppHttpClient();
+        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
+        var (_, instructorId, _) = await GetSeededIdsAsync();
+
+        var response = await client.GetAsync($"/instructors/{instructorId}/quizzes");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task GetInstructorQuizzes_WhenInstructor_ReturnsQuizzes()
+    {
+        using var client = factory.CreateAppHttpClient();
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
+        var (_, instructorId, _) = await GetSeededIdsAsync();
+
+        var response = await client.GetAsync($"/instructors/{instructorId}/quizzes");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var quizzes = await response.Content.ReadFromJsonAsync<List<QuizDto>>();
+        quizzes.Should().NotBeNull();
+    }
+
     private static async Task<HttpResponseMessage> PostQuestionAsync(
         AppHttpClient client,
         Guid quizId,

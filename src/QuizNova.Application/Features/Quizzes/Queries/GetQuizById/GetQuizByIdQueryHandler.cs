@@ -50,21 +50,6 @@ public sealed class GetQuizByIdQueryHandler(
             .Select(instructor => instructor.PersonalInformation.Name)
             .FirstOrDefaultAsync(ct) ?? string.Empty;
 
-        var dto = quiz.ToQuizDto();
-        return new QuizDto
-        {
-            QuizId = dto.QuizId,
-            Title = dto.Title,
-            CourseName = courseName,
-            InstructorName = instructorName,
-            Marks = dto.Marks,
-            StartsAtUtc = dto.StartsAtUtc,
-            EndsAtUtc = dto.EndsAtUtc,
-            ServerUtc = dto.ServerUtc,
-            State = dto.State,
-            CourseId = dto.CourseId,
-            InstructorId = dto.InstructorId,
-            Questions = dto.Questions,
-        };
+        return quiz.ToQuizDto(courseName, instructorName);
     }
 }

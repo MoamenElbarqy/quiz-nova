@@ -5,15 +5,15 @@ namespace QuizNova.Application.Features.Quizzes.Mappers;
 
 public static class QuizMapper
 {
-    public static QuizDto ToQuizDto(this Quiz quiz)
+    public static QuizDto ToQuizDto(this Quiz quiz, string courseName, string instructorName)
     {
         var now = DateTimeOffset.UtcNow;
         return new QuizDto
         {
             QuizId = quiz.Id,
             Title = quiz.Title,
-            CourseName = string.Empty,
-            InstructorName = string.Empty,
+            CourseName = courseName,
+            InstructorName = instructorName,
             Marks = quiz.Questions.Sum(question => question.Marks),
             ServerUtc = now,
             State = quiz.StartsAtUtc > now ? "Upcoming" : quiz.EndsAtUtc < now ? "Completed" : "Active",
