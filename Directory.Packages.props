@@ -32,7 +32,7 @@
   </ItemGroup>
   <!-- API documentation -->
   <ItemGroup>
-    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
   </ItemGroup>
   <!-- Database -->
   <ItemGroup>
@@ -49,7 +49,7 @@
   </ItemGroup>
   <!-- Scalar and Swashbuckle -->
   <ItemGroup>
-    <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.1.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.2.3" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.12.24" />
   </ItemGroup>
   <!-- OpenTelemetry-->
