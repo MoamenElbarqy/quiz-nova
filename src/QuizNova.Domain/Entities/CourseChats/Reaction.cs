@@ -6,13 +6,13 @@ using QuizNova.Domain.Entities.Users;
 
 namespace QuizNova.Domain.Entities.CourseChats;
 
-public sealed class React : Entity
+public sealed class Reaction : Entity
 {
-    private React()
+    private Reaction()
     {
     }
 
-    private React(Guid id, Guid messageId, Guid reactorId, string emoji)
+    private Reaction(Guid id, Guid messageId, Guid reactorId, string emoji)
         : base(id)
     {
         MessageId = messageId;
@@ -33,7 +33,7 @@ public sealed class React : Entity
 
     public DateTimeOffset CreatedAt { get; private set; }
 
-    public static Result<React> Create(Guid messageId, Guid reactorId, string emoji)
+    public static Result<Reaction> Create(Guid messageId, Guid reactorId, string emoji)
     {
         if (messageId == Guid.Empty)
         {
@@ -56,6 +56,6 @@ public sealed class React : Entity
             return CourseChatErrors.EmojiInvalid;
         }
 
-        return new React(Guid.NewGuid(), messageId, reactorId, emoji);
+        return new Reaction(Guid.NewGuid(), messageId, reactorId, emoji);
     }
 }

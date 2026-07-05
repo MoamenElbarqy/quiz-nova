@@ -5,9 +5,9 @@ using QuizNova.Domain.Entities.CourseChats;
 
 namespace QuizNova.Infrastructure.Data.Configurations;
 
-public sealed class ReactConfiguration : IEntityTypeConfiguration<React>
+public sealed class ReactionConfiguration : IEntityTypeConfiguration<Reaction>
 {
-    public void Configure(EntityTypeBuilder<React> builder)
+    public void Configure(EntityTypeBuilder<Reaction> builder)
     {
         builder.ToTable("MessageReactions");
         builder.HasKey(r => r.Id);

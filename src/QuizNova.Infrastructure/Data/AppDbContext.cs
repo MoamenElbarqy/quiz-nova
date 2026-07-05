@@ -60,6 +60,8 @@ public class AppDbContext(
 
     public DbSet<Message> CourseChatRoomMessages => Set<Message>();
 
+    public DbSet<Reaction> Reactions => Set<Reaction>();
+
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)

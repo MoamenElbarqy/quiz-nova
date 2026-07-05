@@ -42,5 +42,7 @@ public interface IAppDbContext
 
     public DbSet<Message> CourseChatRoomMessages { get; }
 
+    public DbSet<Reaction> Reactions { get; }
+
     Task<int> SaveChangesAsync(CancellationToken ct);
 }

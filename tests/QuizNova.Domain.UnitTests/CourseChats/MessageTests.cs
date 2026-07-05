@@ -103,15 +103,15 @@ public class MessageTests
         // Arrange
         var message = Message.Create(Guid.NewGuid(), Guid.NewGuid(), null, JsonDocument.Parse("{\"text\":\"hello\"}"))
             .Value;
-        var react = React.Create(message.Id, Guid.NewGuid(), "👍").Value;
+        var reaction = Reaction.Create(message.Id, Guid.NewGuid(), "👍").Value;
 
         // Act
-        var result = message.AddReaction(react);
+        var result = message.AddReaction(reaction);
 
         // Assert
         Assert.True(result.IsSuccess);
         Assert.Single(message.Reacts);
-        Assert.Contains(react, message.Reacts);
+        Assert.Contains(reaction, message.Reacts);
     }
 
     [Fact]
@@ -120,11 +120,11 @@ public class MessageTests
         // Arrange
         var message = Message.Create(Guid.NewGuid(), Guid.NewGuid(), null, JsonDocument.Parse("{\"text\":\"hello\"}"))
             .Value;
-        var react = React.Create(message.Id, Guid.NewGuid(), "👍").Value;
-        message.AddReaction(react);
+        var reaction = Reaction.Create(message.Id, Guid.NewGuid(), "👍").Value;
+        message.AddReaction(reaction);
 
         // Act
-        var result = message.RemoveReaction(react.Id);
+        var result = message.RemoveReaction(reaction.Id);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -143,14 +143,14 @@ public class MessageTests
 
         // Assert
         Assert.True(result.IsError);
-        Assert.Equal("React.ReactionNotFound", result.TopError.Code);
+        Assert.Equal("Reaction.ReactionNotFound", result.TopError.Code);
     }
 
     [Fact]
     public void ReactCreate_ShouldSuccess_WithSurrogatePairEmoji()
     {
         // Act
-        var result = React.Create(Guid.NewGuid(), Guid.NewGuid(), "😀");
+        var result = Reaction.Create(Guid.NewGuid(), Guid.NewGuid(), "😀");
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -161,21 +161,21 @@ public class MessageTests
     public void ReactCreate_ShouldFail_WithMultipleEmojis()
     {
         // Act
-        var result = React.Create(Guid.NewGuid(), Guid.NewGuid(), "👍😀");
+        var result = Reaction.Create(Guid.NewGuid(), Guid.NewGuid(), "👍😀");
 
         // Assert
         Assert.True(result.IsError);
-        Assert.Equal("React.EmojiInvalid", result.TopError.Code);
+        Assert.Equal("Reaction.EmojiInvalid", result.TopError.Code);
     }
 
     [Fact]
     public void ReactCreate_ShouldFail_WithEmptyEmoji()
     {
         // Act
-        var result = React.Create(Guid.NewGuid(), Guid.NewGuid(), string.Empty);
+        var result = Reaction.Create(Guid.NewGuid(), Guid.NewGuid(), string.Empty);
 
         // Assert
         Assert.True(result.IsError);
-        Assert.Equal("React.EmojiRequired", result.TopError.Code);
+        Assert.Equal("Reaction.EmojiRequired", result.TopError.Code);
     }
 }

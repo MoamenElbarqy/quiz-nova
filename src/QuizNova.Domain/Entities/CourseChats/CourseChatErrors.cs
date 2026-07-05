@@ -26,13 +26,13 @@ public static class CourseChatErrors
         Error.Forbidden("CourseChatRoom.CannotReact", "You are not authorized to react in this chat room.");
 
     public static readonly Error MessageIdRequired =
-        Error.Validation("React.MessageIdRequired", "Message ID is required.");
+        Error.Validation("Reaction.MessageIdRequired", "Message ID is required.");
 
     public static readonly Error ReactorIdRequired =
-        Error.Validation("React.ReactorIdRequired", "Reactor ID is required.");
+        Error.Validation("Reaction.ReactorIdRequired", "Reactor ID is required.");
 
     public static readonly Error EmojiRequired =
-        Error.Validation("React.EmojiRequired", "Emoji is required.");
+        Error.Validation("Reaction.EmojiRequired", "Emoji is required.");
 
     public static readonly Error InstructorIdRequired =
         Error.Validation("CourseChatRoom.InstructorIdRequired", "Instructor ID is required.");
@@ -44,11 +44,11 @@ public static class CourseChatErrors
         Error.NotFound("CourseChatRoom.StudentNotInRoom", "Student is not in this chat room.");
 
     public static readonly Error ReactionNotFound =
-        Error.NotFound("React.ReactionNotFound", "Reaction was not found.");
+        Error.NotFound("Reaction.ReactionNotFound", "Reaction was not found.");
 
     public static readonly Error MessageLengthInvalid =
         Error.Validation("Message.LengthInvalid", "Message must be between 1 and 500 characters.");
 
     public static readonly Error EmojiInvalid =
-        Error.Validation("React.EmojiInvalid", "Emoji must be exactly one character.");
+        Error.Validation("Reaction.EmojiInvalid", "Emoji must be exactly one character.");
 }

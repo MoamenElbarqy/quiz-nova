@@ -5,13 +5,13 @@ namespace QuizNova.Application.Features.CourseChats.Mappers;
 
 public static class ReactMapper
 {
-    public static ReactDto ToDto(this React react)
+    public static ReactDto ToDto(this Reaction reaction)
     {
         return new ReactDto(
-            react.Id,
-            react.MessageId,
-            react.ReactorId,
-            react.Emoji,
-            react.CreatedAt);
+            reaction.Id,
+            reaction.MessageId,
+            reaction.ReactorId,
+            reaction.Emoji,
+            reaction.CreatedAt);
     }
 }

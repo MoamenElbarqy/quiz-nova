@@ -9,7 +9,7 @@ namespace QuizNova.Domain.Entities.CourseChats;
 
 public sealed class Message : Entity
 {
-    private readonly List<React> _reacts;
+    private readonly List<Reaction> _reacts;
 
     [SetsRequiredMembers]
     private Message()
@@ -24,7 +24,7 @@ public sealed class Message : Entity
         Guid? replyOnId,
         DateTimeOffset createdAt,
         JsonDocument content,
-        List<React> reacts)
+        List<Reaction> reacts)
         : base(id)
     {
         RoomId = roomId;
@@ -49,7 +49,7 @@ public sealed class Message : Entity
 
     public required JsonDocument Content { get; init; }
 
-    public IEnumerable<React> Reacts => _reacts.AsReadOnly();
+    public IEnumerable<Reaction> Reacts => _reacts.AsReadOnly();
 
     public static Result<Message> Create(
         Guid roomId,
@@ -99,7 +99,7 @@ public sealed class Message : Entity
         return message;
     }
 
-    public Result<Updated> AddReaction(React reaction)
+    public Result<Updated> AddReaction(Reaction reaction)
     {
         var existing = _reacts.FirstOrDefault(r => r.ReactorId == reaction.ReactorId && r.Emoji == reaction.Emoji);
         if (existing == null)
