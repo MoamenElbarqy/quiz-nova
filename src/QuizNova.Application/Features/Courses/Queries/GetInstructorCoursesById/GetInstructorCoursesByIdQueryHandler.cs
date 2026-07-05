@@ -41,12 +41,6 @@ public sealed class GetInstructorCoursesByIdQueryHandler(
                     .Sum(q => q.Marks)))
             .ToListAsync(ct);
 
-        if (instructorCourses.Count == 0)
-        {
-            logger.LogInformation("No courses found for instructor {InstructorId}", request.InstructorId);
-            return ApplicationErrors.NoCoursesForInstructor(request.InstructorId);
-        }
-
         logger.LogInformation("Successfully retrieved {Count} courses for instructor {InstructorId}",
             instructorCourses.Count, request.InstructorId);
 
