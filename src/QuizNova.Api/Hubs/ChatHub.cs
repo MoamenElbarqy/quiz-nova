@@ -1,3 +1,5 @@
+using MediatR;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -5,16 +7,17 @@ using Microsoft.EntityFrameworkCore;
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
+using QuizNova.Application.Features.CourseChats.Commands.ReactToMessage;
+using QuizNova.Application.Features.CourseChats.Commands.RemoveReaction;
+using QuizNova.Application.Features.CourseChats.Commands.SendMessage;
 using QuizNova.Application.Features.CourseChats.DTOs;
-using QuizNova.Application.Features.CourseChats.Mappers;
-using QuizNova.Application.Features.Users.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.CourseChats;
 
 namespace QuizNova.Api.Hubs;
 
 [Authorize]
-public class ChatHub(IAppDbContext dbContext, IUser currentUser) : Hub
+public class ChatHub(IAppDbContext dbContext, IUser currentUser, IMediator mediator) : Hub
 {
     public async Task<Result<Success>> JoinRoom(Guid roomId)
     {
@@ -38,11 +41,7 @@ public class ChatHub(IAppDbContext dbContext, IUser currentUser) : Hub
             var isCourseInstructor = await dbContext.Courses
                 .AnyAsync(c => c.Id == room.CourseId && c.InstructorId == userId);
 
-            if (isCourseInstructor)
-            {
-                // proceed
-            }
-            else
+            if (!isCourseInstructor)
             {
                 var isEnrolled = await dbContext.Enrollments
                     .AnyAsync(e => e.CourseId == room.CourseId && e.StudentId == userId);
@@ -66,158 +65,40 @@ public class ChatHub(IAppDbContext dbContext, IUser currentUser) : Hub
 
     public async Task<Result<MessageDto>> SendMessage(Guid roomId, SendMessageRequest request)
     {
-        var userIdString = currentUser.Id;
-        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+        var command = new SendMessageCommand(roomId, request.ReplyOnId, request.Content);
+        var result = await mediator.Send(command);
+
+        if (result.IsSuccess)
         {
-            return CourseChatErrors.CannotSend;
+            await Clients.Group(roomId.ToString()).SendAsync("ReceiveMessage", result.Value);
         }
 
-        var room = await dbContext.CourseChatRooms
-            .Include(r => r.Students)
-            .FirstOrDefaultAsync(r => r.Id == roomId);
-
-        if (room == null)
-        {
-            return ApplicationErrors.CourseChatRoomNotFound(roomId);
-        }
-
-        if (!room.CanSend(userId))
-        {
-            return CourseChatErrors.CannotSend;
-        }
-
-        var messageResult = Message.Create(roomId, userId, request.ReplyOnId, request.Content);
-        if (messageResult.IsError)
-        {
-            return messageResult.Errors;
-        }
-
-        var message = messageResult.Value;
-        await dbContext.CourseChatRoomMessages.AddAsync(message);
-        await dbContext.SaveChangesAsync(CancellationToken.None);
-
-        var senderUser = await dbContext.Users
-            .AsNoTracking()
-            .FirstAsync(u => u.Id == userId);
-
-        var senderDto = senderUser.ToDto();
-
-        var messageDto = message.ToDto(senderDto, []);
-        await Clients.Group(roomId.ToString()).SendAsync("ReceiveMessage", messageDto);
-
-        return messageDto;
+        return result;
     }
 
     public async Task<Result<ReactDto>> ReactToMessage(Guid roomId, ReactOnAMessageRequest request)
     {
-        var userIdString = currentUser.Id;
-        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+        var command = new ReactToMessageCommand(roomId, request.MessageId, request.Emoji);
+        var result = await mediator.Send(command);
+
+        if (result.IsSuccess)
         {
-            return CourseChatErrors.CannotReact;
+            await Clients.Group(roomId.ToString()).SendAsync("ReceiveReaction", result.Value);
         }
 
-        var room = await dbContext.CourseChatRooms
-            .Include(r => r.Students)
-            .FirstOrDefaultAsync(r => r.Id == roomId);
-
-        if (room == null)
-        {
-            return ApplicationErrors.CourseChatRoomNotFound(roomId);
-        }
-
-        if (!room.CanReact(userId))
-        {
-            return CourseChatErrors.CannotReact;
-        }
-
-        var message = await dbContext.CourseChatRoomMessages
-            .Include(m => m.Reacts)
-            .FirstOrDefaultAsync(m => m.Id == request.MessageId && m.RoomId == roomId);
-
-        if (message == null)
-        {
-            return ApplicationErrors.MessageNotFound(request.MessageId);
-        }
-
-        var reactResult = React.Create(request.MessageId, userId, request.Emoji);
-        if (reactResult.IsError)
-        {
-            return reactResult.Errors;
-        }
-
-        var react = reactResult.Value;
-        var addResult = message.AddReaction(react);
-        if (addResult.IsError)
-        {
-            return addResult.Errors;
-        }
-
-        if (dbContext is DbContext efDbContext)
-        {
-            efDbContext.Add(react);
-        }
-
-        await dbContext.SaveChangesAsync(CancellationToken.None);
-
-        var reactDto = react.ToDto();
-        await Clients.Group(roomId.ToString()).SendAsync("ReceiveReaction", reactDto);
-
-        return reactDto;
+        return result;
     }
 
     public async Task<Result<Success>> RemoveReaction(Guid roomId, Guid messageId, Guid reactionId)
     {
-        var userIdString = currentUser.Id;
-        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+        var command = new RemoveReactionCommand(roomId, messageId, reactionId);
+        var result = await mediator.Send(command);
+
+        if (result.IsSuccess)
         {
-            return CourseChatErrors.CannotReact;
+            await Clients.Group(roomId.ToString()).SendAsync("ReceiveReactionRemoved", reactionId);
         }
 
-        var room = await dbContext.CourseChatRooms
-            .Include(r => r.Students)
-            .FirstOrDefaultAsync(r => r.Id == roomId);
-
-        if (room == null)
-        {
-            return ApplicationErrors.CourseChatRoomNotFound(roomId);
-        }
-
-        if (!room.CanReact(userId))
-        {
-            return CourseChatErrors.CannotReact;
-        }
-
-        var message = await dbContext.CourseChatRoomMessages
-            .Include(m => m.Reacts)
-            .FirstOrDefaultAsync(m => m.Id == messageId && m.RoomId == roomId);
-
-        if (message == null)
-        {
-            return ApplicationErrors.MessageNotFound(messageId);
-        }
-
-        var reaction = message.Reacts.FirstOrDefault(r => r.Id == reactionId);
-        if (reaction == null)
-        {
-            return CourseChatErrors.ReactionNotFound;
-        }
-
-        if (reaction.ReactorId != userId)
-        {
-            return CourseChatErrors.CannotReact;
-        }
-
-        var removeResult = message.RemoveReaction(reactionId);
-        if (removeResult.IsError)
-        {
-            return removeResult.Errors;
-        }
-
-        await dbContext.SaveChangesAsync(CancellationToken.None);
-
-        var reactDto = reaction.ToDto();
-        await Clients.Group(roomId.ToString()).SendAsync("ReceiveReactionRemoved", reactDto);
-
-        return Result.Success;
+        return result;
     }
 }

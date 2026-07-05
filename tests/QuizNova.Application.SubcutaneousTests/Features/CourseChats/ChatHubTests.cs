@@ -2,6 +2,8 @@ using System.Text.Json;
 
 using FluentAssertions;
 
+using MediatR;
+
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,7 +13,12 @@ using NSubstitute;
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Hubs;
 using QuizNova.Application.Common.Interfaces;
+using QuizNova.Application.Features.CourseChats.Commands.ReactToMessage;
+using QuizNova.Application.Features.CourseChats.Commands.RemoveReaction;
+using QuizNova.Application.Features.CourseChats.Commands.SendMessage;
+using QuizNova.Application.Features.CourseChats.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
+using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.CourseChats;
 using QuizNova.Domain.Entities.Courses;
 
@@ -32,22 +39,22 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
         var course = Course.Create(instructor.Id, $"Course {Guid.NewGuid().ToString()[..8]}", 50, 100, [], []).Value;
         await dbContext.Courses.AddAsync(course);
 
-        // Create CourseChatRoom and add student
         var room = CourseChatRoom.Create(course.Id, instructor.Id).Value;
         room.AddStudent(student);
         await dbContext.CourseChatRooms.AddAsync(room);
         await dbContext.SaveChangesAsync(CancellationToken.None);
 
-        // Mock IUser and SignalR plumbing
         var mockUser = Substitute.For<IUser>();
         mockUser.Id.Returns(student.Id.ToString());
+
+        var mockMediator = Substitute.For<IMediator>();
 
         var hubContext = Substitute.For<HubCallerContext>();
         hubContext.ConnectionId.Returns("conn-1");
 
         var groups = Substitute.For<IGroupManager>();
 
-        var hub = new ChatHub(dbContext, mockUser)
+        var hub = new ChatHub(dbContext, mockUser, mockMediator)
         {
             Context = hubContext,
             Groups = groups,
@@ -76,14 +83,15 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
         await dbContext.CourseChatRooms.AddAsync(room);
         await dbContext.SaveChangesAsync(CancellationToken.None);
 
-        // A random user Guid who is not enrolled
         var randomUserId = Guid.NewGuid();
 
         var mockUser = Substitute.For<IUser>();
         mockUser.Id.Returns(randomUserId.ToString());
 
+        var mockMediator = Substitute.For<IMediator>();
+
         var hubContext = Substitute.For<HubCallerContext>();
-        var hub = new ChatHub(dbContext, mockUser)
+        var hub = new ChatHub(dbContext, mockUser, mockMediator)
         {
             Context = hubContext,
         };
@@ -97,7 +105,7 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
-    public async Task SendMessage_ShouldReturnSuccessAndBroadcast_WhenUserCanSend()
+    public async Task SendMessage_ShouldDelegateToMediatorAndBroadcast()
     {
         // Arrange
         using var scope = factory.Services.CreateScope();
@@ -114,18 +122,32 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
         var mockUser = Substitute.For<IUser>();
         mockUser.Id.Returns(instructor.Id.ToString());
 
+        var mockMediator = Substitute.For<IMediator>();
+
+        var content = JsonDocument.Parse("{\"text\":\"hello world\"}");
+        var expectedDto = new MessageDto(
+            Guid.NewGuid(),
+            room.Id,
+            null!,
+            null,
+            DateTimeOffset.UtcNow,
+            content,
+            []);
+
+        mockMediator.Send(Arg.Is<SendMessageCommand>(c => c.RoomId == room.Id))
+            .Returns((Result<MessageDto>)expectedDto);
+
         var hubContext = Substitute.For<HubCallerContext>();
         var clients = Substitute.For<IHubCallerClients>();
         var clientProxy = Substitute.For<IClientProxy>();
         clients.Group(room.Id.ToString()).Returns(clientProxy);
 
-        var hub = new ChatHub(dbContext, mockUser)
+        var hub = new ChatHub(dbContext, mockUser, mockMediator)
         {
             Context = hubContext,
             Clients = clients,
         };
 
-        var content = JsonDocument.Parse("{\"text\":\"hello world\"}");
         var input = SendMessageRequest.Create(null, content);
 
         // Act
@@ -133,22 +155,14 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNull();
-        result.Value.Content.RootElement.GetProperty("text").GetString().Should().Be("hello world");
 
-        // Verify message was saved to DB
-        var savedMessage = await dbContext.CourseChatRoomMessages
-            .FirstOrDefaultAsync(m => m.RoomId == room.Id && m.SenderId == instructor.Id);
-        savedMessage.Should().NotBeNull();
-
-        // Verify broadcast
         await clientProxy.Received(1).SendCoreAsync(
             "ReceiveMessage",
             Arg.Is<object[]>(args => args.Length == 1));
     }
 
     [Fact]
-    public async Task ReactToMessage_ShouldReturnSuccessAndBroadcast_WhenUserCanReact()
+    public async Task ReactToMessage_ShouldDelegateToMediatorAndBroadcast()
     {
         // Arrange
         using var scope = factory.Services.CreateScope();
@@ -172,12 +186,18 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
         var mockUser = Substitute.For<IUser>();
         mockUser.Id.Returns(student.Id.ToString());
 
+        var mockMediator = Substitute.For<IMediator>();
+        var expectedDto = new ReactDto(Guid.NewGuid(), message.Id, student.Id, "👍", DateTimeOffset.UtcNow);
+
+        mockMediator.Send(Arg.Is<ReactToMessageCommand>(c => c.RoomId == room.Id && c.MessageId == message.Id))
+            .Returns((Result<ReactDto>)expectedDto);
+
         var hubContext = Substitute.For<HubCallerContext>();
         var clients = Substitute.For<IHubCallerClients>();
         var clientProxy = Substitute.For<IClientProxy>();
         clients.Group(room.Id.ToString()).Returns(clientProxy);
 
-        var hub = new ChatHub(dbContext, mockUser)
+        var hub = new ChatHub(dbContext, mockUser, mockMediator)
         {
             Context = hubContext,
             Clients = clients,
@@ -190,26 +210,14 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNull();
-        result.Value.Emoji.Should().Be("👍");
-        result.Value.MessageId.Should().Be(message.Id);
-        result.Value.ReactorId.Should().Be(student.Id);
 
-        // Verify reaction was saved to DB
-        var savedMessage = await dbContext.CourseChatRoomMessages
-            .Include(m => m.Reacts)
-            .FirstOrDefaultAsync(m => m.Id == message.Id);
-        savedMessage.Should().NotBeNull();
-        savedMessage.Reacts.Should().ContainSingle(r => r.ReactorId == student.Id && r.Emoji == "👍");
-
-        // Verify broadcast
         await clientProxy.Received(1).SendCoreAsync(
             "ReceiveReaction",
             Arg.Is<object[]>(args => args.Length == 1));
     }
 
     [Fact]
-    public async Task RemoveReaction_ShouldReturnSuccessAndBroadcast_WhenUserCanRemoveReaction()
+    public async Task RemoveReaction_ShouldDelegateToMediatorAndBroadcast()
     {
         // Arrange
         using var scope = factory.Services.CreateScope();
@@ -227,8 +235,8 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
         var content = JsonDocument.Parse("{\"text\":\"hello world\"}");
         var message = Message.Create(room.Id, instructor.Id, null, content).Value;
 
-        var react = React.Create(message.Id, student.Id, "👍").Value;
-        message.AddReaction(react);
+        var reaction = Reaction.Create(message.Id, student.Id, "👍").Value;
+        message.AddReaction(reaction);
 
         await dbContext.CourseChatRoomMessages.AddAsync(message);
         await dbContext.SaveChangesAsync(CancellationToken.None);
@@ -237,31 +245,30 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
         var mockUser = Substitute.For<IUser>();
         mockUser.Id.Returns(student.Id.ToString());
 
+        var mockMediator = Substitute.For<IMediator>();
+
+        Result<Success> successResult = default(Success);
+        mockMediator.Send(Arg.Is<RemoveReactionCommand>(
+                c => c.RoomId == room.Id && c.MessageId == message.Id && c.ReactionId == reaction.Id))
+            .Returns(successResult);
+
         var hubContext = Substitute.For<HubCallerContext>();
         var clients = Substitute.For<IHubCallerClients>();
         var clientProxy = Substitute.For<IClientProxy>();
         clients.Group(room.Id.ToString()).Returns(clientProxy);
 
-        var hub = new ChatHub(dbContext, mockUser)
+        var hub = new ChatHub(dbContext, mockUser, mockMediator)
         {
             Context = hubContext,
             Clients = clients,
         };
 
         // Act
-        var result = await hub.RemoveReaction(room.Id, message.Id, react.Id);
+        var result = await hub.RemoveReaction(room.Id, message.Id, reaction.Id);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
 
-        // Verify reaction was removed from DB
-        var savedMessage = await dbContext.CourseChatRoomMessages
-            .Include(m => m.Reacts)
-            .FirstOrDefaultAsync(m => m.Id == message.Id);
-        savedMessage.Should().NotBeNull();
-        savedMessage.Reacts.Should().NotContain(r => r.ReactorId == student.Id && r.Emoji == "👍");
-
-        // Verify broadcast
         await clientProxy.Received(1).SendCoreAsync(
             "ReceiveReactionRemoved",
             Arg.Is<object[]>(args => args.Length == 1));
