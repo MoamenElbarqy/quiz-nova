@@ -201,7 +201,7 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
 
         var quizId = Guid.NewGuid();
 
-        // Satisfy the Quiz domain rule: At least 3 questions, display order starting at 0, 1, 2
+        // Satisfy the Quiz domain rule: At least 1 question, display order starting at 0, 1, 2
         var question1 = Essay.Create(Guid.NewGuid(), quizId, "Question 1Text", "Ref 1", 0, 10).Value;
         var question2 = Essay.Create(Guid.NewGuid(), quizId, "Question 2Text", "Ref 2", 1, 10).Value;
 

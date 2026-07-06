@@ -22,6 +22,7 @@ namespace QuizNova.Domain.Entities.Quizzes;
 public class Quiz : Entity
 {
     private readonly List<Question> _questions;
+    private readonly List<QuizAttempt> _quizAttempts;
 
     [SetsRequiredMembers]
     private Quiz()
@@ -45,6 +46,7 @@ public class Quiz : Entity
         StartsAtUtc = startsAtUtc;
         EndsAtUtc = endsAtUtc;
         _questions = questions;
+        _quizAttempts = [];
     }
 
     public Guid CourseId { get; private set; }
@@ -60,6 +62,8 @@ public class Quiz : Entity
     public int Marks => Questions.Sum(q => q.Marks);
 
     public IEnumerable<Question> Questions => _questions.AsReadOnly();
+
+    public IEnumerable<QuizAttempt> QuizAttempts => _quizAttempts.AsReadOnly();
 
     public Course? Course { get; init; }
 
@@ -117,14 +121,14 @@ public class Quiz : Entity
             return QuizErrors.ScheduleDurationTooShort;
         }
 
+        if (questions.Count < 1)
+        {
+            return QuizErrors.QuestionsRequired;
+        }
+
         if (questions.Sum(q => q.Marks) <= 0)
         {
             return QuizErrors.MarksInvalid;
-        }
-
-        if (questions.Count < 3)
-        {
-            return QuizErrors.QuestionsRequired;
         }
 
         var displayOrders = questions.Select(q => q.DisplayOrder).ToHashSet();
@@ -277,7 +281,7 @@ public class Quiz : Entity
             return QuizErrors.QuestionNotFound;
         }
 
-        if (_questions.Count <= 3)
+        if (_questions.Count <= 1)
         {
             return QuizErrors.MinimumQuestionsReached;
         }

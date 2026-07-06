@@ -20,7 +20,7 @@ public static class QuizErrors
         Error.Validation("Quiz_Marks_Invalid", "Marks must be greater than zero.");
 
     public static readonly Error QuestionsRequired =
-        Error.Validation("Quiz_Questions_Required", "At least 3 questions are required to instantiate a quiz.");
+        Error.Validation("Quiz_Questions_Required", "At least 1 question is required to instantiate a quiz.");
 
     public static Error QuestionBelongsToDifferentQuiz(Guid questionId) =>
         Error.Validation(
@@ -33,7 +33,7 @@ public static class QuizErrors
             $"Question with ID '{questionId}' already exists in the quiz.");
 
     public static readonly Error MinimumQuestionsReached =
-        Error.Validation("Quiz_MinimumQuestionsReached", "A quiz must have at least 3 questions.");
+        Error.Validation("Quiz_MinimumQuestionsReached", "A quiz must have at least 1 question.");
 
     public static readonly Error QuestionNotFound =
         Error.NotFound("Quiz_QuestionNotFound", "Question not found in the quiz.");

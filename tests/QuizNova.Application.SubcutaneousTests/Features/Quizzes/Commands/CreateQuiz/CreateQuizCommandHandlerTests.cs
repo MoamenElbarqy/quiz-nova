@@ -145,14 +145,9 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
 
     // --- Domain Rules / Handler level tests ---
     [Fact]
-    public async Task Handle_WithFewerThan3Questions_ShouldReturnDomainError()
+    public async Task Handle_WithZeroQuestions_ShouldReturnDomainError()
     {
         var mediator = factory.CreateMediator();
-        var questions = new List<CreateQuestionCommand>
-        {
-            new CreateTfCommand("Q1 Tf", 1, true),
-            new CreateTfCommand("Q2 Tf", 1, false),
-        };
 
         Guid courseId;
         Guid instructorId;
@@ -165,12 +160,13 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
         }
 
         var command = new CreateQuizCommand("Valid Title", courseId, instructorId,
-            DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30), questions);
+            DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30),
+            []);
 
         var result = await mediator.Send(command);
 
         result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be("Quiz_Questions_Required");
+        result.Errors.Should().Contain(e => e.Code == "Questions");
     }
 
     [Fact]

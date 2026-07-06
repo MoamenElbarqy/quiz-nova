@@ -142,17 +142,15 @@ public class QuizTests
     }
 
     [Fact]
-    public void Create_ShouldFail_WithLessQuestionsThanThree()
+    public void Create_ShouldFail_WithZeroQuestions()
     {
         // Arrange
         var id = Guid.NewGuid();
-        var q1 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 0).Value;
-        var q2 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 1).Value;
 
         // Act
         var result = QuizFactory.CreateQuiz(
             id: id,
-            questions: [q1, q2]);
+            questions: []);
 
         // Assert
         Assert.True(result.IsError);
@@ -350,17 +348,23 @@ public class QuizTests
     }
 
     [Fact]
-    public void DeleteQuestion_ShouldFail_WhenQuestionsCountReachesThree()
+    public void DeleteQuestion_ShouldFail_WhenDeletingLastQuestion()
     {
-        // Assert
+        // Arrange
         var quiz = QuizFactory.CreateQuiz().Value;
         Assert.Equal(3, quiz.Questions.Count());
-        var firstQuestion = quiz.Questions.First();
+        var questions = quiz.Questions.ToList();
 
-        var result = quiz.DeleteQuestion(firstQuestion);
+        // Act — delete down to 1 question (should succeed)
+        var result1 = quiz.DeleteQuestion(questions[0]);
+        var result2 = quiz.DeleteQuestion(questions[1]);
+        var result3 = quiz.DeleteQuestion(questions[2]);
 
-        Assert.True(result.IsError);
-        Assert.Equal(QuizErrors.MinimumQuestionsReached, result.TopError);
+        // Assert
+        Assert.True(result1.IsSuccess);
+        Assert.True(result2.IsSuccess);
+        Assert.True(result3.IsError);
+        Assert.Equal(QuizErrors.MinimumQuestionsReached, result3.TopError);
     }
 
     [Fact]
