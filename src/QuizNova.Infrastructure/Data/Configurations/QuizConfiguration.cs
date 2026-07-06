@@ -20,6 +20,10 @@ public sealed class QuizConfiguration : IEntityTypeConfiguration<Quiz>
             .HasField("_questions")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
+        builder.Navigation(q => q.QuizAttempts)
+            .HasField("_quizAttempts")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.HasOne(q => q.Course)
             .WithMany(c => c.Quizzes)
             .HasForeignKey(q => q.CourseId)

@@ -22,7 +22,7 @@ public sealed class QuizAttemptConfiguration : IEntityTypeConfiguration<QuizAtte
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(qa => qa.Quiz)
-            .WithMany()
+            .WithMany(q => q.QuizAttempts)
             .HasForeignKey(qa => qa.QuizId)
             .OnDelete(DeleteBehavior.Cascade);
     }
