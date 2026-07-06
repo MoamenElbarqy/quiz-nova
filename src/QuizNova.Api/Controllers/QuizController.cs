@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.OutputCaching;
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Mappers;
 using QuizNova.Application.Common.Models;
+using QuizNova.Application.Features.Courses.DTOs;
+using QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesPerformance;
 using QuizNova.Application.Features.Quizzes.Commands.AddQuestion;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.Features.Quizzes.Commands.DeleteQuestion;
@@ -293,6 +295,26 @@ public sealed class QuizController(ISender sender) : ApiController
     public async Task<ActionResult<List<QuizDto>>> GetInstructorQuizzes([FromRoute] Guid id)
     {
         var result = await sender.Send(new GetInstructorQuizzesQuery(id));
+
+        return result.Match(
+            Ok,
+            Problem);
+    }
+
+    [EndpointSummary("Retrieves instructor courses performance.")]
+    [EndpointDescription("Returns performance metrics for all courses of a specific instructor.")]
+    [EndpointName("GetInstructorCoursesPerformance")]
+    [OutputCache(Tags = ["courses", "quizzes", "instructors", "performance"])]
+    [HttpGet("/instructors/{instructorId:guid}/courses/performance")]
+    [Authorize(Roles = nameof(UserRole.Instructor))]
+    [ProducesResponseType(typeof(List<CoursePerformanceDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<List<CoursePerformanceDto>>> GetInstructorCoursesPerformance(
+        [FromRoute] Guid instructorId)
+    {
+        var result = await sender.Send(new GetInstructorCoursesPerformanceQuery(instructorId));
 
         return result.Match(
             Ok,

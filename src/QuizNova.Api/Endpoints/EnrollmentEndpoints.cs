@@ -6,6 +6,7 @@ using QuizNova.Api.DTOs.Requests;
 using QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
 using QuizNova.Application.Features.Enrollments.Commands.RemoveStudentFromCourse;
 using QuizNova.Application.Features.Enrollments.DTOs;
+using QuizNova.Application.Features.Enrollments.Queries.GetAllCoursesEnrollmentCount;
 using QuizNova.Application.Features.Enrollments.Queries.GetStudentEnrollmentsById;
 using QuizNova.Application.Features.Enrollments.Queries.GetStudentEnrollmentsCount;
 using QuizNova.Domain.Entities.Identity;
@@ -16,6 +17,24 @@ public static class EnrollmentEndpoints
 {
     public static IEndpointRouteBuilder MapEnrollmentEndpoints(this IEndpointRouteBuilder app)
     {
+        // GET courses/enrollments/count
+        app.MapGet("courses/enrollments/count", async (ISender sender) =>
+            {
+                var result = await sender.Send(new GetAllCoursesEnrollmentCountQuery());
+                return result.ToOk();
+            })
+            .WithName("GetAllCoursesEnrollmentCount")
+            .WithSummary("Retrieves enrollment counts for all courses.")
+            .WithDescription("Returns a list of all courses with their enrollment count, sorted descending. Admin only.")
+            .CacheOutput(policy => policy.Tag("courses").Tag("enrollments"))
+            .RequireAuthorization(new AuthorizeAttribute { Roles = nameof(UserRole.Admin) })
+            .RequireRateLimiting("Global")
+            .WithTags("enrollments")
+            .Produces<List<CourseEnrollmentCountDto>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
+
         var group = app.MapGroup("students")
             .RequireAuthorization()
             .RequireRateLimiting("Global")

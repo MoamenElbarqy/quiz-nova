@@ -12,7 +12,7 @@ using QuizNova.Application.Features.Courses.Commands.UpdateCourseInstructor;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Application.Features.Courses.Queries.GetAllCourses;
 using QuizNova.Application.Features.Courses.Queries.GetCourseById;
-using QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesById;
+using QuizNova.Application.Features.Courses.Queries.GetInstructorCourses;
 using QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesCount;
 using QuizNova.Domain.Entities.Identity;
 
@@ -47,7 +47,7 @@ public sealed class CourseController(ISender sender) : ApiController
     [EndpointName("GetInstructorCourses")]
     public async Task<ActionResult<List<CourseDto>>> GetInstructorCourses(Guid instructorId)
     {
-        var result = await sender.Send(new GetInstructorCoursesByIdQuery(instructorId));
+        var result = await sender.Send(new GetInstructorCoursesQuery(instructorId));
         return result.Match(Ok, Problem);
     }
 
