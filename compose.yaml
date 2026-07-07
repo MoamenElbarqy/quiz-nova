@@ -50,6 +50,7 @@ services:
       JwtSettings__ExpiryMinutes: 7
       AppSettings__Cors__PolicyName: "AngularClient"
       AppSettings__Cors__AllowedOrigins__0: "http://localhost:4200"
+      DisableRateLimiting: "true"
       OTEL_EXPORTER_OTLP_ENDPOINT: http://seq:5341/ingest/otlp/traces
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
     ports:
