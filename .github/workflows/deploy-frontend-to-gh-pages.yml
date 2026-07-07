@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
     paths:
       - "src/QuizNova.Client/**"
-      - ".github/workflows/deploy-frontend.yml"
+      - ".github/workflows/deploy-frontend-to-gh-pages.yml"
 
 jobs:
   deploy:
