@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.OutputCaching;
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Mappers;
 using QuizNova.Application.Common.Models;
-using QuizNova.Application.Features.Admins.Commands.DeleteAdmin;
 using QuizNova.Application.Features.Admins.DTOs;
 using QuizNova.Application.Features.Admins.Queries.GetAdminById;
 using QuizNova.Application.Features.Admins.Queries.GetAllAdmins;
@@ -73,43 +72,6 @@ public sealed class AdminController(ISender sender) : ApiController
 
         return result.Match(
             Ok,
-            Problem);
-    }
-
-    [EndpointSummary("Updates an existing admin.")]
-    [EndpointDescription("Updates profile and credential fields for the specified admin.")]
-    [EndpointName("UpdateAdmin")]
-    [HttpPut("{id:guid}")]
-    [ProducesResponseType(typeof(AdminDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> UpdateAdmin([FromRoute] Guid id, [FromBody] UpdateAdminRequest request)
-    {
-        var command = request.ToCommand(id);
-
-        var result = await sender.Send(command);
-
-        return result.Match(
-            Ok,
-            Problem);
-    }
-
-    [EndpointSummary("Deletes an admin.")]
-    [EndpointDescription("Removes the admin account identified by the provided admin identifier.")]
-    [EndpointName("DeleteAdmin")]
-    [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteAdmin([FromRoute] Guid id)
-    {
-        var result = await sender.Send(new DeleteAdminCommand(id));
-
-        return result.Match(
-            _ => NoContent(),
             Problem);
     }
 }

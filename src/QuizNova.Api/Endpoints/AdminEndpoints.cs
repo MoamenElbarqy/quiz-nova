@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Mappers;
 using QuizNova.Application.Common.Models;
-using QuizNova.Application.Features.Admins.Commands.DeleteAdmin;
 using QuizNova.Application.Features.Admins.DTOs;
 using QuizNova.Application.Features.Admins.Queries.GetAdminById;
 using QuizNova.Application.Features.Admins.Queries.GetAllAdmins;
@@ -62,32 +61,6 @@ public static class AdminEndpoints
         .Produces<AdminDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status409Conflict);
-
-        group.MapPut("{id:guid}", async (ISender sender, Guid id, UpdateAdminRequest request) =>
-        {
-            var command = request.ToCommand(id);
-            var result = await sender.Send(command);
-            return result.ToOk();
-        })
-        .WithName("UpdateAdmin")
-        .WithSummary("Updates an existing admin.")
-        .WithDescription("Updates profile and credential fields for the specified admin.")
-        .Produces<AdminDto>(StatusCodes.Status200OK)
-        .ProducesProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status404NotFound)
-        .ProducesProblem(StatusCodes.Status409Conflict);
-
-        group.MapDelete("{id:guid}", async (ISender sender, Guid id) =>
-        {
-            var result = await sender.Send(new DeleteAdminCommand(id));
-            return result.ToNoContent();
-        })
-        .WithName("DeleteAdmin")
-        .WithSummary("Deletes an admin.")
-        .WithDescription("Removes the admin account identified by the provided admin identifier.")
-        .Produces(StatusCodes.Status204NoContent)
-        .ProducesProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status404NotFound);
 
         return app;
     }

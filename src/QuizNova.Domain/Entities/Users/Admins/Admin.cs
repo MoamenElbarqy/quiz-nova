@@ -28,15 +28,4 @@ public class Admin : User
         return admin;
     }
 
-    public Result<Updated> Update(PersonalInformation personalInformation)
-    {
-        PersonalInformation = personalInformation;
-
-        return Result.Updated;
-    }
-
-    public Result<Deleted> Delete()
-    {
-        return Result.Deleted;
-    }
 }

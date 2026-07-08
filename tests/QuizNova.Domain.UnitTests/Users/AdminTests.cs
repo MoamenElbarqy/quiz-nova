@@ -1,7 +1,5 @@
 using QuizNova.Domain.Entities.Users.Admins;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
-using QuizNova.Tests.Common.Users.Admins;
-using QuizNova.Tests.Common.Users.UserPersonalInformation;
 
 namespace QuizNova.Domain.UnitTests.Users;
 
@@ -30,40 +28,4 @@ public class AdminTests
         Assert.Empty(result.Value.DomainEvents);
     }
 
-    [Fact]
-    public void Update_ShouldSuccess_WithValidData()
-    {
-        // Arrange
-        var admin = AdminFactory.Create().Value;
-        var newPersonalInfo = PersonalInformationFactory.CreatePersonalInformation(
-            name: "Updated Admin Name",
-            email: "updated.admin@example.com");
-        admin.ClearDomainEvents();
-
-        // Act
-        var result = admin.Update(newPersonalInfo);
-
-        // Assert
-        Assert.True(result.IsSuccess);
-        Assert.Equal("Updated Admin Name", admin.PersonalInformation.Name);
-        Assert.Equal("updated.admin@example.com", admin.PersonalInformation.Email);
-
-        Assert.Empty(admin.DomainEvents);
-    }
-
-    [Fact]
-    public void Delete_ShouldSuccess()
-    {
-        // Arrange
-        var admin = AdminFactory.Create().Value;
-        admin.ClearDomainEvents();
-
-        // Act
-        var result = admin.Delete();
-
-        // Assert
-        Assert.True(result.IsSuccess);
-
-        Assert.Empty(admin.DomainEvents);
-    }
 }
