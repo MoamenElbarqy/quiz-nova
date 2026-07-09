@@ -11,20 +11,20 @@ public sealed class CourseChatRoom : Entity
 
     private CourseChatRoom()
     {
+        _students = [];
+        _messages = [];
     }
 
     private CourseChatRoom(
         Guid id,
         Guid courseId,
         Guid? instructorId,
-        ChatStatus status,
         List<Student> students,
         List<Message> messages)
         : base(id)
     {
         CourseId = courseId;
         InstructorId = instructorId;
-        Status = status;
         _students = students;
         _messages = messages;
     }
@@ -32,8 +32,6 @@ public sealed class CourseChatRoom : Entity
     public Guid CourseId { get; private set; }
 
     public Guid? InstructorId { get; private set; }
-
-    public ChatStatus Status { get; private set; }
 
     public IEnumerable<Student> Students => _students.AsReadOnly();
 
@@ -50,7 +48,6 @@ public sealed class CourseChatRoom : Entity
             Guid.NewGuid(),
             courseId,
             instructorId,
-            ChatStatus.OpenForAny,
             [],
             []);
 
@@ -91,12 +88,6 @@ public sealed class CourseChatRoom : Entity
         return Result.Updated;
     }
 
-    public Result<Updated> UpdateStatus(ChatStatus status)
-    {
-        Status = status;
-        return Result.Updated;
-    }
-
     public bool CanJoin(Guid userId)
     {
         return InstructorId == userId ||
@@ -105,12 +96,7 @@ public sealed class CourseChatRoom : Entity
 
     public bool CanSend(Guid userId)
     {
-        return Status switch
-        {
-            ChatStatus.OpenForAny => CanJoin(userId),
-            ChatStatus.OpenForInstructor => InstructorId == userId,
-            _ => false
-        };
+        return CanJoin(userId);
     }
 
     public bool CanReact(Guid userId)

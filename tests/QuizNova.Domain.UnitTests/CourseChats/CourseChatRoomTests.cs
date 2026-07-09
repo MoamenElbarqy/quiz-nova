@@ -21,7 +21,6 @@ public class CourseChatRoomTests
         Assert.NotEqual(Guid.Empty, result.Value.Id);
         Assert.Equal(courseId, result.Value.CourseId);
         Assert.Equal(instructorId, result.Value.InstructorId);
-        Assert.Equal(ChatStatus.OpenForAny, result.Value.Status);
         Assert.Empty(result.Value.Students);
         Assert.Empty(result.Value.Messages);
     }
@@ -64,20 +63,6 @@ public class CourseChatRoomTests
         // Assert
         Assert.True(result.IsError);
         Assert.Equal("CourseChatRoom.InstructorIdRequired", result.TopError.Code);
-    }
-
-    [Fact]
-    public void UpdateStatus_ShouldUpdateStatus()
-    {
-        // Arrange
-        var room = CourseChatRoom.Create(Guid.NewGuid(), null).Value;
-
-        // Act
-        var result = room.UpdateStatus(ChatStatus.OpenForInstructor);
-
-        // Assert
-        Assert.True(result.IsSuccess);
-        Assert.Equal(ChatStatus.OpenForInstructor, room.Status);
     }
 
     [Fact]
@@ -186,7 +171,7 @@ public class CourseChatRoomTests
     }
 
     [Fact]
-    public void CanSend_ShouldBeTrueForAnyJoined_WhenStatusIsOpenForAny()
+    public void CanSend_ShouldBeTrueForAnyJoined()
     {
         // Arrange
         var instructorId = Guid.NewGuid();
@@ -200,19 +185,4 @@ public class CourseChatRoomTests
         Assert.False(room.CanSend(Guid.NewGuid()));
     }
 
-    [Fact]
-    public void CanSend_ShouldBeTrueOnlyForInstructor_WhenStatusIsOpenForInstructor()
-    {
-        // Arrange
-        var instructorId = Guid.NewGuid();
-        var room = CourseChatRoom.Create(Guid.NewGuid(), instructorId).Value;
-        room.UpdateStatus(ChatStatus.OpenForInstructor);
-        var student = StudentFactory.CreateStudent().Value;
-        room.AddStudent(student);
-
-        // Act & Assert
-        Assert.True(room.CanSend(instructorId));
-        Assert.False(room.CanSend(student.Id));
-        Assert.False(room.CanSend(Guid.NewGuid()));
     }
-}

@@ -82,7 +82,6 @@ public sealed class GetCourseChatRoomByCourseIdQueryHandler(
             room.Id,
             room.CourseId,
             room.InstructorId,
-            room.Status,
             students,
             messages);
 
