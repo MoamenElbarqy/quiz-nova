@@ -38,7 +38,19 @@ public sealed class SendMessageCommandHandler(
 
         if (!room.CanSend(userId))
         {
-            return CourseChatErrors.CannotSend;
+            var isInstructor = await dbContext.Courses
+                .AnyAsync(c => c.Id == room.CourseId && c.InstructorId == userId, ct);
+
+            if (!isInstructor)
+            {
+                var isEnrolled = await dbContext.Enrollments
+                    .AnyAsync(e => e.CourseId == room.CourseId && e.StudentId == userId, ct);
+
+                if (!isEnrolled)
+                {
+                    return CourseChatErrors.CannotSend;
+                }
+            }
         }
 
         var messageResult = Message.Create(request.RoomId, userId, request.ReplyOnId, request.Content);

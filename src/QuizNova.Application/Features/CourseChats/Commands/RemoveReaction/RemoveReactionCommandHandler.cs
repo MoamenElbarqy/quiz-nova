@@ -35,7 +35,19 @@ public sealed class RemoveReactionCommandHandler(
 
         if (!room.CanReact(userId))
         {
-            return CourseChatErrors.CannotReact;
+            var isInstructor = await dbContext.Courses
+                .AnyAsync(c => c.Id == room.CourseId && c.InstructorId == userId, ct);
+
+            if (!isInstructor)
+            {
+                var isEnrolled = await dbContext.Enrollments
+                    .AnyAsync(e => e.CourseId == room.CourseId && e.StudentId == userId, ct);
+
+                if (!isEnrolled)
+                {
+                    return CourseChatErrors.CannotReact;
+                }
+            }
         }
 
         var message = await dbContext.CourseChatRoomMessages
