@@ -81,15 +81,17 @@ public class GetPendingManualAnswersQueryHandlerTests(CustomWebApplicationFactor
         var attemptId1 = Guid.NewGuid();
         var unscoredAnswer = AnswerFactory
             .CreateEssayAnswer(studentId: student.Id, questionId: q1.Id, quizAttemptId: attemptId1, score: null).Value;
-        var attemptWithPending = QuizAttemptFactory.CreateQuizAttempt(quizId: quizId1, studentAnswers: [unscoredAnswer],
+        var attemptWithPending = QuizAttemptFactory.CreateQuizAttempt(quizId: quizId1,
             id: attemptId1, studentId: student.Id).Value;
+        attemptWithPending.SubmitAnswer(unscoredAnswer);
 
         // Attempt 2: has scored essay answer
         var attemptId2 = Guid.NewGuid();
         var scoredAnswer = AnswerFactory
             .CreateEssayAnswer(studentId: student.Id, questionId: q4.Id, quizAttemptId: attemptId2, score: 5).Value;
-        var attemptAllScored = QuizAttemptFactory.CreateQuizAttempt(quizId: quizId2, studentAnswers: [scoredAnswer],
+        var attemptAllScored = QuizAttemptFactory.CreateQuizAttempt(quizId: quizId2,
             id: attemptId2, studentId: student.Id).Value;
+        attemptAllScored.SubmitAnswer(scoredAnswer);
 
         using (var scope = factory.Services.CreateScope())
         {

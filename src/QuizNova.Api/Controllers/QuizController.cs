@@ -266,7 +266,7 @@ public sealed class QuizController(ISender sender) : ApiController
     [EndpointSummary("Retrieves quizzes assigned to a student.")]
     [EndpointDescription("Returns quizzes associatined with the specified student identifier.")]
     [EndpointName("GetStudentQuizzes")]
-    [OutputCache(Tags = ["students", "quizzes"])]
+    [OutputCache(Tags = ["students", "quizzes"], VaryByQueryKeys = ["t"])]
     [HttpGet("/students/{id:guid}/quizzes")]
     [Authorize(Roles = nameof(UserRole.Student))]
     [ProducesResponseType(typeof(StudentQuizzesDto), StatusCodes.Status200OK)]

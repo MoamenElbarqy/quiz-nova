@@ -185,4 +185,4 @@ public class CourseChatRoomTests
         Assert.False(room.CanSend(Guid.NewGuid()));
     }
 
-    }
+}

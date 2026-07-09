@@ -1,6 +1,5 @@
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 
 namespace QuizNova.Tests.Common.QuizAttempts;
 
@@ -8,21 +7,13 @@ public static class QuizAttemptFactory
 {
     public static Result<QuizAttempt> CreateQuizAttempt(
         Guid? quizId = null,
-        DateTime? startedAt = null,
-        DateTime? submittedAt = null,
         Guid? id = null,
-        Guid? studentId = null,
-        List<QuestionAnswer>? studentAnswers = null)
+        Guid? studentId = null)
     {
-        var attemptId = id ?? Guid.NewGuid();
-        var attemptStudentId = studentId ?? Guid.NewGuid();
-
-        return QuizAttempt.Create(
-            attemptId,
-            attemptStudentId,
+        return QuizAttempt.Start(
+            id ?? Guid.NewGuid(),
+            studentId ?? Guid.NewGuid(),
             quizId ?? Guid.NewGuid(),
-            startedAt ?? DateTime.UtcNow.AddMinutes(-30),
-            submittedAt ?? DateTime.UtcNow,
-            studentAnswers ?? []);
+            DateTime.UtcNow);
     }
 }

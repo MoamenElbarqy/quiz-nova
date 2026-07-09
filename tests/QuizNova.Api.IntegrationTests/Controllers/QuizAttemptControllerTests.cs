@@ -4,12 +4,10 @@ using FluentAssertions;
 
 using Microsoft.EntityFrameworkCore;
 
-using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.IntegrationTests.Common;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.QuizAttempts.DTOs;
-using QuizNova.Domain.Entities.Enrollments;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
@@ -86,7 +84,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
-    public async Task GetQuizAttemptByIdForGrading_WhenStudent_ReturnsForbidden()
+    public async Task GetQuizAttemptByIdForGrading_WhenStudent_ReturnsQuizAttemptDto()
     {
         using var client = factory.CreateAppHttpClient();
         await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
@@ -94,7 +92,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
 
         var response = await client.GetAsync($"/quiz-attempts/{attemptId}");
 
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -123,49 +121,6 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
         var attempt = await response.Content.ReadFromJsonAsync<QuizAttemptDto>();
         attempt.Should().NotBeNull();
         attempt.QuizAttemptId.Should().Be(attemptId);
-    }
-
-    [Fact]
-    public async Task SubmitQuizAttempt_WhenInstructor_ReturnsForbidden()
-    {
-        using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
-        var (quizId, studentId, questions) = await SeedActiveQuizForSubmissionAsync();
-        var request = CreateSubmitRequest(quizId, questions);
-
-        var response = await client.PostAsJsonAsync($"/students/{studentId}/quiz-attempts", request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
-
-    [Fact]
-    public async Task SubmitQuizAttempt_WhenAdmin_ReturnsForbidden()
-    {
-        using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
-        var (quizId, studentId, questions) = await SeedActiveQuizForSubmissionAsync();
-        var request = CreateSubmitRequest(quizId, questions);
-
-        var response = await client.PostAsJsonAsync($"/students/{studentId}/quiz-attempts", request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
-
-    [Fact]
-    public async Task SubmitQuizAttempt_WhenStudent_ReturnsQuizAttemptDto()
-    {
-        using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Student.User.Email!, TestUsers.Student.Password, "Student");
-        var (quizId, studentId, questions) = await SeedActiveQuizForSubmissionAsync();
-        var request = CreateSubmitRequest(quizId, questions);
-
-        var response = await client.PostAsJsonAsync($"/students/{studentId}/quiz-attempts", request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var attempt = await response.Content.ReadFromJsonAsync<QuizAttemptDto>();
-        attempt.Should().NotBeNull();
-        attempt.QuizId.Should().Be(quizId);
     }
 
     [Fact]
@@ -292,17 +247,6 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    private static SubmitQuizAttemptRequest CreateSubmitRequest(Guid quizId, IReadOnlyList<Guid> questionIds)
-    {
-        return new SubmitQuizAttemptRequest(
-            quizId,
-            DateTimeOffset.UtcNow.AddMinutes(-5),
-            DateTimeOffset.UtcNow.AddMinutes(-1),
-            questionIds.Select(questionId => new SubmitTfAnswerRequest(questionId, true))
-                .Cast<SubmitQuestionAnswerRequest>()
-                .ToList());
-    }
-
     private static List<Tf> CreateQuestions(Guid quizId)
     {
         return Enumerable.Range(0, 3)
@@ -325,13 +269,15 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
         var answers = questions
             .Select(question => question.Solve(true, studentId, attemptId).Value)
             .ToList();
-        var attempt = QuizAttempt.Create(
+        var attempt = QuizAttempt.Start(
             attemptId,
             studentId,
             quiz.Id,
-            DateTime.UtcNow.AddMinutes(-10),
-            DateTime.UtcNow.AddMinutes(-5),
-            answers).Value;
+            DateTime.UtcNow.AddMinutes(-10)).Value;
+        foreach (var answer in answers)
+        {
+            attempt.SubmitAnswer(answer);
+        }
 
         await dbContext.Quizzes.AddAsync(quiz);
         await dbContext.Questions.AddRangeAsync(questions);
@@ -339,28 +285,6 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
         await dbContext.SaveChangesAsync(CancellationToken.None);
 
         return (attemptId, studentId, quiz.Id);
-    }
-
-    private async Task<(Guid quizId, Guid studentId, IReadOnlyList<Guid> questionIds)>
-        SeedActiveQuizForSubmissionAsync()
-    {
-        using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var (quiz, questions, studentId) = await CreateQuizAsync(dbContext, active: true);
-        var existingEnrollment = await dbContext.Enrollments
-            .AnyAsync(enrollment => enrollment.StudentId == studentId && enrollment.CourseId == quiz.CourseId);
-
-        if (!existingEnrollment)
-        {
-            var enrollment = Enrollment.Create(Guid.NewGuid(), studentId, quiz.CourseId, DateTimeOffset.UtcNow).Value;
-            await dbContext.Enrollments.AddAsync(enrollment);
-        }
-
-        await dbContext.Quizzes.AddAsync(quiz);
-        await dbContext.Questions.AddRangeAsync(questions);
-        await dbContext.SaveChangesAsync(CancellationToken.None);
-
-        return (quiz.Id, studentId, questions.Select(question => question.Id).ToList());
     }
 
     private async Task<(Quiz quiz, List<Tf> questions, Guid studentId)> CreateQuizAsync(

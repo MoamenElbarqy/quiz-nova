@@ -48,7 +48,7 @@ public sealed class GradeQuestionManuallyCommandHandler(
         }
 
         await dbContext.SaveChangesAsync(ct);
-        await cacheInvalidator.InvalidateAsync(["quiz-attempts"], ct);
+        await cacheInvalidator.InvalidateAsync(["quiz_attempts"], ct);
 
         logger.LogInformation(
             "Successfully graded answer {AnswerId} with score {Score}",

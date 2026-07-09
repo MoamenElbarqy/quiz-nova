@@ -67,7 +67,8 @@ public class GetQuizAttemptByIdQueryHandlerTests(CustomWebApplicationFactory fac
             quizAttemptId: attemptId).Value;
 
         var attempt = QuizAttemptFactory.CreateQuizAttempt(quizId: quiz.Id,
-            studentAnswers: [answer], id: attemptId, studentId: student.Id).Value;
+            id: attemptId, studentId: student.Id).Value;
+        attempt.SubmitAnswer(answer);
 
         // Save directly to DB
         using (var scope = factory.Services.CreateScope())

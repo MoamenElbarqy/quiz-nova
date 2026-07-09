@@ -57,7 +57,7 @@ public class CourseChatJoinFlowTests(CustomWebApplicationFactory factory)
             chatRoom.Should().NotBeNull();
             chatRoom.CourseId.Should().Be(courseId);
             chatRoom.InstructorId.Should().Be(instructorId);
-            }
+        }
     }
 
     [Fact]

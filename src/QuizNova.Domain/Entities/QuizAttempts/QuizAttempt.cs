@@ -15,6 +15,7 @@ public class QuizAttempt : Entity
 
     private QuizAttempt()
     {
+        _studentAnswers = [];
     }
 
     private QuizAttempt(
@@ -49,6 +50,10 @@ public class QuizAttempt : Entity
 
     public Quiz? Quiz { get; init; }
 
+    public GradingState GradingState => _studentAnswers.All(a => a is not ManuallyGradedAnswers { IsGraded: false })
+        ? GradingState.FullyGraded
+        : GradingState.AwaitingGrading;
+
     public int Score => StudentAnswers.Sum(answer => answer switch
     {
         AutoGradedAnswer autoGradedAnswer when autoGradedAnswer.Question is not null && autoGradedAnswer.IsCorrect =>
@@ -59,14 +64,17 @@ public class QuizAttempt : Entity
 
     public IEnumerable<QuestionAnswer> StudentAnswers => _studentAnswers.AsReadOnly();
 
-    public static Result<QuizAttempt> Create(
+    public static Result<QuizAttempt> Start(
         Guid id,
         Guid studentId,
         Guid quizId,
-        DateTime startedAt,
-        DateTime submittedAt,
-        List<QuestionAnswer> studentAnswers)
+        DateTime startedAt)
     {
+        if (id == Guid.Empty)
+        {
+            return QuizAttemptErrors.AttemptIdRequired;
+        }
+
         if (studentId == Guid.Empty)
         {
             return QuizAttemptErrors.StudentIdRequired;
@@ -82,16 +90,66 @@ public class QuizAttempt : Entity
             return QuizAttemptErrors.StartedAtRequired;
         }
 
-        if (submittedAt < startedAt)
+        var quizAttempt = new QuizAttempt(
+            id,
+            studentId,
+            quizId,
+            startedAt,
+            default,
+            QuizAttemptStatus.InProgress,
+            []);
+
+        return quizAttempt;
+    }
+
+    public Result<Validated> SubmitAnswer(QuestionAnswer answer)
+    {
+        if (Status != QuizAttemptStatus.InProgress)
+        {
+            return QuizAttemptErrors.AttemptAlreadyCompleted;
+        }
+
+        if (answer is null)
+        {
+            return QuizAttemptErrors.QuestionAnswerRequired;
+        }
+
+        if (Quiz is not null && Quiz.Questions.All(q => q.Id != answer.QuestionId))
+        {
+            return QuizAttemptErrors.QuestionNotFoundInQuiz(answer.QuestionId, QuizId);
+        }
+
+        _studentAnswers.RemoveAll(a => a.QuestionId == answer.QuestionId);
+        _studentAnswers.Add(answer);
+
+        return Result.Validated;
+    }
+
+    public Result<Completed> Complete(DateTime submittedAt, DateTime quizEndsAtUtc)
+    {
+        if (Status != QuizAttemptStatus.InProgress)
+        {
+            return QuizAttemptErrors.AttemptAlreadyCompleted;
+        }
+
+        if (submittedAt == default)
+        {
+            return QuizAttemptErrors.SubmittedAtRequired;
+        }
+
+        if (submittedAt < StartedAt)
         {
             return QuizAttemptErrors.SubmittedAtInvalid;
         }
 
-        var status = studentAnswers.Any(a => a is ManuallyGradedAnswers { IsGraded: false })
-            ? QuizAttemptStatus.Pending
-            : QuizAttemptStatus.Completed;
+        if (submittedAt > quizEndsAtUtc)
+        {
+            return QuizAttemptErrors.SubmittedAtAfterQuizEnd(quizEndsAtUtc);
+        }
 
-        var quizAttempt = new QuizAttempt(id, studentId, quizId, startedAt, submittedAt, status, studentAnswers);
-        return quizAttempt;
+        SubmittedAt = submittedAt;
+        Status = QuizAttemptStatus.Completed;
+
+        return Result.Completed;
     }
 }

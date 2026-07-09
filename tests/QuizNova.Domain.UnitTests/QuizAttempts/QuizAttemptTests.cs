@@ -13,312 +13,207 @@ namespace QuizNova.Domain.UnitTests.QuizAttempts;
 public class QuizAttemptTests
 {
     [Fact]
-    public void Create_ShouldSuccess_WithValidData()
+    public void Start_ShouldSuccess_WithValidData()
     {
-        // Act
         var result = QuizAttemptFactory.CreateQuizAttempt();
 
-        // Assert
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
+        Assert.Equal(QuizAttemptStatus.InProgress, result.Value.Status);
+        Assert.Empty(result.Value.StudentAnswers);
     }
 
     [Fact]
-    public void SubmitAttempt_ShouldSuccess_WithExactAnswersCount()
+    public void StartAttempt_OnQuiz_ShouldSuccess()
     {
-        // Arrange
-        var quiz = QuizFactory.CreateQuiz().Value;
-        var attemptId = Guid.NewGuid();
+        var quiz = QuizFactory.CreateQuiz(startsAtUtc: DateTimeOffset.UtcNow.AddHours(-2)).Value;
         var studentId = Guid.NewGuid();
 
-        var questions = quiz.Questions.ToList();
-        var ans1 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, questionId: questions[0].Id, quizAttemptId: attemptId).Value;
-        var ans2 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, questionId: questions[1].Id, quizAttemptId: attemptId).Value;
-        var ans3 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, questionId: questions[2].Id, quizAttemptId: attemptId).Value;
+        var result = quiz.StartAttempt(studentId);
 
-        // Act
-        var result = quiz.SubmitAttempt(
-            attemptId,
-            studentId,
-            quiz.Id,
-            quiz.StartsAtUtc.AddMinutes(5),
-            quiz.StartsAtUtc.AddMinutes(20),
-            [ans1, ans2, ans3]);
-
-        // Assert
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
-        Assert.Equal(3, result.Value.StudentAnswers.Count());
+        Assert.Equal(QuizAttemptStatus.InProgress, result.Value.Status);
+        Assert.Equal(quiz.Id, result.Value.QuizId);
     }
 
     [Fact]
-    public void SubmitAttempt_ShouldSuccess_WithFewerAnswersThanQuestions()
+    public void StartAttempt_ShouldFail_WhenCourseCompleted()
     {
-        // Arrange
         var quiz = QuizFactory.CreateQuiz().Value;
-        var attemptId = Guid.NewGuid();
-        var studentId = Guid.NewGuid();
-
-        var questions = quiz.Questions.ToList();
-
-        // Submitting only 2 answers for a 3-question quiz
-        var ans1 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, questionId: questions[0].Id, quizAttemptId: attemptId).Value;
-        var ans2 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, questionId: questions[1].Id, quizAttemptId: attemptId).Value;
-
-        // Act
-        var result = quiz.SubmitAttempt(
-            attemptId,
-            studentId,
-            quiz.Id,
-            quiz.StartsAtUtc.AddMinutes(5),
-            quiz.StartsAtUtc.AddMinutes(20),
-            [ans1, ans2]);
-
-        // Assert
-        Assert.True(result.IsSuccess);
-        Assert.NotNull(result.Value);
-        Assert.Equal(2, result.Value.StudentAnswers.Count());
-    }
-
-    [Fact]
-    public void SubmitAttempt_ShouldFail_WithMoreAnswersThanQuestions()
-    {
-        // Arrange
-        var quiz = QuizFactory.CreateQuiz().Value;
-        var attemptId = Guid.NewGuid();
-        var studentId = Guid.NewGuid();
-
-        var questions = quiz.Questions.ToList();
-        var ans1 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, questionId: questions[0].Id, quizAttemptId: attemptId).Value;
-        var ans2 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, questionId: questions[1].Id, quizAttemptId: attemptId).Value;
-        var ans3 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, questionId: questions[2].Id, quizAttemptId: attemptId).Value;
-        var ans4 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, questionId: Guid.NewGuid(), quizAttemptId: attemptId).Value;
-
-        // Act
-        var result = quiz.SubmitAttempt(
-            attemptId,
-            studentId,
-            quiz.Id,
-            quiz.StartsAtUtc.AddMinutes(5),
-            quiz.StartsAtUtc.AddMinutes(20),
-            [ans1, ans2, ans3, ans4]);
-
-        // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(QuizAttemptErrors.TooManyQuestionAnswers(4, 3).Code, result.TopError.Code);
-    }
-
-    [Fact]
-    public void SubmitAttempt_ShouldFail_WhenQuizIdMismatch()
-    {
-        // Arrange
-        var quiz = QuizFactory.CreateQuiz().Value;
-
-        // Act
-        var result = quiz.SubmitAttempt(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow, []);
-
-        // Assert
-        Assert.True(result.IsError);
-    }
-
-    [Fact]
-    public void SubmitAttempt_ShouldFail_WhenStartsAtEqualOrAfterSubmittedAt()
-    {
-        // Arrange
-        var quiz = QuizFactory.CreateQuiz().Value;
-        var attemptId = Guid.NewGuid();
-        var studentId = Guid.NewGuid();
-
-        // Act
-        var result = quiz.SubmitAttempt(
-            attemptId,
-            studentId,
-            quiz.Id,
-            quiz.StartsAtUtc.AddMinutes(20),
-            quiz.StartsAtUtc.AddMinutes(10), // Submitted before started!
-            []);
-
-        // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(QuizAttemptErrors.SubmittedAtInvalid, result.TopError);
-    }
-
-    [Fact]
-    public void SubmitAttempt_ShouldFail_WhenSubmittedAfterQuizEnd()
-    {
-        // Arrange
-        var quiz = QuizFactory.CreateQuiz().Value;
-        var attemptId = Guid.NewGuid();
-        var studentId = Guid.NewGuid();
-
-        // Act
-        var result = quiz.SubmitAttempt(
-            attemptId,
-            studentId,
-            quiz.Id,
-            quiz.StartsAtUtc.AddMinutes(5),
-            quiz.EndsAtUtc.AddMinutes(1), // Submitted after end time!
-            []);
-
-        // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(QuizAttemptErrors.SubmittedAtAfterQuizEnd(quiz.EndsAtUtc).Code, result.TopError.Code);
-    }
-
-    [Fact]
-    public void SubmitAttempt_ShouldFail_WhenStartedBeforeQuizStarts()
-    {
-        // Arrange
-        var quiz = QuizFactory.CreateQuiz().Value;
-        var attemptId = Guid.NewGuid();
-        var studentId = Guid.NewGuid();
-
-        // Act
-        var result = quiz.SubmitAttempt(
-            attemptId,
-            studentId,
-            quiz.Id,
-            quiz.StartsAtUtc.AddMinutes(-1), // Started before quiz start time!
-            quiz.StartsAtUtc.AddMinutes(5),
-            []);
-
-        // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(QuizAttemptErrors.StartedAtBeforeQuizStart(quiz.StartsAtUtc).Code, result.TopError.Code);
-    }
-
-    [Fact]
-    public void SubmitAttempt_ShouldFail_WhenSubmissionDoesNotRelateToQuiz()
-    {
-        // Arrange
-        var quiz = QuizFactory.CreateQuiz().Value;
-        var attemptId = Guid.NewGuid();
-        var studentId = Guid.NewGuid();
-
-        var questions = quiz.Questions.ToList();
-
-        // Answer belongs to a completely different attempt
-        var ans1 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, questionId: questions[0].Id, quizAttemptId: Guid.NewGuid()).Value;
-
-        // Act
-        var result = quiz.SubmitAttempt(
-            attemptId,
-            studentId,
-            quiz.Id,
-            quiz.StartsAtUtc.AddMinutes(5),
-            quiz.StartsAtUtc.AddMinutes(20),
-            [ans1]);
-
-        // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(QuizAttemptErrors.AnswerQuizAttemptMismatch(ans1.QuestionId, attemptId, ans1.QuizAttemptId).Code,
-            result.TopError.Code);
-    }
-
-    [Fact]
-    public void SubmitAttempt_ShouldFail_WhenSubmissionDoesNotRelateToStudent()
-    {
-        // Arrange
-        var quiz = QuizFactory.CreateQuiz().Value;
-        var attemptId = Guid.NewGuid();
-        var studentId = Guid.NewGuid();
-
-        var questions = quiz.Questions.ToList();
-
-        // Answer belongs to a different student
-        var ans1 = AnswerFactory
-            .CreateTfAnswer(studentId: Guid.NewGuid(), questionId: questions[0].Id, quizAttemptId: attemptId).Value;
-
-        // Act
-        var result = quiz.SubmitAttempt(
-            attemptId,
-            studentId,
-            quiz.Id,
-            quiz.StartsAtUtc.AddMinutes(5),
-            quiz.StartsAtUtc.AddMinutes(20),
-            [ans1]);
-
-        // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(QuizAttemptErrors.AnswerStudentMismatch(ans1.QuestionId, studentId, ans1.StudentId).Code,
-            result.TopError.Code);
-    }
-
-    [Fact]
-    public void SubmitAttempt_ShouldFail_WhenSubmissionDoesNotRelateToAnyQuestionInQuiz()
-    {
-        // Arrange
-        var quiz = QuizFactory.CreateQuiz().Value;
-        var attemptId = Guid.NewGuid();
-        var studentId = Guid.NewGuid();
-
-        var ans1 = AnswerFactory
-            .CreateTfAnswer(studentId: studentId, questionId: Guid.NewGuid(), quizAttemptId: attemptId)
-            .Value; // Guid.NewGuid is not in quiz!
-
-        // Act
-        var result = quiz.SubmitAttempt(
-            attemptId,
-            studentId,
-            quiz.Id,
-            quiz.StartsAtUtc.AddMinutes(5),
-            quiz.StartsAtUtc.AddMinutes(20),
-            [ans1]);
-
-        // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(QuizAttemptErrors.QuestionNotFoundInQuiz(ans1.QuestionId, quiz.Id).Code, result.TopError.Code);
-    }
-
-    [Fact]
-    public void SubmitAttempt_ShouldFail_WhenAssociatedCourseCompleted()
-    {
-        // Arrange
-        var course = CourseFactory.CreateCourse().Value;
+        var course = CourseFactory.CreateCourse(quizzes: [quiz]).Value;
         course.MarkAsCompeleted();
-        var completedQuiz = QuizFactory.CreateQuiz().Value;
-        typeof(Quiz).GetProperty("Course")!.SetValue(completedQuiz, course);
+        typeof(Quiz).GetProperty("Course")!.SetValue(quiz, course);
 
-        // Act
-        var result = completedQuiz.SubmitAttempt(Guid.NewGuid(), Guid.NewGuid(), completedQuiz.Id,
-            DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, []);
+        var result = quiz.StartAttempt(Guid.NewGuid());
 
-        // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.CourseCompleted, result.TopError);
     }
 
     [Fact]
+    public void StartAttempt_ShouldFail_WhenStartedBeforeQuizStarts()
+    {
+        var quiz = QuizFactory.CreateQuiz().Value;
+        typeof(Quiz).GetProperty("StartsAtUtc")!.SetValue(quiz, DateTimeOffset.UtcNow.AddHours(1));
+
+        var result = quiz.StartAttempt(Guid.NewGuid());
+
+        Assert.True(result.IsError);
+    }
+
+    [Fact]
+    public void StartAttempt_ShouldFail_WhenStartedAfterQuizEnds()
+    {
+        var quiz = QuizFactory.CreateQuiz().Value;
+        typeof(Quiz).GetProperty("EndsAtUtc")!.SetValue(quiz, DateTimeOffset.UtcNow.AddHours(-1));
+
+        var result = quiz.StartAttempt(Guid.NewGuid());
+
+        Assert.True(result.IsError);
+    }
+
+    [Fact]
+    public void SubmitAnswer_ShouldAddAnswer_ToEmptyAttempt()
+    {
+        var attempt = QuizAttemptFactory.CreateQuizAttempt().Value;
+        var answer = AnswerFactory.CreateTfAnswer(
+            studentId: attempt.StudentId,
+            questionId: Guid.NewGuid(),
+            quizAttemptId: attempt.Id).Value;
+
+        var result = attempt.SubmitAnswer(answer);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(attempt.StudentAnswers);
+    }
+
+    [Fact]
+    public void SubmitAnswer_ShouldUpsert_WhenSameQuestionAnsweredAgain()
+    {
+        var attempt = QuizAttemptFactory.CreateQuizAttempt().Value;
+        var questionId = Guid.NewGuid();
+        var answer1 = AnswerFactory.CreateTfAnswer(
+            studentId: attempt.StudentId, questionId: questionId,
+            quizAttemptId: attempt.Id, studentChoice: true).Value;
+
+        attempt.SubmitAnswer(answer1);
+
+        var answer2 = AnswerFactory.CreateTfAnswer(
+            studentId: attempt.StudentId, questionId: questionId,
+            quizAttemptId: attempt.Id, studentChoice: false).Value;
+
+        var result = attempt.SubmitAnswer(answer2);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(attempt.StudentAnswers);
+        Assert.False(((QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.TrueFalseAnswer.TfAnswer)attempt.StudentAnswers.First()).StudentChoice);
+    }
+
+    [Fact]
+    public void SubmitAnswer_ShouldFail_WhenAttemptNotInProgress()
+    {
+        var quiz = QuizFactory.CreateQuiz(startsAtUtc: DateTimeOffset.UtcNow.AddHours(-2)).Value;
+        var attempt = quiz.StartAttempt(Guid.NewGuid()).Value;
+        attempt.Complete(DateTime.UtcNow, quiz.EndsAtUtc.UtcDateTime);
+
+        var result = attempt.SubmitAnswer(AnswerFactory.CreateTfAnswer(
+            studentId: attempt.StudentId, questionId: Guid.NewGuid(),
+            quizAttemptId: attempt.Id).Value);
+
+        Assert.True(result.IsError);
+        Assert.Equal(QuizAttemptErrors.AttemptAlreadyCompleted, result.TopError);
+    }
+
+    [Fact]
+    public void SubmitAnswer_ShouldFail_WhenAnswerIsNull()
+    {
+        var attempt = QuizAttemptFactory.CreateQuizAttempt().Value;
+
+        var result = attempt.SubmitAnswer(null!);
+
+        Assert.True(result.IsError);
+    }
+
+    [Fact]
+    public void Complete_ShouldSetStatus_AndSubmittedAt()
+    {
+        var quiz = QuizFactory.CreateQuiz(startsAtUtc: DateTimeOffset.UtcNow.AddHours(-2)).Value;
+        var attempt = quiz.StartAttempt(Guid.NewGuid()).Value;
+        var submittedAt = DateTime.UtcNow;
+
+        var result = attempt.Complete(submittedAt, quiz.EndsAtUtc.UtcDateTime);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(QuizAttemptStatus.Completed, attempt.Status);
+        Assert.Equal(submittedAt, attempt.SubmittedAt);
+    }
+
+    [Fact]
+    public void Complete_ShouldFail_WhenAlreadyCompleted()
+    {
+        var quiz = QuizFactory.CreateQuiz(startsAtUtc: DateTimeOffset.UtcNow.AddHours(-2)).Value;
+        var attempt = quiz.StartAttempt(Guid.NewGuid()).Value;
+        attempt.Complete(DateTime.UtcNow, quiz.EndsAtUtc.UtcDateTime);
+
+        var result = attempt.Complete(DateTime.UtcNow, DateTime.UtcNow.AddHours(1));
+
+        Assert.True(result.IsError);
+        Assert.Equal(QuizAttemptErrors.AttemptAlreadyCompleted, result.TopError);
+    }
+
+    [Fact]
+    public void Complete_ShouldFail_WhenSubmittedAtDefault()
+    {
+        var attempt = QuizAttemptFactory.CreateQuizAttempt().Value;
+
+        var result = attempt.Complete(default, DateTime.UtcNow.AddHours(1));
+
+        Assert.True(result.IsError);
+        Assert.Equal(QuizAttemptErrors.SubmittedAtRequired, result.TopError);
+    }
+
+    [Fact]
+    public void Complete_ShouldFail_WhenSubmittedAtBeforeStartedAt()
+    {
+        var quiz = QuizFactory.CreateQuiz(startsAtUtc: DateTimeOffset.UtcNow.AddHours(-2)).Value;
+        var attempt = quiz.StartAttempt(Guid.NewGuid()).Value;
+        var submittedAt = attempt.StartedAt.AddMinutes(-1);
+
+        var result = attempt.Complete(submittedAt, DateTime.UtcNow);
+
+        Assert.True(result.IsError);
+        Assert.Equal(QuizAttemptErrors.SubmittedAtInvalid, result.TopError);
+    }
+
+    [Fact]
+    public void Complete_ShouldFail_WhenSubmittedAfterQuizEnd()
+    {
+        var quiz = QuizFactory.CreateQuiz(startsAtUtc: DateTimeOffset.UtcNow.AddHours(-2)).Value;
+        var attempt = quiz.StartAttempt(Guid.NewGuid()).Value;
+
+        var result = attempt.Complete(attempt.StartedAt.AddMinutes(1), attempt.StartedAt);
+
+        Assert.True(result.IsError);
+        Assert.Equal(QuizAttemptErrors.SubmittedAtAfterQuizEnd(attempt.StartedAt).Code, result.TopError.Code);
+    }
+
+    [Fact]
     public void Score_ShouldSumCorrectAnswersPolymorphically()
     {
-        // Arrange
         var studentId = Guid.NewGuid();
         var attemptId = Guid.NewGuid();
 
-        // 1. Correct TF Answer (10 marks)
         var tfQuest = QuestionFactory.CreateTfQuestion(marks: 10).Value;
         var tfAns = AnswerFactory.CreateTfAnswer(studentId: studentId, questionId: tfQuest.Id,
             quizAttemptId: attemptId, isCorrect: true).Value;
         typeof(QuestionAnswer).GetProperty("Question")!.SetValue(tfAns, tfQuest);
 
-        // 2. Incorrect TF Answer (marks 10, but incorrect so 0)
         var tfQuestIncorrect = QuestionFactory.CreateTfQuestion(marks: 10).Value;
         var tfAnsIncorrect = AnswerFactory.CreateTfAnswer(studentId: studentId,
             questionId: tfQuestIncorrect.Id, quizAttemptId: attemptId, isCorrect: false).Value;
         typeof(QuestionAnswer).GetProperty("Question")!.SetValue(tfAnsIncorrect, tfQuestIncorrect);
 
-        // 3. Correct MCQ Answer (15 marks)
         var mcqQuest = QuestionFactory.CreateMcqQuestion(marks: 15).Value;
         var mcqAns = AnswerFactory.CreateMcqAnswer(studentId: studentId, quizAttemptId: attemptId,
                 questionId: mcqQuest.Id, selectedChoiceId: mcqQuest.CorrectChoiceId, question: mcqQuest,
@@ -326,64 +221,60 @@ public class QuizAttemptTests
             .Value;
         typeof(QuestionAnswer).GetProperty("Question")!.SetValue(mcqAns, mcqQuest);
 
-        // Act
-        var attempt = QuizAttemptFactory.CreateQuizAttempt(studentAnswers: [tfAns, tfAnsIncorrect, mcqAns],
-            id: attemptId, studentId: studentId).Value;
+        var attempt = QuizAttemptFactory.CreateQuizAttempt(id: attemptId, studentId: studentId).Value;
+        attempt.SubmitAnswer(tfAns);
+        attempt.SubmitAnswer(tfAnsIncorrect);
+        attempt.SubmitAnswer(mcqAns);
 
-        // Assert
-        Assert.Equal(25, attempt.Score); // 10 + 0 + 15 = 25
+        Assert.Equal(25, attempt.Score);
     }
 
     [Fact]
-    public void Create_ShouldSetStatusToPending_WhenManuallyGradedAnswersExistAndNotGradedYet()
+    public void GradingState_ShouldBeAwaitingGrading_WhenManuallyGradedAnswersNotGraded()
     {
-        // Arrange
         var studentId = Guid.NewGuid();
         var attemptId = Guid.NewGuid();
-        var essayAns = AnswerFactory.CreateEssayAnswer(studentId: studentId, quizAttemptId: attemptId, score: null)
-            .Value;
-        var tfAns = AnswerFactory.CreateTfAnswer(studentId: studentId, questionId: Guid.NewGuid(), quizAttemptId: attemptId).Value;
+        var essayAns = AnswerFactory.CreateEssayAnswer(
+            studentId: studentId, quizAttemptId: attemptId, score: null).Value;
+        var tfAns = AnswerFactory.CreateTfAnswer(
+            studentId: studentId, questionId: Guid.NewGuid(), quizAttemptId: attemptId).Value;
 
-        // Act
-        var attempt = QuizAttemptFactory
-            .CreateQuizAttempt(studentAnswers: [essayAns, tfAns], id: attemptId, studentId: studentId).Value;
+        var attempt = QuizAttemptFactory.CreateQuizAttempt(id: attemptId, studentId: studentId).Value;
+        attempt.SubmitAnswer(essayAns);
+        attempt.SubmitAnswer(tfAns);
 
-        // Assert
-        Assert.Equal(QuizAttemptStatus.Pending, attempt.Status);
+        Assert.Equal(GradingState.AwaitingGrading, attempt.GradingState);
     }
 
     [Fact]
-    public void Create_ShouldSetStatusToCompleted_WhenManuallyGradedAnswersExistAndAreGraded()
+    public void GradingState_ShouldBeFullyGraded_WhenManuallyGradedAnswersAreGraded()
     {
-        // Arrange
         var studentId = Guid.NewGuid();
         var attemptId = Guid.NewGuid();
 
-        // Give it a score so it is graded
-        var essayAns = AnswerFactory.CreateEssayAnswer(studentId: studentId, quizAttemptId: attemptId, score: 10).Value;
-        var tfAns = AnswerFactory.CreateTfAnswer(studentId: studentId, questionId: Guid.NewGuid(), quizAttemptId: attemptId).Value;
+        var essayAns = AnswerFactory.CreateEssayAnswer(
+            studentId: studentId, quizAttemptId: attemptId, score: 10).Value;
+        var tfAns = AnswerFactory.CreateTfAnswer(
+            studentId: studentId, questionId: Guid.NewGuid(), quizAttemptId: attemptId).Value;
 
-        // Act
-        var attempt = QuizAttemptFactory
-            .CreateQuizAttempt(studentAnswers: [essayAns, tfAns], id: attemptId, studentId: studentId).Value;
+        var attempt = QuizAttemptFactory.CreateQuizAttempt(id: attemptId, studentId: studentId).Value;
+        attempt.SubmitAnswer(essayAns);
+        attempt.SubmitAnswer(tfAns);
 
-        // Assert
-        Assert.Equal(QuizAttemptStatus.Completed, attempt.Status);
+        Assert.Equal(GradingState.FullyGraded, attempt.GradingState);
     }
 
     [Fact]
-    public void Create_ShouldSetStatusToCompleted_WhenNoManuallyGradedAnswersExist()
+    public void GradingState_ShouldBeFullyGraded_WhenNoManuallyGradedAnswers()
     {
-        // Arrange
         var studentId = Guid.NewGuid();
         var attemptId = Guid.NewGuid();
-        var tfAns = AnswerFactory.CreateTfAnswer(studentId: studentId, questionId: Guid.NewGuid(), quizAttemptId: attemptId).Value;
+        var tfAns = AnswerFactory.CreateTfAnswer(
+            studentId: studentId, questionId: Guid.NewGuid(), quizAttemptId: attemptId).Value;
 
-        // Act
-        var attempt = QuizAttemptFactory.CreateQuizAttempt(studentAnswers: [tfAns], id: attemptId, studentId: studentId)
-            .Value;
+        var attempt = QuizAttemptFactory.CreateQuizAttempt(id: attemptId, studentId: studentId).Value;
+        attempt.SubmitAnswer(tfAns);
 
-        // Assert
-        Assert.Equal(QuizAttemptStatus.Completed, attempt.Status);
+        Assert.Equal(GradingState.FullyGraded, attempt.GradingState);
     }
 }

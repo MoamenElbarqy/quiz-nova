@@ -96,7 +96,8 @@ public class GetAllQuizzesAttemptsQueryHandlerTests(CustomWebApplicationFactory 
         var answer1 = AnswerFactory.CreateTfAnswer(studentId: student.Id, questionId: questionId, quizAttemptId: attemptId, isCorrect: true)
             .Value;
         var attempt = QuizAttemptFactory
-            .CreateQuizAttempt(id: attemptId, studentId: student.Id, quizId: quiz.Id, studentAnswers: [answer1]).Value;
+            .CreateQuizAttempt(id: attemptId, studentId: student.Id, quizId: quiz.Id).Value;
+        attempt.SubmitAnswer(answer1);
 
         using (var scope = factory.Services.CreateScope())
         {

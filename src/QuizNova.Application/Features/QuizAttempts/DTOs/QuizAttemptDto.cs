@@ -13,5 +13,6 @@ public sealed record QuizAttemptDto(
     int CorrectAnswers,
     int Score,
     string Status,
+    string GradingState,
     IReadOnlyList<QuestionDto> Questions,
     IReadOnlyList<QuestionAnswerDto> Answers);

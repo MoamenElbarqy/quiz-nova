@@ -12,7 +12,6 @@ public class QuizAttemptMapperTests
     [Fact]
     public void ToQuizAttemptDto_ShouldMapFieldsCorrectly()
     {
-        // Arrange
         var studentId = Guid.NewGuid();
         var attemptId = Guid.NewGuid();
         var quizId = Guid.NewGuid();
@@ -38,40 +37,39 @@ public class QuizAttemptMapperTests
             selectedChoiceId: Guid.NewGuid(),
             isCorrect: false).Value;
 
-        var quizAttempt = QuizAttemptFactory.CreateQuizAttempt(quizId: quizId,
-            studentAnswers: [tfAnswer1, tfAnswer2, mcqAnswer], id: attemptId, studentId: studentId).Value;
+        var quizAttempt = QuizAttemptFactory.CreateQuizAttempt(
+            quizId: quizId, id: attemptId, studentId: studentId).Value;
 
-        // Act
+        quizAttempt.SubmitAnswer(tfAnswer1);
+        quizAttempt.SubmitAnswer(tfAnswer2);
+        quizAttempt.SubmitAnswer(mcqAnswer);
+
         var dto = quizAttempt.ToQuizAttemptDto();
 
-        // Assert
         Assert.NotNull(dto);
         Assert.Equal(quizAttempt.Id, dto.QuizAttemptId);
         Assert.Equal(quizAttempt.QuizId, dto.QuizId);
         Assert.Equal(quizAttempt.StartedAt, dto.StartedAt);
         Assert.Equal(quizAttempt.SubmittedAt, dto.SubmittedAt);
 
-        // Verify default / fallback mappings for null Quiz and Question navigation properties
         Assert.Equal(string.Empty, dto.QuizTitle);
         Assert.Equal(0, dto.TotalQuestions);
         Assert.Equal(3, dto.AnsweredQuestions);
-        Assert.Equal(2, dto.CorrectAnswers); // TF1 and TF2 are correct
-        Assert.Equal(0,
-            dto.Score); // Score calculation relies on autoGradedAnswer and manually graded is null in this test!
+        Assert.Equal(2, dto.CorrectAnswers);
+        Assert.Equal(0, dto.Score);
         Assert.Empty(dto.Questions);
 
-        // Check mapped answers
         Assert.NotNull(dto.Answers);
         Assert.Equal(3, dto.Answers.Count);
 
         var mappedTfAnswer1 = dto.Answers.FirstOrDefault(a => a.QuestionId == tfAnswer1.QuestionId) as TfAnswerDto;
         Assert.NotNull(mappedTfAnswer1);
         Assert.Equal("tf", mappedTfAnswer1.AutoAnswerType);
-        Assert.Equal(string.Empty, mappedTfAnswer1.QuestionText); // question is null
+        Assert.Equal(string.Empty, mappedTfAnswer1.QuestionText);
 
         var mappedMcqAnswer = dto.Answers.FirstOrDefault(a => a.QuestionId == mcqAnswer.QuestionId) as McqAnswerDto;
         Assert.NotNull(mappedMcqAnswer);
         Assert.Equal("mcq", mappedMcqAnswer.AutoAnswerType);
-        Assert.Equal(string.Empty, mappedMcqAnswer.QuestionText); // question is null
+        Assert.Equal(string.Empty, mappedMcqAnswer.QuestionText);
     }
 }

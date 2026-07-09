@@ -8,6 +8,7 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Quizzes.DTOs;
 using QuizNova.Application.Features.Quizzes.Mappers;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.QuizAttempts.Enums;
 using QuizNova.Domain.Entities.Quizzes.Enums;
 
 namespace QuizNova.Application.Features.Quizzes.Queries.GetStudentQuizzes;
@@ -39,12 +40,6 @@ public sealed class GetStudentQuizzesQueryHandler(
             .Select(enrollment => enrollment.CourseId)
             .ToListAsync(ct);
 
-        if (enrolledCourseIds.Count == 0)
-        {
-            logger.LogInformation("No enrolled courses found for student {StudentId}", request.StudentId);
-            return new StudentQuizzesDto(serverUtc, Array.Empty<StudentQuizDto>());
-        }
-
         var quizzes = await dbContext.Quizzes
             .AsNoTracking()
             .Where(quiz => enrolledCourseIds.Contains(quiz.CourseId) && quiz.EndsAtUtc >= serverUtc)
@@ -53,14 +48,27 @@ public sealed class GetStudentQuizzesQueryHandler(
             .OrderBy(quiz => quiz.StartsAtUtc)
             .ToListAsync(ct);
 
+        var quizIds = quizzes.Select(q => q.Id).ToList();
+
+        var inProgressAttempts = await dbContext.QuizAttempts
+            .AsNoTracking()
+            .Where(a => a.StudentId == request.StudentId &&
+                        quizIds.Contains(a.QuizId) &&
+                        a.Status == QuizAttemptStatus.InProgress)
+            .Select(a => new { a.QuizId, a.Id })
+            .ToListAsync(ct);
+
+        var attemptByQuizId = inProgressAttempts
+            .ToDictionary(a => a.QuizId, a => (Guid?)a.Id);
+
         var mappedQuizzes = quizzes
-            .Select(quiz => quiz.ToStudentQuizDto())
-            .Where(quiz =>
-                quiz.QuizStatus == QuizStatus.AvailableNow ||
-                quiz.QuizStatus == QuizStatus.Scheduled)
+            .Select(quiz => quiz.ToStudentQuizDto(
+                attemptByQuizId.GetValueOrDefault(quiz.Id)))
+            .Where(quiz => quiz.QuizStatus is QuizStatus.AvailableNow or QuizStatus.Scheduled)
             .ToList();
 
-        logger.LogInformation("Successfully retrieved {Count} available/scheduled quizzes for student {StudentId}", mappedQuizzes.Count, request.StudentId);
+        logger.LogInformation("Successfully retrieved {Count} available/scheduled quizzes for student {StudentId}",
+            mappedQuizzes.Count, request.StudentId);
 
         return new StudentQuizzesDto(serverUtc, mappedQuizzes);
     }

@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.RateLimiting;
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Mappers;
 using QuizNova.Application.Common.Models;
+using QuizNova.Application.Features.QuizAttempts.Commands.CompleteQuizAttempt;
+using QuizNova.Application.Features.QuizAttempts.Commands.StartQuizAttempt;
 using QuizNova.Application.Features.QuizAttempts.DTOs;
 using QuizNova.Application.Features.QuizAttempts.Queries.GetAllQuizzesAttempts;
 using QuizNova.Application.Features.QuizAttempts.Queries.GetQuizAttemptById;
@@ -42,12 +44,12 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
             Problem);
     }
 
-    [EndpointSummary("Retrieves a quiz attempt by id for grading.")]
+    [EndpointSummary("Retrieves a quiz attempt by id for grading or resume.")]
     [EndpointDescription("Fetches a single quiz attempt using the provided attempt identifier.")]
     [EndpointName("GetQuizAttemptByIdForGrading")]
     [HttpGet("quiz-attempts/{id:guid}")]
     [OutputCache(Tags = ["quiz-attempts"])]
-    [Authorize(Roles = nameof(UserRole.Instructor))]
+    [Authorize(Roles = $"{nameof(UserRole.Student)},{nameof(UserRole.Instructor)}")]
     [ProducesResponseType(typeof(QuizAttemptDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -61,22 +63,59 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
             Problem);
     }
 
-    [EndpointSummary("Submits a student's quiz attempt.")]
-    [EndpointDescription("Creates and grades a submitted quiz attempt for the specified student.")]
-    [EndpointName("SubmitQuizAttempt")]
-    [HttpPost("students/{studentId:guid}/quiz-attempts")]
+    [EndpointSummary("Starts a new quiz attempt.")]
+    [EndpointDescription("Creates a new quiz attempt in InProgress state for the authenticated student.")]
+    [EndpointName("StartQuizAttempt")]
+    [HttpPost("quizattempts")]
     [Authorize(Roles = nameof(UserRole.Student))]
     [EnableRateLimiting("SubmitQuiz")]
     [ProducesResponseType(typeof(QuizAttemptDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<QuizAttemptDto>> SubmitQuizAttempt(
-        [FromRoute] Guid studentId,
-        [FromBody] SubmitQuizAttemptRequest request)
+    public async Task<ActionResult<QuizAttemptDto>> StartQuizAttempt(
+        [FromBody] StartQuizAttemptRequest request)
     {
-        var command = request.ToCommand(studentId);
+        var result = await sender.Send(new StartQuizAttemptCommand(request.QuizId));
+
+        return result.Match(
+            Ok,
+            Problem);
+    }
+
+    [EndpointSummary("Submits an answer for a question in a quiz attempt.")]
+    [EndpointDescription("Submits or updates a single question answer for an in-progress quiz attempt.")]
+    [EndpointName("SubmitQuestionAnswer")]
+    [HttpPost("quizattempts/{id:guid}/answers")]
+    [Authorize(Roles = nameof(UserRole.Student))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult> SubmitQuestionAnswer(
+        [FromRoute] Guid id,
+        [FromBody] SubmitQuestionAnswerRequest request)
+    {
+        var command = request.ToCommand(id);
 
         var result = await sender.Send(command);
+
+        return result.Match(
+            _ => Ok(),
+            Problem);
+    }
+
+    [EndpointSummary("Completes a quiz attempt.")]
+    [EndpointDescription("Marks an in-progress quiz attempt as completed.")]
+    [EndpointName("CompleteQuizAttempt")]
+    [HttpPut("quizattempts/{id:guid}")]
+    [Authorize(Roles = nameof(UserRole.Student))]
+    [ProducesResponseType(typeof(QuizAttemptDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<QuizAttemptDto>> CompleteQuizAttempt(
+        [FromRoute] Guid id,
+        [FromBody] CompleteQuizAttemptRequest request)
+    {
+        var result = await sender.Send(new CompleteQuizAttemptCommand(id, request.SubmittedAt));
 
         return result.Match(
             Ok,

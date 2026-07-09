@@ -227,13 +227,13 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
             attemptId,
             "REST stands for Representational State Transfer...").Value;
 
-        var attempt = QuizAttempt.Create(
+        var attempt = QuizAttempt.Start(
             attemptId,
             student.Id,
             quizId,
-            DateTime.UtcNow.AddMinutes(2),
-            DateTime.UtcNow.AddMinutes(4),
-            [answer]).Value;
+            DateTime.UtcNow.AddMinutes(2)).Value;
+        attempt.SubmitAnswer(answer);
+        attempt.Complete(DateTime.UtcNow.AddMinutes(4), DateTime.UtcNow.AddHours(2));
 
         await dbContext.Quizzes.AddAsync(quiz);
         await dbContext.Questions.AddRangeAsync(new List<Question> { question1, question2, question3 });

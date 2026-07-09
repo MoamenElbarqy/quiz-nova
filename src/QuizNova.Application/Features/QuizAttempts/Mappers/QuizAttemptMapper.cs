@@ -37,6 +37,7 @@ public static class QuizAttemptMapper
             correctAnswers,
             quizAttempt.Score,
             quizAttempt.Status.ToString(),
+            quizAttempt.GradingState.ToString(),
             questionDtos,
             answerDtos);
     }

@@ -32,7 +32,6 @@ public sealed class DbInitializer(
 
         await EnsureOutboxTriggerAsync(ct);
 
-        // Seed Roles
         var roles = new[] { "Admin", "Instructor", "Student" };
         foreach (var role in roles)
         {
@@ -179,7 +178,7 @@ public sealed class DbInitializer(
                     instructors[0].Id,
                     "Backend Fundamentals",
                     minimumPassingMarks: 50,
-                    maximumMarks: 100,
+                    maximumMarks: 500,
                     quizzes: [],
                     enrollments: []),
                 "course one"),
@@ -188,7 +187,7 @@ public sealed class DbInitializer(
                     instructors[1].Id,
                     "Frontend Fundamentals",
                     minimumPassingMarks: 50,
-                    maximumMarks: 100,
+                    maximumMarks: 500,
                     quizzes: [],
                     enrollments: []),
                 "course two"),

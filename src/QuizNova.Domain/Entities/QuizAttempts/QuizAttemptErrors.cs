@@ -22,11 +22,11 @@ public static class QuizAttemptErrors
     public static readonly Error SubmittedAtInvalid =
         Error.Validation("QuizAttempt_SubmittedAt_Invalid", "Submission time cannot be earlier than start time.");
 
-    public static readonly Error QuestionAnswersRequired =
-        Error.Validation("QuizAttempt_QuestionAnswers_Required", "At least one question answer is required.");
+    public static readonly Error AttemptAlreadyCompleted =
+        Error.Validation("QuizAttempt_Already_Completed", "Cannot modify a completed attempt.");
 
-    public static readonly Error DuplicateQuestionAnswers =
-        Error.Validation("QuizAttempt_QuestionAnswers_Duplicate", "Duplicate question answers are not allowed.");
+    public static readonly Error QuestionAnswerRequired =
+        Error.Validation("QuizAttempt_QuestionAnswer_Required", "Question answer is required.");
 
     public static Error QuizIdMismatch(Guid expectedQuizId, Guid actualQuizId) =>
         Error.Validation(
@@ -43,10 +43,10 @@ public static class QuizAttemptErrors
             "QuizAttempt_StartedAt_BeforeQuizStart",
             $"Start time must be after or equal to quiz start time '{quizStartTimeUtc:O}'.");
 
-    public static Error TooManyQuestionAnswers(int providedAnswers, int questionCount) =>
+    public static Error StartedAtAfterQuizEnd(DateTimeOffset quizEndTimeUtc) =>
         Error.Validation(
-            "QuizAttempt_QuestionAnswers_TooMany",
-            $"Provided '{providedAnswers}' answers but quiz has only '{questionCount}' questions.");
+            "QuizAttempt_StartedAt_AfterQuizEnd",
+            $"Start time must be before or equal to quiz end time '{quizEndTimeUtc:O}'.");
 
     public static Error QuestionNotFoundInQuiz(Guid questionId, Guid quizId) =>
         Error.Validation(

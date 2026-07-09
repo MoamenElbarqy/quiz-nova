@@ -2,11 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace QuizNova.Api.DTOs.Requests;
 
-public sealed record SubmitQuizAttemptRequest(
-    Guid QuizId,
-    DateTimeOffset StartedAt,
-    DateTimeOffset SubmittedAt,
-    IReadOnlyCollection<SubmitQuestionAnswerRequest> QuestionAnswers);
+public sealed record StartQuizAttemptRequest(Guid QuizId);
+
+public sealed record CompleteQuizAttemptRequest(DateTimeOffset SubmittedAt);
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(SubmitMcqAnswerRequest), "mcq")]

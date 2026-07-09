@@ -18,6 +18,10 @@ public static class Result
     public static Updated Updated => default;
 
     public static Validated Validated => default;
+
+    public static Completed Completed => default;
+
+    public static Submitted Submitted => default;
 }
 
 public sealed class Result<TValue> : IResult<TValue>
@@ -115,3 +119,7 @@ public readonly record struct Updated;
 public readonly record struct Validated;
 
 public readonly record struct Added;
+
+public readonly record struct Completed;
+
+public readonly record struct Submitted;

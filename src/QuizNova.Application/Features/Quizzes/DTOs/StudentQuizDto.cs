@@ -9,4 +9,5 @@ public sealed record StudentQuizDto(
     int QuestionsCount,
     DateTimeOffset StartsAtUtc,
     DateTimeOffset EndsAtUtc,
-    QuizStatus QuizStatus);
+    QuizStatus QuizStatus,
+    Guid? AttemptId);

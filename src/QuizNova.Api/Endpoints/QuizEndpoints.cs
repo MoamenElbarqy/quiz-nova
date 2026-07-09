@@ -35,7 +35,6 @@ public static class QuizEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
-        // GET quizzes
         quizzesGroup.MapGet(string.Empty, async (ISender sender, [AsParameters] GetAllQuizzesQuery query) =>
             {
                 var result = await sender.Send(query);
@@ -50,7 +49,6 @@ public static class QuizEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        // GET quizzes/count
         quizzesGroup.MapGet("count", async (ISender sender, [FromQuery] Guid instructorId) =>
             {
                 var result = await sender.Send(new GetInstructorQuizzesCountQuery(instructorId));
@@ -66,7 +64,6 @@ public static class QuizEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        // GET quizzes/{quizId:guid}
         quizzesGroup.MapGet("{quizId:guid}", async (ISender sender, Guid quizId) =>
             {
                 var result = await sender.Send(new GetQuizByIdQuery(quizId));
@@ -80,7 +77,6 @@ public static class QuizEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // POST quizzes
         quizzesGroup.MapPost(string.Empty, async (ISender sender, CreateQuizRequest request) =>
             {
                 var command = request.ToCommand();
@@ -95,7 +91,6 @@ public static class QuizEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        // PUT quizzes/{quizId:guid}/metadata
         quizzesGroup.MapPut("{quizId:guid}/metadata",
                 async (ISender sender, Guid quizId, UpdateQuizMetadataRequest request) =>
                 {
@@ -115,7 +110,6 @@ public static class QuizEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // POST quizzes/{quizId:guid}/questions
         quizzesGroup.MapPost("{quizId:guid}/questions",
                 async (ISender sender, Guid quizId, CreateQuizQuestionRequest request) =>
                 {
@@ -153,7 +147,6 @@ public static class QuizEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // PUT quizzes/{quizId:guid}/questions/{questionId:guid}
         quizzesGroup.MapPut("{quizId:guid}/questions/{questionId:guid}",
                 async (ISender sender, Guid quizId, Guid questionId, UpdateQuestionRequest request) =>
                 {
@@ -200,7 +193,6 @@ public static class QuizEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // PUT quizzes/{quizId:guid}/course
         quizzesGroup.MapPut("{quizId:guid}/course",
                 async (ISender sender, Guid quizId, UpdateQuizCourseIdRequest request) =>
                 {
@@ -217,7 +209,6 @@ public static class QuizEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // DELETE quizzes/{quizId:guid}/questions/{questionId:guid}
         quizzesGroup.MapDelete("{quizId:guid}/questions/{questionId:guid}",
                 async (ISender sender, Guid quizId, Guid questionId) =>
                 {
@@ -233,7 +224,6 @@ public static class QuizEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // GET students/{id:guid}/quizzes
         app.MapGet("students/{id:guid}/quizzes", async (ISender sender, Guid id) =>
             {
                 var result = await sender.Send(new GetStudentQuizzesQuery(id));
@@ -242,7 +232,7 @@ public static class QuizEndpoints
             .WithName("GetStudentQuizzes")
             .WithSummary("Retrieves quizzes assigned to a student.")
             .WithDescription("Returns quizzes associatined with the specified student identifier.")
-            .CacheOutput(policy => policy.Tag("students").Tag("quizzes"))
+            .CacheOutput(policy => policy.Tag("students").Tag("quizzes").SetVaryByQuery("t"))
             .RequireAuthorization(new AuthorizeAttribute { Roles = nameof(UserRole.Student) })
             .RequireRateLimiting("Global")
             .WithTags("quizzes")
@@ -253,7 +243,6 @@ public static class QuizEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
-        // GET instructors/{id:guid}/quizzes
         app.MapGet("instructors/{id:guid}/quizzes", async (ISender sender, Guid id) =>
             {
                 var result = await sender.Send(new GetInstructorQuizzesQuery(id));
@@ -273,7 +262,6 @@ public static class QuizEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
-        // GET instructors/{instructorId:guid}/courses/performance
         app.MapGet("instructors/{instructorId:guid}/courses/performance", async (ISender sender, Guid instructorId) =>
             {
                 var result = await sender.Send(new GetInstructorCoursesPerformanceQuery(instructorId));

@@ -12,6 +12,9 @@ public sealed class QuizAttemptConfiguration : IEntityTypeConfiguration<QuizAtte
         builder.ToTable("QuizAttempts");
         builder.HasKey(qa => qa.Id);
 
+        builder.Property(qa => qa.Status)
+            .IsRequired();
+
         builder.Navigation(qa => qa.StudentAnswers)
             .HasField("_studentAnswers")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
