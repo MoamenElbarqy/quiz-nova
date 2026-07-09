@@ -74,11 +74,13 @@ public class AuthController(ISender sender) : ApiController
             throw new InvalidOperationException("Refresh token is required to set authentication cookie.");
         }
 
+        var isHttps = Request.IsHttps;
+
         Response.Cookies.Append(RefreshTokenCookieName, refreshToken, new CookieOptions
         {
             HttpOnly = true,
-            Secure = Request.IsHttps,
-            SameSite = SameSiteMode.None,
+            Secure = isHttps,
+            SameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax,
             Expires = DateTime.UtcNow.AddDays(7),
             Path = "/",
             MaxAge = TimeSpan.FromDays(7),
