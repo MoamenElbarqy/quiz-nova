@@ -36,7 +36,6 @@ public class CreateInstructorCommandHandlerTests(CustomWebApplicationFactory fac
         result.Value.Should().NotBeNull();
         result.Value.PersonalInformation.Email.Should().Be(uniqueEmail);
 
-        // Verify existence in database
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
         var instructorInDb = await dbContext.Instructors

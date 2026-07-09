@@ -54,7 +54,6 @@ public sealed class GetCourseChatRoomByCourseIdQueryHandler(
 
             if (isCourseInstructor)
             {
-                // proceed
             }
             else
             {

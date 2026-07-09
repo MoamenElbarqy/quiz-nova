@@ -233,7 +233,6 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
 
         result.IsSuccess.Should().BeTrue();
 
-        // Verify DB State
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();

@@ -28,7 +28,6 @@ public static class QuestionAnswerMapper
         };
     }
 
-    // ── Auto-graded ──────────────────────────────────────────────────────────
     private static AutoGradedAnswerDto ToDto(
         this AutoGradedAnswer answer,
         string questionText) => answer switch
@@ -57,7 +56,6 @@ public static class QuestionAnswerMapper
             answer.IsCorrect,
             answer.StudentChoice);
 
-    // ── Manually graded ──────────────────────────────────────────────────────
     private static ManuallyGradedAnswerDto ToDto(
         this ManuallyGradedAnswers answer,
         string questionText) => answer switch

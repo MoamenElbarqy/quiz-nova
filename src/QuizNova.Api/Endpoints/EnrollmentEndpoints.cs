@@ -17,7 +17,6 @@ public static class EnrollmentEndpoints
 {
     public static IEndpointRouteBuilder MapEnrollmentEndpoints(this IEndpointRouteBuilder app)
     {
-        // GET courses/enrollments/count
         app.MapGet("courses/enrollments/count", async (ISender sender) =>
             {
                 var result = await sender.Send(new GetAllCoursesEnrollmentCountQuery());
@@ -42,7 +41,6 @@ public static class EnrollmentEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
-        // POST students/{studentId:guid}/enrollments
         group.MapPost("{studentId:guid}/enrollments", async (ISender sender, Guid studentId, EnrollStudentInCourseRequest request) =>
         {
             var result = await sender.Send(new EnrollStudentInCourseCommand(request.CourseId, studentId));
@@ -57,7 +55,6 @@ public static class EnrollmentEndpoints
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // DELETE students/{studentId:guid}/enrollments/{enrollmentId:guid}
         group.MapDelete("{studentId:guid}/enrollments/{enrollmentId:guid}", async (ISender sender, Guid studentId, Guid enrollmentId) =>
         {
             var result = await sender.Send(new RemoveStudentFromCourseCommand(enrollmentId, studentId));
@@ -72,7 +69,6 @@ public static class EnrollmentEndpoints
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // GET students/{studentId:guid}/enrollments
         group.MapGet("{studentId:guid}/enrollments", async (ISender sender, Guid studentId) =>
         {
             var result = await sender.Send(new GetStudentEnrollmentsByIdQuery(studentId));
@@ -86,7 +82,6 @@ public static class EnrollmentEndpoints
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // GET students/{studentId:guid}/enrollments/count
         group.MapGet("{studentId:guid}/enrollments/count", async (ISender sender, Guid studentId) =>
         {
             var result = await sender.Send(new GetStudentEnrollmentsCountQuery(studentId));

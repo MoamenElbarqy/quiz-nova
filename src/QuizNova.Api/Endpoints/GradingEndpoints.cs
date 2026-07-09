@@ -23,7 +23,6 @@ public static class GradingEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
-        // GET quiz-attempts/manually-graded-answers
         group.MapGet("manually-graded-answers", async (ISender sender, [AsParameters] GetPendingManualAnswersQuery query) =>
         {
             var result = await sender.Send(query);
@@ -35,7 +34,6 @@ public static class GradingEndpoints
         .Produces<PaginatedList<PendingManualAnswersDto>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest);
 
-        // PUT quiz-attempts/manually-graded-answers/{answerId:guid}
         group.MapPut("manually-graded-answers/{answerId:guid}", async (ISender sender, Guid answerId, GradeQuestionRequest request) =>
         {
             var result = await sender.Send(new GradeQuestionCommand(

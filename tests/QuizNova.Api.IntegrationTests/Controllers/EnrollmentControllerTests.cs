@@ -123,7 +123,6 @@ public class EnrollmentControllerTests(CustomWebApplicationFactory factory) : IC
         var request = new EnrollStudentInCourseRequest(course.Id);
         await client.PostAsJsonAsync($"/students/{student.Id}/enrollments", request);
 
-        // Fetch the enrollment ID
         var enrollment = await dbContext.Enrollments
             .FirstAsync(e => e.StudentId == student.Id && e.CourseId == course.Id);
 

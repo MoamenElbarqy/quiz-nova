@@ -25,7 +25,6 @@ public static class StudentEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
-        // GET students
         group.MapGet(string.Empty, async (ISender sender, [AsParameters] GetAllStudentsQuery query) =>
         {
             var result = await sender.Send(query);
@@ -38,7 +37,6 @@ public static class StudentEndpoints
         .Produces<PaginatedList<StudentDto>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest);
 
-        // GET students/{id:guid}
         group.MapGet("{id:guid}", async (ISender sender, Guid id) =>
         {
             var result = await sender.Send(new GetStudentByIdQuery(id));
@@ -52,7 +50,6 @@ public static class StudentEndpoints
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // POST students
         group.MapPost(string.Empty, async (ISender sender, CreateStudentRequest request) =>
         {
             var command = request.ToCommand();
@@ -66,7 +63,6 @@ public static class StudentEndpoints
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status409Conflict);
 
-        // PUT students/{id:guid}
         group.MapPut("{id:guid}", async (ISender sender, Guid id, UpdateStudentRequest request) =>
         {
             var command = request.ToCommand(id);
@@ -81,7 +77,6 @@ public static class StudentEndpoints
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict);
 
-        // DELETE students/{id:guid}
         group.MapDelete("{id:guid}", async (ISender sender, Guid id) =>
         {
             var result = await sender.Send(new DeleteStudentCommand(id));

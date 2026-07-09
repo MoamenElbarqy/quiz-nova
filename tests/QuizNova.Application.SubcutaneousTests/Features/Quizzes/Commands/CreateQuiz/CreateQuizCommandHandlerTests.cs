@@ -267,7 +267,6 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
         result.Value.CourseId.Should().Be(courseId);
         result.Value.InstructorId.Should().Be(instructorId);
 
-        // Verify DB State
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();

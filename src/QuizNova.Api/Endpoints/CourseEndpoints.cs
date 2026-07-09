@@ -34,7 +34,6 @@ public static class CourseEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
-        // GET courses
         coursesGroup.MapGet(string.Empty, async (ISender sender, [AsParameters] GetAllCoursesQuery query) =>
         {
             var result = await sender.Send(query);
@@ -49,7 +48,6 @@ public static class CourseEndpoints
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        // GET courses/{id:guid}
         coursesGroup.MapGet("{id:guid}", async (ISender sender, Guid id) =>
         {
             var result = await sender.Send(new GetCourseByIdQuery(id));
@@ -63,7 +61,6 @@ public static class CourseEndpoints
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // POST courses
         coursesGroup.MapPost(string.Empty, async (ISender sender, CreateCourseRequest request) =>
         {
             var command = request.ToCommand();
@@ -78,7 +75,6 @@ public static class CourseEndpoints
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        // PATCH courses/{courseId:guid}/instructor
         coursesGroup.MapPatch("{courseId:guid}/instructor", async (ISender sender, Guid courseId, UpdateCourseInstructorRequest request) =>
         {
             var result = await sender.Send(new UpdateCourseInstructorCommand(courseId, request.InstructorId));
@@ -93,7 +89,6 @@ public static class CourseEndpoints
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // DELETE courses/{id:guid}
         coursesGroup.MapDelete("{id:guid}", async (ISender sender, Guid id) =>
         {
             var result = await sender.Send(new DeleteCourseByIdCommand(id));
@@ -108,7 +103,6 @@ public static class CourseEndpoints
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // GET instructor/{instructorId:guid}/courses
         instructorGroup.MapGet("{instructorId:guid}/courses", async (ISender sender, Guid instructorId) =>
         {
             var result = await sender.Send(new GetInstructorCoursesQuery(instructorId));
@@ -122,7 +116,6 @@ public static class CourseEndpoints
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // GET instructor/{instructorId:guid}/courses/count
         instructorGroup.MapGet("{instructorId:guid}/courses/count", async (ISender sender, Guid instructorId) =>
         {
             var result = await sender.Send(new GetInstructorCoursesCountQuery(instructorId));

@@ -168,7 +168,6 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
         result.IsSuccess.Should().BeTrue();
         result.Value.QuestionText.Should().Be("Valid Tf Question");
 
-        // Verify DB State
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();

@@ -25,7 +25,6 @@ public static class InstructorEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
-        // GET instructors
         group.MapGet(string.Empty, async (ISender sender, [AsParameters] GetAllInstructorsQuery query) =>
         {
             var result = await sender.Send(query);
@@ -38,7 +37,6 @@ public static class InstructorEndpoints
         .Produces<PaginatedList<InstructorDto>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest);
 
-        // GET instructors/{id:guid}
         group.MapGet("{id:guid}", async (ISender sender, Guid id) =>
         {
             var result = await sender.Send(new GetInstructorByIdQuery(id));
@@ -52,7 +50,6 @@ public static class InstructorEndpoints
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // POST instructors
         group.MapPost(string.Empty, async (ISender sender, CreateInstructorRequest request) =>
         {
             var command = request.ToCommand();
@@ -66,7 +63,6 @@ public static class InstructorEndpoints
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status409Conflict);
 
-        // PUT instructors/{id:guid}
         group.MapPut("{id:guid}", async (ISender sender, Guid id, UpdateInstructorRequest request) =>
         {
             var command = request.ToCommand(id);
@@ -81,7 +77,6 @@ public static class InstructorEndpoints
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict);
 
-        // DELETE instructors/{id:guid}
         group.MapDelete("{id:guid}", async (ISender sender, Guid id) =>
         {
             var result = await sender.Send(new DeleteInstructorCommand(id));
