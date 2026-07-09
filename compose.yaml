@@ -115,7 +115,7 @@ services:
     image: grafana/grafana:latest
     container_name: quiznova-grafana
     environment:
-      GF_SECURITY_ADMIN_PASSWORD: P@ssw0rd
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
     ports:
       - "3000:3000"
     volumes:
