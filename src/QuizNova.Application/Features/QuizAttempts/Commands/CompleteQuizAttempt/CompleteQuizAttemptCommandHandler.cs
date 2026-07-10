@@ -34,7 +34,6 @@ public sealed class CompleteQuizAttemptCommandHandler(
                 .ThenInclude(q => q!.Questions)
                     .ThenInclude((Question question) => (question as Mcq)!.Choices)
             .Include(a => a.StudentAnswers)
-            .AsSplitQuery()
             .FirstOrDefaultAsync(a => a.Id == request.AttemptId, ct);
 
         if (attempt is null)

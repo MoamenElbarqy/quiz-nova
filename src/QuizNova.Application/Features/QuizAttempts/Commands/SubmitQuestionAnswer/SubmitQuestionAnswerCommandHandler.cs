@@ -32,10 +32,9 @@ public sealed class SubmitQuestionAnswerCommandHandler(
 
         var attempt = await dbContext.QuizAttempts
             .Include(a => a.Quiz)
-                .ThenInclude(q => q!.Questions)
-                    .ThenInclude((Question question) => (question as Mcq)!.Choices)
+            .ThenInclude(q => q!.Questions)
+            .ThenInclude((Question question) => (question as Mcq)!.Choices)
             .Include(a => a.StudentAnswers)
-            .AsSplitQuery()
             .FirstOrDefaultAsync(a => a.Id == request.AttemptId, ct);
 
         if (attempt is null)

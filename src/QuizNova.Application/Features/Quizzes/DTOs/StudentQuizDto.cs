@@ -10,4 +10,5 @@ public sealed record StudentQuizDto(
     DateTimeOffset StartsAtUtc,
     DateTimeOffset EndsAtUtc,
     QuizStatus QuizStatus,
-    Guid? AttemptId);
+    Guid? AttemptId,
+    string? AttemptStatus);

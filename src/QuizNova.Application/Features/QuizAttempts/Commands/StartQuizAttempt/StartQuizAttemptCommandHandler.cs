@@ -80,6 +80,21 @@ public sealed class StartQuizAttemptCommandHandler(
             return ApplicationErrors.QuizAttemptAlreadyExists(studentId, request.QuizId);
         }
 
+        var existingCompletedAttempt = await dbContext.QuizAttempts
+            .AsNoTracking()
+            .AnyAsync(qa => qa.StudentId == studentId && qa.QuizId == request.QuizId
+                                                      && qa.Status == QuizAttemptStatus.Completed, ct);
+
+        if (existingCompletedAttempt)
+        {
+            logger.LogWarning(
+                "Start attempt failed: Completed attempt already exists for student {StudentId} and quiz {QuizId}",
+                studentId,
+                request.QuizId);
+
+            return ApplicationErrors.QuizAttemptAlreadyCompleted(studentId, request.QuizId);
+        }
+
         var createResult = quiz.StartAttempt(studentId);
 
         if (createResult.IsError)

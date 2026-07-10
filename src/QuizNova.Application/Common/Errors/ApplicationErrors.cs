@@ -89,7 +89,12 @@ public static class ApplicationErrors
     public static Error QuizAttemptAlreadyExists(Guid studentId, Guid quizId) =>
         Error.Conflict(
             code: "QuizAttempt.AlreadyExists",
-            description: $"Student '{studentId}' already has an attempt for quiz '{quizId}'.");
+            description: $"Student '{studentId}' already has an active attempt for quiz '{quizId}'.");
+
+    public static Error QuizAttemptAlreadyCompleted(Guid studentId, Guid quizId) =>
+        Error.Conflict(
+            code: "QuizAttempt.AlreadyCompleted",
+            description: $"Student '{studentId}' has already completed quiz '{quizId}'.");
 
     public static Error QuizCorrectChoiceNotFound(Guid questionId, Guid correctChoiceId) =>
         Error.Validation(

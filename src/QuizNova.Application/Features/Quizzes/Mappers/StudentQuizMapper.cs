@@ -5,7 +5,7 @@ namespace QuizNova.Application.Features.Quizzes.Mappers;
 
 public static class StudentQuizMapper
 {
-    public static StudentQuizDto ToStudentQuizDto(this Quiz quiz, Guid? attemptId = null)
+    public static StudentQuizDto ToStudentQuizDto(this Quiz quiz, Guid? attemptId = null, string? attemptStatus = null)
     {
         return new StudentQuizDto(
             quiz.Id,
@@ -15,6 +15,7 @@ public static class StudentQuizMapper
             quiz.StartsAtUtc,
             quiz.EndsAtUtc,
             quiz.Status,
-            attemptId);
+            attemptId,
+            attemptStatus);
     }
 }

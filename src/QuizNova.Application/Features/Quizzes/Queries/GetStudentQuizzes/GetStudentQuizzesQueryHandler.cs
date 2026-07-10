@@ -50,20 +50,27 @@ public sealed class GetStudentQuizzesQueryHandler(
 
         var quizIds = quizzes.Select(q => q.Id).ToList();
 
-        var inProgressAttempts = await dbContext.QuizAttempts
+        var studentAttempts = await dbContext.QuizAttempts
             .AsNoTracking()
             .Where(a => a.StudentId == request.StudentId &&
-                        quizIds.Contains(a.QuizId) &&
-                        a.Status == QuizAttemptStatus.InProgress)
-            .Select(a => new { a.QuizId, a.Id })
+                        quizIds.Contains(a.QuizId))
+            .Select(a => new { a.QuizId, a.Id, a.Status })
             .ToListAsync(ct);
 
-        var attemptByQuizId = inProgressAttempts
-            .ToDictionary(a => a.QuizId, a => (Guid?)a.Id);
+        var attemptByQuizId = studentAttempts
+            .GroupBy(a => a.QuizId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderByDescending(a => a.Status == QuizAttemptStatus.Completed).First());
 
         var mappedQuizzes = quizzes
-            .Select(quiz => quiz.ToStudentQuizDto(
-                attemptByQuizId.GetValueOrDefault(quiz.Id)))
+            .Select(quiz =>
+            {
+                var attempt = attemptByQuizId.GetValueOrDefault(quiz.Id);
+                return quiz.ToStudentQuizDto(
+                    attempt?.Id,
+                    attempt?.Status.ToString());
+            })
             .Where(quiz => quiz.QuizStatus is QuizStatus.AvailableNow or QuizStatus.Scheduled)
             .ToList();
 

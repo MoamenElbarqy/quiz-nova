@@ -25,6 +25,7 @@ public static class QuizAttemptMapper
             .ToList();
 
         var correctAnswers = answerDtos.OfType<AutoGradedAnswerDto>().Count(answer => answer.IsCorrect);
+        var totalMarks = quizAttempt.Quiz?.Questions.Sum(question => question.Marks) ?? 0;
 
         return new QuizAttemptDto(
             quizAttempt.Id,
@@ -36,6 +37,7 @@ public static class QuizAttemptMapper
             answeredQuestions,
             correctAnswers,
             quizAttempt.Score,
+            totalMarks,
             quizAttempt.Status.ToString(),
             quizAttempt.GradingState.ToString(),
             questionDtos,
