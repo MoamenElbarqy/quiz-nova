@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 
 using QuizNova.Api;
 using QuizNova.Api.Hubs;
+using QuizNova.Infrastructure.Data;
 using QuizNova.Infrastructure.Settings;
 
 using Scalar.AspNetCore;
@@ -40,6 +41,13 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseRateLimiter();
+
+if (app.Configuration.GetValue<bool>("ResetDatabase"))
+{
+    using var scope = app.Services.CreateScope();
+    var resetCtx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await resetCtx.Database.EnsureDeletedAsync();
+}
 
 if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("AutoMigrateDb"))
 {
