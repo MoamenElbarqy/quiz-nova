@@ -34,7 +34,7 @@ Built with **.NET 10** · **Angular 21** · **PostgreSQL** · **SignalR**
 ## 📸 Screenshots
 
 <details>
-<summary>📂 View Database Schema & swagger UI Screenshots</summary>
+<summary>📂 View Database Schema & Swagger UI Screenshots</summary>
 
 ### 🗄️ Relational Schema
 
@@ -46,12 +46,31 @@ Built with **.NET 10** · **Angular 21** · **PostgreSQL** · **SignalR**
 
 <table>
   <tr>
-    <td width="50%">
+    <td width="50%" align="center">
+      <b>👑 Admin, Auth & College Endpoints</b><br/>
       <img src="docs/images/swagger/swagger-admin-auth-college.png" alt="Swagger — Admin, Auth & College endpoints" width="100%"/>
     </td>
-    <td width="50%">
+    <td width="50%" align="center">
+      <b>📚 Course & Grading Endpoints</b><br/>
       <img src="docs/images/swagger/swagger-course-grading.png" alt="Swagger — Course & Grading endpoints" width="100%"/>
     </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <b>👨‍🏫 Instructor Attempts Endpoints</b><br/>
+      <img src="docs/images/swagger/swagger-instructor-attempts.png" alt="Swagger — Instructor Attempts endpoints" width="100%"/>
+    </td>
+    <td width="50%" align="center">
+      <b>🧑‍🎓 Student Quiz Endpoints (Part 1)</b><br/>
+      <img src="docs/images/swagger/swagger-quiz-student.png" alt="Swagger — Student Quiz endpoints Part 1" width="100%"/>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <b>🧑‍🎓 Student Quiz Endpoints (Part 2)</b><br/>
+      <img src="docs/images/swagger/swagger-quiz-student-2.png" alt="Swagger — Student Quiz endpoints Part 2" width="100%"/>
+    </td>
+    <td width="50%"></td>
   </tr>
 </table>
 
@@ -59,19 +78,23 @@ Built with **.NET 10** · **Angular 21** · **PostgreSQL** · **SignalR**
 
 <table>
   <tr>
-    <td width="50%">
-      <img src="docs/images/landing-page.png" alt="Landing Page" width="100%"/>
+    <td width="50%" align="center">
+      <b>🔑 Login Page</b><br/>
+      <img src="docs/images/screenshots/login.png" alt="Login Page" width="100%"/>
     </td>
-    <td width="50%">
-      <img src="docs/images/admin-dashboard.png" alt="Admin Dashboard" width="100%"/>
+    <td width="50%" align="center">
+      <b>💬 Course Chat Room</b><br/>
+      <img src="docs/images/screenshots/course-chat.png" alt="Course Chat Room" width="100%"/>
     </td>
   </tr>
   <tr>
-    <td width="50%">
-      <img src="docs/images/instructor-quiz-create.png" alt="Instructor — Create Quiz" width="100%"/>
+    <td width="50%" align="center">
+      <b>👨‍🏫 Instructor — Create Quiz</b><br/>
+      <img src="docs/images/screenshots/create-quiz.png" alt="Instructor — Create Quiz" width="100%"/>
     </td>
-    <td width="50%">
-      <img src="docs/images/student-quiz-attempt.png" alt="Student — Quiz Attempt" width="100%"/>
+    <td width="50%" align="center">
+      <b>🧑‍🎓 Student — Quiz Attempt</b><br/>
+      <img src="docs/images/screenshots/quiz-attempt.png" alt="Student — Quiz Attempt" width="100%"/>
     </td>
   </tr>
 </table>
@@ -147,10 +170,15 @@ Models questions and answers through a two-level polymorphic hierarchy mapping E
 - **LSP in Practice**: The quiz attempt handler dispatches solver logic through the base `Question` type:
 
   ```csharp
-  return question switch {
-      Mcq mcq => mcq.Solve(mcqAnswer, studentId, attemptId),
-      Tf  tf  => tf.Solve(tfAnswer,  studentId, attemptId),
-      _       => Error.Validation("Quiz.Question.TypeMismatch", "..."),
+  Result<QuestionAnswer> createAnswerResult = (question, request.Answer) switch
+  {
+      (Mcq mcqQuestion, SubmitMcqAnswerCommand mcqAnswer) =>
+          mcqQuestion.Solve(mcqAnswer.SelectedChoiceId, studentId, attempt.Id),
+      (Tf tfQuestion, SubmitTfAnswerCommand tfAnswer) =>
+          tfQuestion.Solve(tfAnswer.StudentChoice, studentId, attempt.Id),
+      (Essay essayQuestion, SubmitEssayAnswerCommand essayAnswer) =>
+          essayQuestion.Solve(essayAnswer.StudentResponse, studentId, attempt.Id),
+      _ => Error.Unexpected("QuizAttempt.Answer.AnswerTypeMismatch", "...")
   };
   ```
 
@@ -166,8 +194,7 @@ QuizNova uses a **Hybrid Cache** (L1 in-process + L2 PostgreSQL distributed cach
 
   ```csharp
   await dbContext.SaveChangesAsync(ct);
-  await cacheInvalidator.InvalidateAsync("quizzes:all");
-  await cacheInvalidator.InvalidateAsync($"courses:{quiz.CourseId}:quizzes");
+  await cacheInvalidator.InvalidateAsync(["quizzes"], ct);
   ```
 
 </details>
@@ -257,6 +284,18 @@ docker compose up -d
 | 📙 Scalar API | [`http://localhost:8080/scalar`](http://localhost:8080/scalar) |
 | 📋 Seq Logs | [`http://localhost:5341`](http://localhost:5341) |
 | 📈 Grafana | [`http://localhost:3000`](http://localhost:3000) |
+
+### 🔐 Demo Credentials
+
+Ready to explore? The application comes pre-seeded with demo accounts. Use any of the credentials below on the login page:
+
+| Role | Email | Password |
+|---|---|---|
+| 👑 Admin | `admin@quiznova.local` | `Admin123!` |
+| 👨‍🏫 Instructor | `ahmed.nasser@quiznova.local` | `Instructor123!` |
+| 🧑‍🎓 Student | `omar.yasser@quiznova.local` | `Student123!` |
+
+> 💡 The demo credentials are also displayed on the login page for quick reference.
 
 ---
 
