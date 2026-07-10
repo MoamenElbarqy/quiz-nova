@@ -11,5 +11,8 @@ public sealed class StudentAnswerConfiguration : IEntityTypeConfiguration<Questi
     {
         builder.ToTable("QuestionAnswers");
         builder.HasKey(a => a.Id);
+
+        builder.Property(a => a.Id)
+            .ValueGeneratedNever();
     }
 }
