@@ -70,4 +70,10 @@ public class EssayAnswer : ManuallyGradedAnswers
             trimmedResponse,
             score);
     }
+
+    public void Update(string studentResponse)
+    {
+        StudentResponse = studentResponse;
+        ResetGrading();
+    }
 }

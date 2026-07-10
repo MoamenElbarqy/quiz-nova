@@ -5,9 +5,15 @@ namespace QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.McqAns
 
 public class McqAnswer : AutoGradedAnswer
 {
-    public Guid SelectedChoiceId { get; }
+    public Guid SelectedChoiceId { get; private set; }
 
     public Mcq? Mcq { get; init; }
+
+    public void Update(Guid selectedChoiceId, bool isCorrect)
+    {
+        SelectedChoiceId = selectedChoiceId;
+        UpdateIsCorrect(isCorrect);
+    }
 
     // Required by EF Core
     private McqAnswer()

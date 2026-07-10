@@ -144,13 +144,20 @@ public class Mcq : AutoGradedQuestion<Guid>
     public override Result<QuestionAnswer> Solve(Guid answer, Guid studentId, Guid quizAttemptId)
     {
         var isCorrect = CorrectionCondition(answer);
-        return McqAnswer.Create(
+        var createResult = McqAnswer.Create(
             Guid.NewGuid(),
             studentId,
             Id,
             quizAttemptId,
             answer,
             this,
-            isCorrect).Value;
+            isCorrect);
+
+        if (createResult.IsError)
+        {
+            return createResult.TopError;
+        }
+
+        return createResult.Value;
     }
 }

@@ -1,8 +1,11 @@
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.McqAnswer;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.TrueFalseAnswer;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers.EssayAnswer;
 using QuizNova.Domain.Entities.QuizAttempts.Enums;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Users.Student;
@@ -109,18 +112,39 @@ public class QuizAttempt : Entity
             return QuizAttemptErrors.AttemptAlreadyCompleted;
         }
 
-        if (answer is null)
-        {
-            return QuizAttemptErrors.QuestionAnswerRequired;
-        }
-
         if (Quiz is not null && Quiz.Questions.All(q => q.Id != answer.QuestionId))
         {
             return QuizAttemptErrors.QuestionNotFoundInQuiz(answer.QuestionId, QuizId);
         }
 
-        _studentAnswers.RemoveAll(a => a.QuestionId == answer.QuestionId);
-        _studentAnswers.Add(answer);
+        var existingAnswer = _studentAnswers.FirstOrDefault(a => a.QuestionId == answer.QuestionId);
+        if (existingAnswer is not null)
+        {
+            if (existingAnswer is McqAnswer existingMcq &&
+                answer is McqAnswer newMcq)
+            {
+                existingMcq.Update(newMcq.SelectedChoiceId, newMcq.IsCorrect);
+            }
+            else if (existingAnswer is TfAnswer existingTf &&
+                     answer is TfAnswer newTf)
+            {
+                existingTf.Update(newTf.StudentChoice, newTf.IsCorrect);
+            }
+            else if (existingAnswer is EssayAnswer existingEssay &&
+                     answer is EssayAnswer newEssay)
+            {
+                existingEssay.Update(newEssay.StudentResponse);
+            }
+            else
+            {
+                _studentAnswers.Remove(existingAnswer);
+                _studentAnswers.Add(answer);
+            }
+        }
+        else
+        {
+            _studentAnswers.Add(answer);
+        }
 
         return Result.Validated;
     }

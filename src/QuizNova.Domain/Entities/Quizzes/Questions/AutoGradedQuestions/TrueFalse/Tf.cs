@@ -80,12 +80,19 @@ public class Tf : AutoGradedQuestion<bool>
     public override Result<QuestionAnswer> Solve(bool answer, Guid studentId, Guid quizAttemptId)
     {
         var isCorrect = CorrectionCondition(answer);
-        return TfAnswer.Create(
+        var createResult = TfAnswer.Create(
             Guid.NewGuid(),
             studentId,
             Id,
             quizAttemptId,
             answer,
-            isCorrect).Value;
+            isCorrect);
+
+        if (createResult.IsError)
+        {
+            return createResult.TopError;
+        }
+
+        return createResult.Value;
     }
 }

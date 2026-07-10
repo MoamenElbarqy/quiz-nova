@@ -10,4 +10,9 @@ public abstract class AutoGradedAnswer(
     bool isCorrect) : QuestionAnswer(id, studentId, questionId, quizAttemptId)
 {
     public bool IsCorrect { get; private set; } = isCorrect;
+
+    protected void UpdateIsCorrect(bool isCorrect)
+    {
+        IsCorrect = isCorrect;
+    }
 }

@@ -66,4 +66,11 @@ public abstract class ManuallyGradedAnswers : QuestionAnswer
 
         return Result.Updated;
     }
+
+    protected void ResetGrading()
+    {
+        Score = null;
+        Feedback = null;
+        GradedAt = null;
+    }
 }

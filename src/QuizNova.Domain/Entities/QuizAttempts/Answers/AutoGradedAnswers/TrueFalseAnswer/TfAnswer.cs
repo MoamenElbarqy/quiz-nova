@@ -5,9 +5,15 @@ namespace QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.TrueFa
 
 public class TfAnswer : AutoGradedAnswer
 {
-    public bool StudentChoice { get; }
+    public bool StudentChoice { get; private set; }
 
     public Tf? Tf { get; init; }
+
+    public void Update(bool studentChoice, bool isCorrect)
+    {
+        StudentChoice = studentChoice;
+        UpdateIsCorrect(isCorrect);
+    }
 
     // Required by EF Core
     private TfAnswer()
