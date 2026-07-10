@@ -46,7 +46,7 @@ if (app.Configuration.GetValue<bool>("ResetDatabase"))
 {
     using var scope = app.Services.CreateScope();
     var resetCtx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await resetCtx.Database.EnsureDeletedAsync();
+    await resetCtx.Database.ExecuteSqlRawAsync("DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;");
 }
 
 if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("AutoMigrateDb"))
