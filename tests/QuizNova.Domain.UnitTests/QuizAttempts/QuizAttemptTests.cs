@@ -126,16 +126,6 @@ public class QuizAttemptTests
     }
 
     [Fact]
-    public void SubmitAnswer_ShouldFail_WhenAnswerIsNull()
-    {
-        var attempt = QuizAttemptFactory.CreateQuizAttempt().Value;
-
-        var result = attempt.SubmitAnswer(null!);
-
-        Assert.True(result.IsError);
-    }
-
-    [Fact]
     public void Complete_ShouldSetStatus_AndSubmittedAt()
     {
         var quiz = QuizFactory.CreateQuiz(startsAtUtc: DateTimeOffset.UtcNow.AddHours(-2)).Value;

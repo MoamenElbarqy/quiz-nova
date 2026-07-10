@@ -303,7 +303,7 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync("student1@quiznova.local", "Student123!", "Student");
+        await client.AuthenticateAsync("omar.yasser@quiznova.local", "Student123!", "Student");
 
         var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(), Guid.NewGuid(),
             DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30), _validQuestions);

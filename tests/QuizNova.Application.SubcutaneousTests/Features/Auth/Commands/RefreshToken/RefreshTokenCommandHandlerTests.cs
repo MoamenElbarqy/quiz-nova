@@ -40,7 +40,7 @@ public class RefreshTokenCommandHandlerTests(CustomWebApplicationFactory factory
 
         // Login to get initial tokens
         var loginResult = await mediator.Send(
-            new LoginCommand("instructor1@quiznova.local", "Instructor123!", "Instructor"));
+            new LoginCommand("ahmed.nasser@quiznova.local", "Instructor123!", "Instructor"));
         loginResult.IsSuccess.Should().BeTrue();
 
         var originalAccessToken = loginResult.Value.Token.AccessToken;
@@ -82,7 +82,7 @@ public class RefreshTokenCommandHandlerTests(CustomWebApplicationFactory factory
 
         // Login to get a valid access token
         var loginResult = await mediator.Send(
-            new LoginCommand("instructor1@quiznova.local", "Instructor123!", "Instructor"));
+            new LoginCommand("ahmed.nasser@quiznova.local", "Instructor123!", "Instructor"));
         loginResult.IsSuccess.Should().BeTrue();
 
         var accessToken = loginResult.Value.Token.AccessToken;
@@ -123,7 +123,7 @@ public class RefreshTokenCommandHandlerTests(CustomWebApplicationFactory factory
 
         // Login to get a valid access token
         var loginResult = await mediator.Send(
-            new LoginCommand("instructor1@quiznova.local", "Instructor123!", "Instructor"));
+            new LoginCommand("ahmed.nasser@quiznova.local", "Instructor123!", "Instructor"));
         loginResult.IsSuccess.Should().BeTrue();
 
         // Act
@@ -143,7 +143,7 @@ public class RefreshTokenCommandHandlerTests(CustomWebApplicationFactory factory
 
         // Login to get a valid refresh token
         var loginResult = await mediator.Send(
-            new LoginCommand("instructor1@quiznova.local", "Instructor123!", "Instructor"));
+            new LoginCommand("ahmed.nasser@quiznova.local", "Instructor123!", "Instructor"));
         loginResult.IsSuccess.Should().BeTrue();
 
         // Act
@@ -163,7 +163,7 @@ public class RefreshTokenCommandHandlerTests(CustomWebApplicationFactory factory
 
         // Login to get tokens
         var loginResult = await mediator.Send(
-            new LoginCommand("instructor1@quiznova.local", "Instructor123!", "Instructor"));
+            new LoginCommand("ahmed.nasser@quiznova.local", "Instructor123!", "Instructor"));
         loginResult.IsSuccess.Should().BeTrue();
 
         var accessToken = loginResult.Value.Token.AccessToken;

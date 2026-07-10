@@ -14,7 +14,7 @@ public class GetCollegeSummaryQueryHandlerTests(CustomWebApplicationFactory fact
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync("instructor1@quiznova.local", "Instructor123!", "Instructor");
+        await client.AuthenticateAsync("ahmed.nasser@quiznova.local", "Instructor123!", "Instructor");
 
         // Act
         var response = await client.GetAsync("/colleges");
@@ -28,7 +28,7 @@ public class GetCollegeSummaryQueryHandlerTests(CustomWebApplicationFactory fact
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync("student1@quiznova.local", "Student123!", "Student");
+        await client.AuthenticateAsync("omar.yasser@quiznova.local", "Student123!", "Student");
 
         // Act
         var response = await client.GetAsync("/colleges");

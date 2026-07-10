@@ -141,7 +141,7 @@ public class LoginCommandHandlerTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        var command = new LoginCommand("instructor1@quiznova.local", "Instructor123!", "guard");
+        var command = new LoginCommand("ahmed.nasser@quiznova.local", "Instructor123!", "guard");
 
         // Act
         var result = await mediator.Send(command);
@@ -156,7 +156,7 @@ public class LoginCommandHandlerTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        var command = new LoginCommand("instructor1@quiznova.local", "Instructor123!", "Instructor");
+        var command = new LoginCommand("ahmed.nasser@quiznova.local", "Instructor123!", "Instructor");
 
         // Act
         var result = await mediator.Send(command);
@@ -190,7 +190,7 @@ public class LoginCommandHandlerTests(CustomWebApplicationFactory factory)
             tokenCountBefore = await dbContext.UserRefreshTokens.CountAsync();
         }
 
-        var command = new LoginCommand("instructor1@quiznova.local", "WrongPass123!", "Instructor");
+        var command = new LoginCommand("ahmed.nasser@quiznova.local", "WrongPass123!", "Instructor");
 
         // Act
         var result = await mediator.Send(command);
@@ -211,7 +211,7 @@ public class LoginCommandHandlerTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         var mediator = factory.CreateMediator();
-        var command = new LoginCommand("instructor1@quiznova.local", "Instructor123!", "Student");
+        var command = new LoginCommand("ahmed.nasser@quiznova.local", "Instructor123!", "Student");
 
         // Act
         var result = await mediator.Send(command);
