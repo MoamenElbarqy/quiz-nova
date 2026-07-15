@@ -1,0 +1,4 @@
+db_connection_string  = "your-neon-postgres-connection-string"
+jwt_secret            = "your-jwt-secret-key"
+grafana_loki_password = "your-grafana-loki-password"
+github_token          = "your-github-personal-access-token"

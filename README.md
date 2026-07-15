@@ -27,7 +27,9 @@ Built with **.NET 10** · **Angular 21** · **PostgreSQL** · **SignalR**
 - [🛠️ Tech Stack](#️-tech-stack)
 - [🧪 Testing Strategy](#-testing-strategy)
 - [🚦 Getting Started](#-getting-started)
+- [☁️ Infrastructure as Code (IaC)](#-infrastructure-as-code-iac)
 - [🔄 CI/CD Pipeline](#-cicd-pipeline)
+
 
 ---
 
@@ -296,6 +298,20 @@ Ready to explore? The application comes pre-seeded with demo accounts. Use any o
 | 🧑‍🎓 Student | `omar.yasser@quiznova.local` | `Student123!` |
 
 > 💡 The demo credentials are also displayed on the login page for quick reference.
+
+---
+
+## ☁️ Infrastructure as Code (IaC)
+
+QuizNova's cloud infrastructure is fully declared and managed using **Terraform**, providing a repeatable and automated deployment model for Azure and GitHub Pages.
+
+- **Azure Provider (`azurerm`)**: Declares and manages the core hosting resources:
+  - **Resource Group** in `swedencentral`.
+  - **Container App Environment** acting as the secure networking and log aggregation boundary.
+  - **Container App** hosting the .NET Web API container, configured with serverless Consumption billing and scaling profiles (`min_replicas = 0`, `max_replicas = 1`).
+- **GitHub Provider (`github`)**: Automates custom domain registration by updating GitHub Pages configuration to bind the static Angular frontend build to the custom domain (`quiznova.dev`).
+- **Secrets Management**: Sensitive values (such as the Neon PostgreSQL database connection string, JWT secrets, and Grafana logging credentials) are separated into local gitignored `.tfvars` files, ensuring no secrets are leaked to the public repository.
+- **GitOps Life Cycle Guard (`ignore_changes`)**: To prevent Terraform from rolling back new application deployments, Terraform is configured to ignore container image, environment, and probe updates. This separates infrastructure management from application CI/CD.
 
 ---
 
