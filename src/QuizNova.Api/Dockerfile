@@ -18,7 +18,7 @@ COPY --chown=app:app . .
 
 RUN dotnet publish "src/QuizNova.Api/QuizNova.Api.csproj" \
   -c Release \
-  -o /app/publish \
+  -o ./publish \
   /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
@@ -36,6 +36,6 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 
 EXPOSE 8080
 
-COPY --from=build /app/publish .
+COPY --from=build /src/publish .
 
 ENTRYPOINT ["dotnet", "QuizNova.Api.dll"]
