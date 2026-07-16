@@ -31,7 +31,8 @@ jobs:
 
       - name: Build Angular Client
         working-directory: src/QuizNova.Client
-        run: npm run build -- --base-href /quiz-nova/
+        run: npm run build -- --base-href /
+
 
       - name: SPA Routing Fix (Create 404.html)
         working-directory: src/QuizNova.Client
