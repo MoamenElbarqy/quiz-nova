@@ -31,10 +31,10 @@ public sealed class SubmitQuestionAnswerCommandHandler(
             request.AttemptId);
 
         var attempt = await dbContext.QuizAttempts
-            .Include(a => a.Quiz)
-            .ThenInclude(q => q!.Questions)
-            .ThenInclude((Question question) => (question as Mcq)!.Choices)
-            .Include(a => a.StudentAnswers)
+            .Include(a => a.StudentAnswers.Where(sa => sa.QuestionId == request.Answer.QuestionId))
+            .Include(a => a.Quiz!)
+            .ThenInclude(q => q.Questions.Where(q => q.Id == request.Answer.QuestionId))
+            .ThenInclude((Question q) => (q as Mcq)!.Choices)
             .FirstOrDefaultAsync(a => a.Id == request.AttemptId, ct);
 
         if (attempt is null)
@@ -48,8 +48,7 @@ public sealed class SubmitQuestionAnswerCommandHandler(
             return Error.Forbidden("Forbidden", "You do not own this attempt.");
         }
 
-        var question = attempt.Quiz!.Questions
-            .FirstOrDefault(q => q.Id == request.Answer.QuestionId);
+        var question = attempt.Quiz?.Questions.FirstOrDefault(q => q.Id == request.Answer.QuestionId);
 
         if (question is null)
         {
