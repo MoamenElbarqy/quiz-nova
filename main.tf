@@ -32,13 +32,31 @@ resource "azurerm_container_app" "backend_app" {
         value = "https://moamenelbarqy.github.io"
       }
       env {
+        name  = "AppSettings__Cors__AllowedOrigins__1"
+        value = "https://quiznova.dev"
+      }
+      env {
+        name  = "AppSettings__Cors__AllowedOrigins__2"
+        value = "https://www.quiznova.dev"
+      }
+      env {
         name  = "JwtSettings__Issuer"
         value = "https://quiznova-api.purpleforest-454b82e9.swedencentral.azurecontainerapps.io"
       }
       env {
-        name  = "JwtSettings__Audience"
+        name  = "JwtSettings__Audiences__0"
         value = "https://moamenelbarqy.github.io"
       }
+      env {
+        name  = "JwtSettings__Audiences__1"
+        value = "https://quiznova.dev"
+      }
+      env {
+        name  = "JwtSettings__Audiences__2"
+        value = "https://www.quiznova.dev"
+      }
+
+
       env {
         name  = "ASPNETCORE_ENVIRONMENT"
         value = "Production"
@@ -61,7 +79,7 @@ resource "azurerm_container_app" "backend_app" {
       }
       env {
         name  = "SERILOG__WRITETO__2__ARGS__URI"
-        value = "https://logs-prod-012.grafana.net"
+        value = var.grafana_loki_uri
       }
       env {
         name  = "SERILOG__WRITETO__2__ARGS__LABELS__0__KEY"

@@ -63,7 +63,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
         builder.UseSetting("DisableRateLimiting", "true");
         builder.UseSetting("JwtSettings:Secret", "QuizNova-Development-Secret-Key-Change-This-2026-Super-Long-Key");
         builder.UseSetting("JwtSettings:Issuer", "QuizNova.Api");
-        builder.UseSetting("JwtSettings:Audience", "QuizNova.Client");
+        builder.UseSetting("JwtSettings:Audiences:0", "QuizNova.Client");
     }
 
     private HttpClient CreateManualClient()

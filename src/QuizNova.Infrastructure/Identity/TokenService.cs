@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -15,7 +16,11 @@ using QuizNova.Infrastructure.Settings;
 
 namespace QuizNova.Infrastructure.Identity;
 
-public sealed class TokenService(AppDbContext dbContext, IOptions<JwtSettings> jwtOptions, TimeProvider timeProvider)
+public sealed class TokenService(
+    AppDbContext dbContext,
+    IOptions<JwtSettings> jwtOptions,
+    TimeProvider timeProvider,
+    IHttpContextAccessor httpContextAccessor)
     : ITokenService
 {
     private const int DefaultAccessTokenExpiryInMinutes = 7;
@@ -26,9 +31,8 @@ public sealed class TokenService(AppDbContext dbContext, IOptions<JwtSettings> j
     public async Task<Result<TokenDto>> GenerateJwtTokenAsync(UserDto user, CancellationToken ct)
     {
         var issuer = _jwtSettings.Issuer;
-        var audience = _jwtSettings.Audience;
+        var audience = GetValidAudienceFromRequest();
         var secret = _jwtSettings.Secret;
-
         if (string.IsNullOrWhiteSpace(secret))
         {
             return ApplicationErrors.TokenGenerationFailed;
@@ -83,7 +87,6 @@ public sealed class TokenService(AppDbContext dbContext, IOptions<JwtSettings> j
         }
 
         var issuer = _jwtSettings.Issuer;
-        var audience = _jwtSettings.Audience;
         var secret = _jwtSettings.Secret;
 
         if (string.IsNullOrWhiteSpace(secret))
@@ -97,8 +100,8 @@ public sealed class TokenService(AppDbContext dbContext, IOptions<JwtSettings> j
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
             ValidateIssuer = !string.IsNullOrWhiteSpace(issuer),
             ValidIssuer = issuer,
-            ValidateAudience = !string.IsNullOrWhiteSpace(audience),
-            ValidAudience = audience,
+            ValidateAudience = _jwtSettings.Audiences.Length > 0,
+            ValidAudiences = _jwtSettings.Audiences,
             ValidateLifetime = false,
             ClockSkew = TimeSpan.Zero,
         };
@@ -137,5 +140,32 @@ public sealed class TokenService(AppDbContext dbContext, IOptions<JwtSettings> j
     {
         var randomBytes = RandomNumberGenerator.GetBytes(64);
         return Convert.ToBase64String(randomBytes);
+    }
+
+    private string? GetValidAudienceFromRequest()
+    {
+        var httpContext = httpContextAccessor.HttpContext;
+        if (httpContext != null)
+        {
+            var origin = httpContext.Request.Headers.Origin.ToString();
+            if (!string.IsNullOrWhiteSpace(origin) && _jwtSettings.Audiences.Contains(origin))
+            {
+                return origin;
+            }
+
+            var referer = httpContext.Request.Headers.Referer.ToString();
+            if (!string.IsNullOrWhiteSpace(referer))
+            {
+                foreach (var aud in _jwtSettings.Audiences)
+                {
+                    if (referer.StartsWith(aud, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return aud;
+                    }
+                }
+            }
+        }
+
+        return _jwtSettings.Audiences.Length > 0 ? _jwtSettings.Audiences[0] : null;
     }
 }

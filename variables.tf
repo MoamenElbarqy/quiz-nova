@@ -22,3 +22,7 @@ variable "github_token" {
   sensitive   = true
 }
 
+variable "grafana_loki_uri" {
+  description = "The Grafana Loki ingest endpoint URI"
+  type        = string
+}
