@@ -14,7 +14,13 @@ Use this skill to ensure that the codebase remains healthy, formatted, and build
 
 When changes are made to the backend projects, execute the following commands from the repository root:
 
-1. **Lint and Format Check:**
+1. **Format Check:**
+
+   ```bash
+   dotnet format QuizNova.slnx --verify-no-changes
+   ```
+
+   _Auto-fix formatting issues:_
 
    ```bash
    dotnet format QuizNova.slnx
@@ -23,14 +29,26 @@ When changes are made to the backend projects, execute the following commands fr
 2. **Build Verification:**
 
    ```bash
-   dotnet build
+   dotnet build --warningsaserrors
    ```
 
 ## Frontend Verification (Angular)
 
 When changes are made to the `src/QuizNova.Client` directory, execute the following commands within that directory:
 
-1. **TypeScript Linting:**
+1. **Format Check:**
+
+   ```bash
+   npm run format:check
+   ```
+
+   _Auto-fix formatting:_
+
+   ```bash
+   npm run format
+   ```
+
+2. **TypeScript Linting:**
 
    ```bash
    npm run lint
@@ -42,7 +60,7 @@ When changes are made to the `src/QuizNova.Client` directory, execute the follow
    npm run lint -- --fix
    ```
 
-2. **CSS Linting:**
+3. **CSS Linting:**
 
    ```bash
    npm run lint:css
@@ -54,13 +72,13 @@ When changes are made to the `src/QuizNova.Client` directory, execute the follow
    npm run lint:css -- --fix
    ```
 
-3. **Testing:**
+4. **Testing:**
 
    ```bash
    npm run test
    ```
 
-4. **Production Build:**
+5. **Production Build:**
 
    ```bash
    npm run build
@@ -77,6 +95,27 @@ When validating user flows and visual correctness, execute within `src/QuizNova.
    ```
 
    _Note: In CI (GitHub Actions), video recording is automatically enabled to provide high-quality 1080p visual proof of functionality for recruiters and VCs._
+
+## Pre-commit Hooks
+
+The project uses Husky + lint-staged to auto-format and lint staged files before every commit:
+
+- **Frontend:** Prettier, ESLint, and Stylelint run on staged `.ts`, `.html`, `.css` files
+- **Backend:** `dotnet format --verify-no-changes` checks the entire solution
+- If the hook fails, the commit is blocked — fix the issues and try again
+- To skip hooks (emergency only): `git commit --no-verify`
+
+## CI Enforcement
+
+GitHub Actions (`.github/workflows/build-and-test.yml`) enforces on every push/PR:
+
+| Check | Command |
+|---|---|
+| Backend formatting | `dotnet format --verify-no-changes` |
+| Backend build | `dotnet build --warningsaserrors` |
+| Frontend lint | `npm run lint` |
+| Frontend formatting | `npm run format:check` |
+| Frontend build | `npm run build` |
 
 ## Guidelines
 
