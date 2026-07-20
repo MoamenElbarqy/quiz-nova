@@ -13,6 +13,8 @@ Built with **.NET 10** · **Angular 21** · **PostgreSQL** · **SignalR**
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/MoamenElbarqy/quiz-nova/build-and-test.yml?branch=main&style=flat-square&label=CI)](https://github.com/MoamenElbarqy/quiz-nova/actions)
 
+> **⚠️ RED FLAG — Scale-to-Zero:** The live demo frontend is hosted as a static GitHub Pages site, but the backend API runs on Azure Container Apps with **scale-to-zero**. The first backend request after inactivity may take **up to 10 seconds** while the API container cold-starts. Please be patient.
+
 </div>
 
 ---
