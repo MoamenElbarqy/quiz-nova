@@ -70,31 +70,31 @@ resource "azurerm_container_app" "backend_app" {
         value = var.db_connection_string
       }
       env {
-        name  = "SERILOG__USING__1"
+        name  = "SERILOG__USING__0"
         value = "Serilog.Sinks.Grafana.Loki"
       }
       env {
-        name  = "SERILOG__WRITETO__2__NAME"
+        name  = "SERILOG__WRITETO__1__NAME"
         value = "GrafanaLoki"
       }
       env {
-        name  = "SERILOG__WRITETO__2__ARGS__URI"
+        name  = "SERILOG__WRITETO__1__ARGS__URI"
         value = var.grafana_loki_uri
       }
       env {
-        name  = "SERILOG__WRITETO__2__ARGS__LABELS__0__KEY"
+        name  = "SERILOG__WRITETO__1__ARGS__LABELS__0__KEY"
         value = "app"
       }
       env {
-        name  = "SERILOG__WRITETO__2__ARGS__LABELS__0__VALUE"
+        name  = "SERILOG__WRITETO__1__ARGS__LABELS__0__VALUE"
         value = "QuizNova.Api"
       }
       env {
-        name  = "SERILOG__WRITETO__2__ARGS__LABELS__1__KEY"
+        name  = "SERILOG__WRITETO__1__ARGS__LABELS__1__KEY"
         value = "env"
       }
       env {
-        name  = "SERILOG__WRITETO__2__ARGS__LABELS__1__VALUE"
+        name  = "SERILOG__WRITETO__1__ARGS__LABELS__1__VALUE"
         value = "production"
       }
       env {
@@ -102,19 +102,19 @@ resource "azurerm_container_app" "backend_app" {
         value = var.jwt_secret
       }
       env {
-        name  = "SERILOG__WRITETO__2__ARGS__CREDENTIALS__LOGIN"
+        name  = "SERILOG__WRITETO__1__ARGS__CREDENTIALS__LOGIN"
         value = "1640218"
       }
       env {
-        name  = "SERILOG__WRITETO__2__ARGS__CREDENTIALS__PASSWORD"
+        name  = "SERILOG__WRITETO__1__ARGS__CREDENTIALS__PASSWORD"
         value = var.grafana_loki_password
       }
       env {
-        name  = "SERILOG__WRITETO__2__ARGS__PERIOD"
+        name  = "SERILOG__WRITETO__1__ARGS__PERIOD"
         value = "00:00:01"
       }
       env {
-        name  = "SERILOG__WRITETO__2__ARGS__EAGERLYEMITFIRSTEVENT"
+        name  = "SERILOG__WRITETO__1__ARGS__EAGERLYEMITFIRSTEVENT"
         value = "true"
       }
     }
