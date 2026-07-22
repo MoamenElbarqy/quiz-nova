@@ -111,7 +111,7 @@ resource "azurerm_container_app" "backend_app" {
       }
       env {
         name  = "SERILOG__WRITETO__2__ARGS__PERIOD"
-        value = "1"
+        value = "00:00:01"
       }
       env {
         name  = "SERILOG__WRITETO__2__ARGS__EAGERLYEMITFIRSTEVENT"
