@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 using QuizNova.Application.Common.Errors;
+using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Quizzes.Commands.UpdateQuizMetadata;
 using QuizNova.Application.SubcutaneousTests.Common;
-using QuizNova.Infrastructure.Data;
 using QuizNova.Tests.Common.Quizzes;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Quizzes.Commands.UpdateQuizMetadata;
@@ -102,7 +102,7 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
         Guid quizId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var course = await dbContext.Courses.FirstAsync();
 
             // Create and save an active quiz
@@ -136,7 +136,7 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
         Guid quizId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var course = await dbContext.Courses.FirstAsync();
 
             // Create a completed quiz
@@ -170,7 +170,7 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
         Guid quizId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
 
             // Find a course that isn't completed
             var course = await dbContext.Courses.FirstAsync();
@@ -207,7 +207,7 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
         Guid quizId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
 
             // Find a course that isn't completed
             var course = await dbContext.Courses.FirstAsync();
@@ -235,7 +235,7 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var quiz = await dbContext.Quizzes.FirstAsync(q => q.Id == quizId);
 
             quiz.Title.Should().Be("Awesome Updated Title");

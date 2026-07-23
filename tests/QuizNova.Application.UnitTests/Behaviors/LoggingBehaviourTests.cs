@@ -13,13 +13,13 @@ public class LoggingBehaviourTests
 {
     private readonly ILogger<DummyRequest> _logger = Substitute.For<ILogger<DummyRequest>>();
     private readonly IUser _user = Substitute.For<IUser>();
-    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
+    private readonly IAuthService _authService = Substitute.For<IAuthService>();
 
     private readonly LoggingBehaviour<DummyRequest> _sut;
 
     public LoggingBehaviourTests()
     {
-        _sut = new LoggingBehaviour<DummyRequest>(_logger, _user, _identityService);
+        _sut = new LoggingBehaviour<DummyRequest>(_logger, _user, _authService);
     }
 
     [Fact]
@@ -28,13 +28,13 @@ public class LoggingBehaviourTests
         // Arrange
         var request = new DummyRequest();
         _user.Id.Returns("abc123");
-        _identityService.GetUserNameAsync("abc123").Returns("Issam");
+        _authService.GetUserNameAsync("abc123").Returns("Issam");
 
         // Act
         await _sut.Process(request, CancellationToken.None);
 
         // Assert
-        await _identityService.Received(1).GetUserNameAsync("abc123");
+        await _authService.Received(1).GetUserNameAsync("abc123");
 
         _logger.Received(1).Log(
             LogLevel.Information,
@@ -55,7 +55,7 @@ public class LoggingBehaviourTests
         await _sut.Process(request, CancellationToken.None);
 
         // Assert
-        await _identityService.DidNotReceive().GetUserNameAsync(Arg.Any<string>());
+        await _authService.DidNotReceive().GetUserNameAsync(Arg.Any<string>());
 
         _logger.Received(1).Log(
             LogLevel.Information,

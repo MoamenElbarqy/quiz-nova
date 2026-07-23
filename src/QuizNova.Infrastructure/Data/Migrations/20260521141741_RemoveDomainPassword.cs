@@ -1,4 +1,6 @@
 ﻿using System;
+using QuizNova.Infrastructure.Identity;
+using QuizNova.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 

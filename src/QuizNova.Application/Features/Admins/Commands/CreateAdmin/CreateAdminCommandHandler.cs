@@ -16,7 +16,7 @@ namespace QuizNova.Application.Features.Admins.Commands.CreateAdmin;
 
 public sealed class CreateAdminCommandHandler(
     IAppDbContext dbContext,
-    IIdentityService identityService,
+    IAuthService authService,
     ILogger<CreateAdminCommandHandler> logger,
     ICacheInvalidator cacheInvalidator)
     : IRequestHandler<CreateAdminCommand, Result<AdminDto>>
@@ -52,7 +52,7 @@ public sealed class CreateAdminCommandHandler(
         }
 
         // 1. Register User in Identity Database
-        var identityResult = await identityService.RegisterUserAsync(
+        var identityResult = await authService.RegisterUserAsync(
             request.PersonalInformation.Email,
             request.Password,
             nameof(UserRole.Admin));

@@ -1,10 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 
+using QuizNova.Domain.Common;
 using QuizNova.Domain.Entities.CourseChats;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Enrollments;
 using QuizNova.Domain.Entities.QuizAttempts;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
+using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers.EssayAnswer;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
@@ -17,32 +20,39 @@ namespace QuizNova.Application.Common.Interfaces;
 
 public interface IAppDbContext
 {
-    public DbSet<User> Users { get; }
-    public DbSet<Course> Courses { get; }
+    DbSet<Course> Courses { get; }
 
-    public DbSet<QuizAttempt> QuizAttempts { get; }
+    DbSet<QuizAttempt> QuizAttempts { get; }
 
-    public DbSet<Quiz> Quizzes { get; }
+    DbSet<Quiz> Quizzes { get; }
 
-    public DbSet<Question> Questions { get; }
+    DbSet<Question> Questions { get; }
 
-    public DbSet<Choice> Choices { get; }
+    DbSet<QuestionAnswer> QuestionAnswers { get; }
 
-    public DbSet<Instructor> Instructors { get; }
+    DbSet<ManuallyGradedAnswers> ManuallyGradedAnswers { get; }
 
-    public DbSet<Student> Students { get; }
+    DbSet<EssayAnswer> EssayAnswers { get; }
 
-    public DbSet<Admin> Admins { get; }
+    DbSet<Choice> Choices { get; }
 
-    public DbSet<ManuallyGradedAnswers> ManuallyGradedAnswers { get; }
+    DbSet<User> Users { get; }
 
-    public DbSet<Enrollment> Enrollments { get; }
+    DbSet<Instructor> Instructors { get; }
 
-    public DbSet<CourseChatRoom> CourseChatRooms { get; }
+    DbSet<Student> Students { get; }
 
-    public DbSet<Message> CourseChatRoomMessages { get; }
+    DbSet<Admin> Admins { get; }
 
-    public DbSet<Reaction> Reactions { get; }
+    DbSet<Enrollment> Enrollments { get; }
 
-    Task<int> SaveChangesAsync(CancellationToken ct);
+    DbSet<CourseChatRoom> CourseChatRooms { get; }
+
+    DbSet<Message> CourseChatRoomMessages { get; }
+
+    DbSet<Reaction> Reactions { get; }
+
+    DbSet<OutboxMessage> OutboxMessages { get; }
+
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

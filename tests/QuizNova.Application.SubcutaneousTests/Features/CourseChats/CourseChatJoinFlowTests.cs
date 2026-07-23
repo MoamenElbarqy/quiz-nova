@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
 using QuizNova.Application.Features.Enrollments.Commands.RemoveStudentFromCourse;
@@ -11,7 +12,6 @@ using QuizNova.Domain.Entities.CourseChats;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Courses.Events;
 using QuizNova.Domain.Entities.Enrollments.Events;
-using QuizNova.Infrastructure.Data;
 using QuizNova.Tests.Common.Users.Students;
 using QuizNova.Tests.Common.Users.UserPersonalInformation;
 
@@ -29,7 +29,7 @@ public class CourseChatJoinFlowTests(CustomWebApplicationFactory factory)
         Guid instructorId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var instructor = await dbContext.Instructors.FirstAsync();
             instructorId = instructor.Id;
         }
@@ -51,7 +51,7 @@ public class CourseChatJoinFlowTests(CustomWebApplicationFactory factory)
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var chatRoom = await dbContext.CourseChatRooms.FirstOrDefaultAsync(r => r.CourseId == courseId);
 
             chatRoom.Should().NotBeNull();
@@ -70,10 +70,11 @@ public class CourseChatJoinFlowTests(CustomWebApplicationFactory factory)
         Guid studentId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
 
             var instructor = await dbContext.Instructors.FirstAsync();
-            var course = Course.Create(instructor.Id, $"Course {Guid.NewGuid().ToString()[..8]}", 50, 100, [], []).Value;
+            var course = Course.Create(instructor.Id, $"Course {Guid.NewGuid().ToString()[..8]}", 50, 100, [], [])
+                .Value;
             await dbContext.Courses.AddAsync(course);
             courseId = course.Id;
 
@@ -99,7 +100,7 @@ public class CourseChatJoinFlowTests(CustomWebApplicationFactory factory)
         // Assert
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var chatRoom = await dbContext.CourseChatRooms
                 .Include(r => r.Students)
                 .FirstOrDefaultAsync(r => r.CourseId == courseId);
@@ -120,10 +121,11 @@ public class CourseChatJoinFlowTests(CustomWebApplicationFactory factory)
         Guid enrollmentId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
 
             var instructor = await dbContext.Instructors.FirstAsync();
-            var course = Course.Create(instructor.Id, $"Course {Guid.NewGuid().ToString()[..8]}", 50, 100, [], []).Value;
+            var course = Course.Create(instructor.Id, $"Course {Guid.NewGuid().ToString()[..8]}", 50, 100, [], [])
+                .Value;
             await dbContext.Courses.AddAsync(course);
             courseId = course.Id;
 
@@ -149,7 +151,7 @@ public class CourseChatJoinFlowTests(CustomWebApplicationFactory factory)
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var chatRoom = await dbContext.CourseChatRooms
                 .Include(r => r.Students)
                 .FirstOrDefaultAsync(r => r.CourseId == courseId);
@@ -166,7 +168,7 @@ public class CourseChatJoinFlowTests(CustomWebApplicationFactory factory)
         // Assert
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var chatRoom = await dbContext.CourseChatRooms
                 .Include(r => r.Students)
                 .FirstOrDefaultAsync(r => r.CourseId == courseId);

@@ -4,10 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 using QuizNova.Application.Common.Errors;
+using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Quizzes.Commands.AddQuestion;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.SubcutaneousTests.Common;
-using QuizNova.Infrastructure.Data;
 using QuizNova.Tests.Common.Quizzes;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Quizzes.Commands.AddQuestion;
@@ -78,7 +78,7 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
         Guid quizId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var course = await dbContext.Courses.FirstAsync();
 
             var quiz = QuizFactory.CreateQuiz(
@@ -110,7 +110,7 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
         Guid quizId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var course = await dbContext.Courses.FirstAsync();
 
             var quiz = QuizFactory.CreateQuiz(
@@ -145,7 +145,7 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
         int initialQuestionCount;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var course = await dbContext.Courses.FirstAsync();
 
             var quiz = QuizFactory.CreateQuiz(
@@ -170,7 +170,7 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var quiz = await dbContext.Quizzes.Include(q => q.Questions).FirstAsync(q => q.Id == quizId);
 
             quiz.Questions.Count().Should().Be(initialQuestionCount + 1);

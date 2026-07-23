@@ -16,7 +16,7 @@ namespace QuizNova.Application.Features.Students.Commands.CreateStudent;
 
 public sealed class CreateStudentCommandHandler(
     IAppDbContext dbContext,
-    IIdentityService identityService,
+    IAuthService authService,
     ILogger<CreateStudentCommandHandler> logger,
     ICacheInvalidator cacheInvalidator)
     : IRequestHandler<CreateStudentCommand, Result<StudentDto>>
@@ -46,7 +46,7 @@ public sealed class CreateStudentCommandHandler(
         }
 
         // 1. Register User in Identity Database
-        var identityResult = await identityService.RegisterUserAsync(
+        var identityResult = await authService.RegisterUserAsync(
             request.PersonalInformation.Email,
             request.Password,
             nameof(UserRole.Student));

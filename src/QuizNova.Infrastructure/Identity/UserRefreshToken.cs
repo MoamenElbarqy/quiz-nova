@@ -4,9 +4,9 @@ public class UserRefreshToken
 {
     public Guid Id { get; init; }
 
-    public string Token { get; init; } = null!;
+    public string Token { get; init; }
 
-    public string UserId { get; init; } = null!;
+    public string UserId { get; init; }
 
     public DateTimeOffset ExpiresOnUtc { get; init; }
 
@@ -16,5 +16,5 @@ public class UserRefreshToken
 
     public bool IsActive => RevokedOnUtc == null && !IsExpired;
 
-    public AppUser User { get; init; } = null!;
+    public AppUser User { get; init; }
 }

@@ -3,10 +3,10 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.Features.Quizzes.Queries.GetInstructorQuizzes;
 using QuizNova.Application.SubcutaneousTests.Common;
-using QuizNova.Infrastructure.Data;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Quizzes.Queries.GetInstructorQuizzes;
 
@@ -46,7 +46,7 @@ public class GetInstructorQuizzesQueryTests(CustomWebApplicationFactory factory)
         Guid courseId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var course = await dbContext.Courses.FirstAsync();
             courseId = course.Id;
             instructorId = course.InstructorId!.Value;

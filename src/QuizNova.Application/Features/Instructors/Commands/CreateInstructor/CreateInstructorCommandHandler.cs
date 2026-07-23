@@ -16,7 +16,7 @@ namespace QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
 
 public sealed class CreateInstructorCommandHandler(
     IAppDbContext dbContext,
-    IIdentityService identityService,
+    IAuthService authService,
     ILogger<CreateInstructorCommandHandler> logger,
     ICacheInvalidator cacheInvalidator)
     : IRequestHandler<CreateInstructorCommand, Result<InstructorDto>>
@@ -53,7 +53,7 @@ public sealed class CreateInstructorCommandHandler(
         }
 
         // 1. Register User in Identity Database
-        var identityResult = await identityService.RegisterUserAsync(
+        var identityResult = await authService.RegisterUserAsync(
             request.PersonalInformation.Email,
             request.Password,
             nameof(UserRole.Instructor));

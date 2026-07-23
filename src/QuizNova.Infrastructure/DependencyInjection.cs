@@ -29,8 +29,7 @@ public static class DependencyInjection
         services.ConfigureDataBase(configuration);
         services.ConfigureCaching(configuration);
         services.AddSingleton(TimeProvider.System);
-        services.AddScoped<IIdentityService, IdentityService>();
-        services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<DbInitializer>();
         services.AddHostedService<OutboxProcessorJob>();
         return services;
@@ -76,12 +75,13 @@ public static class DependencyInjection
         }
 
         services.AddDbContext<AppDbContext>(options => options
-            .UseNpgsql(connectionString)
+            .UseNpgsql(connectionString, npgsqlOptions =>
+                npgsqlOptions.MigrationsAssembly(typeof(DbInitializer).Assembly.FullName))
             .ConfigureWarnings(warnings =>
                 warnings.Ignore(EntityFrameworkCore.Diagnostics.RelationalEventId
                     .PendingModelChangesWarning)));
 
-        services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
+        services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
         services.AddIdentityCore<AppUser>(options =>
             {

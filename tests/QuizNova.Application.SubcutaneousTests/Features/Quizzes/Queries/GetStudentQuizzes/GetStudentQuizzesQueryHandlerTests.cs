@@ -8,7 +8,6 @@ using QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.Features.Quizzes.Queries.GetStudentQuizzes;
 using QuizNova.Application.SubcutaneousTests.Common;
-using QuizNova.Infrastructure.Data;
 using QuizNova.Tests.Common.Users.Students;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Quizzes.Queries.GetStudentQuizzes;
@@ -66,7 +65,7 @@ public class GetStudentQuizzesQueryHandlerTests(CustomWebApplicationFactory fact
         Guid instructorId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             studentId = (await dbContext.Students.FirstAsync()).Id;
             var course = await dbContext.Courses.FirstAsync();
             courseId = course.Id;
