@@ -75,8 +75,6 @@ else
     app.UseHsts();
 }
 
-app.MapPrometheusScrapingEndpoint();
-
 app.MapControllers();
 
 app.MapHub<ChatHub>("/chat");

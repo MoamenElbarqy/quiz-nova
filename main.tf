@@ -117,6 +117,22 @@ resource "azurerm_container_app" "backend_app" {
         name  = "SERILOG__WRITETO__1__ARGS__EAGERLYEMITFIRSTEVENT"
         value = "true"
       }
+      env {
+        name  = "OTEL_SERVICE_NAME"
+        value = "QuizNova.Api"
+      }
+      env {
+        name  = "OTEL_EXPORTER_OTLP_ENDPOINT"
+        value = var.grafana_otlp_endpoint
+      }
+      env {
+        name  = "OTEL_EXPORTER_OTLP_HEADERS"
+        value = "Authorization=Basic ${var.grafana_otlp_auth_header}"
+      }
+      env {
+        name  = "OTEL_EXPORTER_OTLP_PROTOCOL"
+        value = "http/protobuf"
+      }
     }
   }
 

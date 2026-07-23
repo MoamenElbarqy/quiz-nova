@@ -237,8 +237,8 @@ public static class DependencyInjection
             {
                 metrics.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation();
 
-                // export the metrics to /metrics and prometheus will scrape this endpoint
-                metrics.AddPrometheusExporter();
+                // export metrics via OTLP
+                metrics.AddOtlpExporter();
             });
 
         return services;
