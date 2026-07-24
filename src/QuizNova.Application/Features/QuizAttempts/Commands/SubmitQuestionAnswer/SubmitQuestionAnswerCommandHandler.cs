@@ -1,22 +1,21 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
+using QuizNova.Application.Common.MongoDb;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
-using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.ManuallyGradedQuestions;
 
 namespace QuizNova.Application.Features.QuizAttempts.Commands.SubmitQuestionAnswer;
 
 public sealed class SubmitQuestionAnswerCommandHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     IUser user,
     ILogger<SubmitQuestionAnswerCommandHandler> logger)
     : IRequestHandler<SubmitQuestionAnswerCommand, Result<Submitted>>
@@ -30,12 +29,8 @@ public sealed class SubmitQuestionAnswerCommandHandler(
             request.Answer.QuestionId,
             request.AttemptId);
 
-        var attempt = await dbContext.QuizAttempts
-            .Include(a => a.StudentAnswers.Where(sa => sa.QuestionId == request.Answer.QuestionId))
-            .Include(a => a.Quiz!)
-            .ThenInclude(q => q.Questions.Where(q => q.Id == request.Answer.QuestionId))
-            .ThenInclude((Question q) => (q as Mcq)!.Choices)
-            .FirstOrDefaultAsync(a => a.Id == request.AttemptId, ct);
+        var attempt = await mongoContext.QuizAttempts
+            .GetAttemptWithQuizAsync(a => a.Id == request.AttemptId, ct);
 
         if (attempt is null)
         {
@@ -48,7 +43,13 @@ public sealed class SubmitQuestionAnswerCommandHandler(
             return Error.Forbidden("Forbidden", "You do not own this attempt.");
         }
 
-        var question = attempt.Quiz?.Questions.FirstOrDefault(q => q.Id == request.Answer.QuestionId);
+        if (attempt.Quiz is null)
+        {
+            return ApplicationErrors.QuizNotFound(attempt.QuizId);
+        }
+
+        var question = attempt.Quiz.Questions
+            .FirstOrDefault(q => q.Id == request.Answer.QuestionId);
 
         if (question is null)
         {
@@ -104,7 +105,7 @@ public sealed class SubmitQuestionAnswerCommandHandler(
             return submitResult.TopError;
         }
 
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.QuizAttempts.ReplaceOneAsync(a => a.Id == attempt.Id, attempt, cancellationToken: ct);
 
         logger.LogInformation(
             "Successfully submitted answer for question {QuestionId} on attempt {AttemptId}",
@@ -114,3 +115,4 @@ public sealed class SubmitQuestionAnswerCommandHandler(
         return Result.Submitted;
     }
 }
+

@@ -9,13 +9,12 @@ using QuizNova.Application.Features.QuizAttempts.DTOs;
 using QuizNova.Application.Features.QuizAttempts.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts.Enums;
-using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
-using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
 namespace QuizNova.Application.Features.QuizAttempts.Commands.StartQuizAttempt;
 
 public sealed class StartQuizAttemptCommandHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     IUser user,
     ILogger<StartQuizAttemptCommandHandler> logger,
     ICacheInvalidator cacheInvalidator)
@@ -40,10 +39,9 @@ public sealed class StartQuizAttemptCommandHandler(
             return ApplicationErrors.QuizAttemptStudentNotFound(studentId);
         }
 
-        var quiz = await dbContext.Quizzes
-            .Include(q => q.Questions)
-            .ThenInclude((Question question) => (question as Mcq)!.Choices)
-            .FirstOrDefaultAsync(q => q.Id == request.QuizId, ct);
+        var quiz = await mongoContext.Quizzes
+            .Find(q => q.Id == request.QuizId)
+            .FirstOrDefaultAsync(ct);
 
         if (quiz is null)
         {
@@ -65,10 +63,10 @@ public sealed class StartQuizAttemptCommandHandler(
             return ApplicationErrors.StudentNotEnrolledInCourse(studentId, quiz.CourseId);
         }
 
-        var existingActiveAttempt = await dbContext.QuizAttempts
-            .AsNoTracking()
-            .AnyAsync(qa => qa.StudentId == studentId && qa.QuizId == request.QuizId
-                                                      && qa.Status == QuizAttemptStatus.InProgress, ct);
+        var existingActiveAttempt = await mongoContext.QuizAttempts
+            .Find(qa => qa.StudentId == studentId && qa.QuizId == request.QuizId
+                                                  && qa.Status == QuizAttemptStatus.InProgress)
+            .AnyAsync(ct);
 
         if (existingActiveAttempt)
         {
@@ -80,10 +78,10 @@ public sealed class StartQuizAttemptCommandHandler(
             return ApplicationErrors.QuizAttemptAlreadyExists(studentId, request.QuizId);
         }
 
-        var existingCompletedAttempt = await dbContext.QuizAttempts
-            .AsNoTracking()
-            .AnyAsync(qa => qa.StudentId == studentId && qa.QuizId == request.QuizId
-                                                      && qa.Status == QuizAttemptStatus.Completed, ct);
+        var existingCompletedAttempt = await mongoContext.QuizAttempts
+            .Find(qa => qa.StudentId == studentId && qa.QuizId == request.QuizId
+                                                  && qa.Status == QuizAttemptStatus.Completed)
+            .AnyAsync(ct);
 
         if (existingCompletedAttempt)
         {
@@ -108,8 +106,7 @@ public sealed class StartQuizAttemptCommandHandler(
 
         var attempt = createResult.Value;
 
-        await dbContext.QuizAttempts.AddAsync(attempt, ct);
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.QuizAttempts.InsertOneAsync(attempt, cancellationToken: ct);
 
         await cacheInvalidator.InvalidateAsync(["quiz_attempts", "quizzes"], ct);
 

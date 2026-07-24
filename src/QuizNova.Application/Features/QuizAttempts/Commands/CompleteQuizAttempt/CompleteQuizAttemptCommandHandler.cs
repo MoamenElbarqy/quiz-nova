@@ -1,20 +1,18 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
+using QuizNova.Application.Common.MongoDb;
 using QuizNova.Application.Features.QuizAttempts.DTOs;
 using QuizNova.Application.Features.QuizAttempts.Mappers;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
-using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
 namespace QuizNova.Application.Features.QuizAttempts.Commands.CompleteQuizAttempt;
 
 public sealed class CompleteQuizAttemptCommandHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     IUser user,
     ILogger<CompleteQuizAttemptCommandHandler> logger,
     ICacheInvalidator cacheInvalidator)
@@ -29,17 +27,18 @@ public sealed class CompleteQuizAttemptCommandHandler(
             request.AttemptId,
             studentId);
 
-        var attempt = await dbContext.QuizAttempts
-            .Include(a => a.Quiz)
-                .ThenInclude(q => q!.Questions)
-                    .ThenInclude((Question question) => (question as Mcq)!.Choices)
-            .Include(a => a.StudentAnswers)
-            .FirstOrDefaultAsync(a => a.Id == request.AttemptId, ct);
+        var attempt = await mongoContext.QuizAttempts
+            .GetAttemptWithQuizAsync(a => a.Id == request.AttemptId, ct);
 
         if (attempt is null)
         {
             logger.LogWarning("Complete attempt failed: Attempt {AttemptId} not found", request.AttemptId);
             return ApplicationErrors.QuizAttemptNotFound(request.AttemptId);
+        }
+
+        if (attempt.Quiz is null)
+        {
+            return ApplicationErrors.QuizNotFound(attempt.QuizId);
         }
 
         if (attempt.StudentId != studentId)
@@ -48,8 +47,7 @@ public sealed class CompleteQuizAttemptCommandHandler(
         }
 
         var completeResult = attempt.Complete(
-            request.SubmittedAt.UtcDateTime,
-            attempt.Quiz!.EndsAtUtc.UtcDateTime);
+            request.SubmittedAt.UtcDateTime);
 
         if (completeResult.IsError)
         {
@@ -60,7 +58,7 @@ public sealed class CompleteQuizAttemptCommandHandler(
             return completeResult.TopError;
         }
 
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.QuizAttempts.ReplaceOneAsync(a => a.Id == attempt.Id, attempt, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync(["quiz_attempts", "quizzes"], ct);
 
         logger.LogInformation(
