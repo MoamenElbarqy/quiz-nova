@@ -7,7 +7,7 @@ namespace QuizNova.Application.Features.Quizzes.Queries.GetInstructorQuizzesCoun
 public sealed record GetInstructorQuizzesCountQuery(Guid InstructorId)
     : ICachedQuery<Result<QuizzesCountDto>>
 {
-    public string CacheKey => $"quizzes:instructors:{InstructorId}:count";
+    public string CacheKey => $"quizzes:instructor:{InstructorId}:count";
 
     public string[] Tags => ["quizzes", "instructors"];
 

@@ -21,7 +21,7 @@ public static class QuizMapper
             InstructorId = quiz.InstructorId,
             StartsAtUtc = quiz.StartsAtUtc,
             EndsAtUtc = quiz.EndsAtUtc,
-            Questions = quiz.Questions.Select(q => q.ToQuestionDto()).ToArray(),
+            Questions = [.. quiz.Questions.Select(q => q.ToQuestionDto())],
         };
     }
 }

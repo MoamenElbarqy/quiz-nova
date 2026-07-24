@@ -13,6 +13,7 @@ namespace QuizNova.Application.Features.Quizzes.Queries.GetQuizById;
 
 public sealed class GetQuizByIdQueryHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetQuizByIdQueryHandler> logger)
     : IRequestHandler<GetQuizByIdQuery, Result<QuizDto>>
 {
@@ -20,17 +21,9 @@ public sealed class GetQuizByIdQueryHandler(
     {
         logger.LogInformation("Retrieving quiz details for ID: {QuizId}", request.QuizId);
 
-        var quiz = await dbContext.Quizzes
-            .Include(q => q.Questions)
-            .FirstOrDefaultAsync(q => q.Id == request.QuizId, ct);
-
-        if (quiz is not null)
-        {
-            var questionIds = quiz.Questions.Select(question => question.Id).ToArray();
-            await dbContext.Choices
-                .Where(choice => questionIds.AsEnumerable().Contains(choice.QuestionId))
-                .LoadAsync(ct);
-        }
+        var quiz = await mongoContext.Quizzes
+            .Find(q => q.Id == request.QuizId)
+            .FirstOrDefaultAsync(ct);
 
         if (quiz is null)
         {
@@ -53,3 +46,4 @@ public sealed class GetQuizByIdQueryHandler(
         return quiz.ToQuizDto(courseName, instructorName);
     }
 }
+

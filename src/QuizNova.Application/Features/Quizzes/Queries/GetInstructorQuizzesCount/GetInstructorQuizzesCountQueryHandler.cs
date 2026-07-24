@@ -12,6 +12,7 @@ namespace QuizNova.Application.Features.Quizzes.Queries.GetInstructorQuizzesCoun
 
 public sealed class GetInstructorQuizzesCountQueryHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetInstructorQuizzesCountQueryHandler> logger)
     : IRequestHandler<GetInstructorQuizzesCountQuery, Result<QuizzesCountDto>>
 {
@@ -19,18 +20,23 @@ public sealed class GetInstructorQuizzesCountQueryHandler(
     {
         logger.LogInformation("Retrieving quizzes count for instructor with ID: {InstructorId}", request.InstructorId);
 
-        var instructorExists = await dbContext.Instructors.AnyAsync(instructor => instructor.Id == request.InstructorId, ct);
+        var instructorExists =
+            await dbContext.Instructors.AnyAsync(instructor => instructor.Id == request.InstructorId, ct);
         if (!instructorExists)
         {
             logger.LogWarning("Retrieval failed: Instructor with ID {InstructorId} not found", request.InstructorId);
             return ApplicationErrors.InstructorNotFound(request.InstructorId);
         }
 
-        var quizzesCount = await dbContext.Quizzes.CountAsync(quiz => quiz.InstructorId == request.InstructorId, ct);
+        var quizzesCount =
+            (int)await mongoContext.Quizzes.CountDocumentsAsync(quiz => quiz.InstructorId == request.InstructorId,
+                cancellationToken: ct);
 
-        logger.LogInformation("Successfully retrieved quizzes count for instructor {InstructorId}: {Count}", request.InstructorId, quizzesCount);
+        logger.LogInformation("Successfully retrieved quizzes count for instructor {InstructorId}: {Count}",
+            request.InstructorId, quizzesCount);
 
         return new QuizzesCountDto(quizzesCount);
     }
 }
+
 

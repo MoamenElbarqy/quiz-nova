@@ -13,6 +13,7 @@ namespace QuizNova.Application.Features.Quizzes.Queries.GetAllQuizzes;
 
 public sealed class GetAllQuizzesQueryHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetAllQuizzesQueryHandler> logger)
     : IRequestHandler<GetAllQuizzesQuery, Result<PaginatedList<QuizDto>>>
 {
@@ -20,91 +21,66 @@ public sealed class GetAllQuizzesQueryHandler(
     {
         logger.LogInformation("Retrieving all quizzes");
 
-        IQueryable<Quiz> query = dbContext.Quizzes
-            .AsNoTracking()
-            .AsQueryable();
+        var filterBuilder = Builders<Quiz>.Filter;
+        var filter = filterBuilder.Empty;
 
-        query = ApplySearchTerm(query, request, dbContext);
-        query = ApplyFiltering(query, request);
-        query = ApplySorting(query);
+        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+        {
+            filter &= filterBuilder.Text(request.SearchTerm);
+        }
 
-        var totalCount = await query.CountAsync(ct);
-        var now = DateTimeOffset.UtcNow;
+        if (request.Marks.HasValue)
+        {
+            filter &= filterBuilder.Where(q => q.Questions.Sum(question => question.Marks) == request.Marks.Value);
+        }
 
-        var quizzes = await query
+        var totalCount = (int)await mongoContext.Quizzes.CountDocumentsAsync(filter, cancellationToken: ct);
+
+        var quizzes = await mongoContext.Quizzes
+            .Find(filter)
+            .SortByDescending(q => q.StartsAtUtc)
             .Skip((request.PageNumber - 1) * request.PageSize)
-            .Take(request.PageSize)
-            .Select(quiz => new QuizDto
-            {
-                QuizId = quiz.Id,
-                Title = quiz.Title,
-                CourseName = dbContext.Courses
-                    .Where(course => course.Id == quiz.CourseId)
-                    .Select(course => course.Name)
-                    .FirstOrDefault() ?? string.Empty,
-                InstructorName = dbContext.Instructors
-                    .Where(instructor => instructor.Id == quiz.InstructorId)
-                    .Select(instructor => instructor.PersonalInformation.Name)
-                    .FirstOrDefault() ?? string.Empty,
-                Marks = quiz.Questions.Sum(question => question.Marks),
-                StartsAtUtc = quiz.StartsAtUtc,
-                EndsAtUtc = quiz.EndsAtUtc,
-                ServerUtc = now,
-                State = quiz.StartsAtUtc > now ? "Upcoming" : quiz.EndsAtUtc < now ? "Completed" : "Active",
-                CourseId = quiz.CourseId,
-                InstructorId = quiz.InstructorId,
-            })
+            .Limit(request.PageSize)
             .ToListAsync(ct);
 
+        var courseIds = quizzes.Select(q => q.CourseId).Distinct().ToList();
+        var instructorIds = quizzes.Select(q => q.InstructorId).Distinct().ToList();
+
+        var courses = await dbContext.Courses
+            .Where(c => courseIds.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, c => c.Name, ct);
+
+        var instructors = await dbContext.Instructors
+            .Where(i => instructorIds.Contains(i.Id))
+            .ToDictionaryAsync(i => i.Id, i => i.PersonalInformation.Name, ct);
+
+        var now = DateTimeOffset.UtcNow;
+
+        var quizDtos = quizzes.Select(quiz => new QuizDto
+        {
+            QuizId = quiz.Id,
+            Title = quiz.Title,
+            CourseName = courses.GetValueOrDefault(quiz.CourseId, string.Empty),
+            InstructorName = instructors.GetValueOrDefault(quiz.InstructorId, string.Empty),
+            Marks = quiz.Questions.Sum(question => question.Marks),
+            StartsAtUtc = quiz.StartsAtUtc,
+            EndsAtUtc = quiz.EndsAtUtc,
+            ServerUtc = now,
+            State = quiz.StartsAtUtc > now ? "Upcoming" : quiz.EndsAtUtc < now ? "Completed" : "Active",
+            CourseId = quiz.CourseId,
+            InstructorId = quiz.InstructorId,
+        }).ToList();
+
         var response = new PaginatedList<QuizDto>(
-            quizzes,
+            quizDtos,
             totalCount,
             request.PageNumber,
             request.PageSize);
 
-        logger.LogInformation("Successfully retrieved {Count} quizzes for page {PageNumber}", quizzes.Count, request.PageNumber);
+        logger.LogInformation("Successfully retrieved {Count} quizzes for page {PageNumber}", quizDtos.Count,
+            request.PageNumber);
 
         return response;
     }
-
-    private static IQueryable<Quiz> ApplyFiltering(
-        IQueryable<Quiz> query,
-        GetAllQuizzesQuery request)
-    {
-        if (request.Marks.HasValue)
-        {
-            query = query.Where(quiz => quiz.Questions.Sum(question => question.Marks) == request.Marks.Value);
-        }
-
-        return query;
-    }
-
-    private static IQueryable<Quiz> ApplySearchTerm(
-        IQueryable<Quiz> query,
-        GetAllQuizzesQuery request,
-        IAppDbContext dbContext)
-    {
-        if (string.IsNullOrWhiteSpace(request.SearchTerm))
-        {
-            return query;
-        }
-
-        return query.Where(quiz =>
-            quiz.Title.Contains(request.SearchTerm) ||
-            dbContext.Courses
-                .Where(course => course.Id == quiz.CourseId)
-                .Select(course => course.Name)
-                .FirstOrDefault()!
-                .Contains(request.SearchTerm) ||
-            dbContext.Instructors
-                .Where(instructor => instructor.Id == quiz.InstructorId)
-                .Select(instructor => instructor.PersonalInformation.Name)
-                .FirstOrDefault()!
-                .Contains(request.SearchTerm));
-    }
-
-    private static IOrderedQueryable<Quiz> ApplySorting(IQueryable<Quiz> query)
-    {
-        return query.OrderByDescending(quiz => quiz.StartsAtUtc);
-    }
 }
+

@@ -15,6 +15,7 @@ namespace QuizNova.Application.Features.Quizzes.Queries.GetStudentQuizzes;
 
 public sealed class GetStudentQuizzesQueryHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetStudentQuizzesQueryHandler> logger)
     : IRequestHandler<GetStudentQuizzesQuery, Result<StudentQuizzesDto>>
 {
@@ -40,21 +41,16 @@ public sealed class GetStudentQuizzesQueryHandler(
             .Select(enrollment => enrollment.CourseId)
             .ToListAsync(ct);
 
-        var quizzes = await dbContext.Quizzes
-            .AsNoTracking()
-            .Where(quiz => enrolledCourseIds.Contains(quiz.CourseId) && quiz.EndsAtUtc >= serverUtc)
-            .Include(quiz => quiz.Course)
-            .Include(quiz => quiz.Questions)
-            .OrderBy(quiz => quiz.StartsAtUtc)
+        var quizzes = await mongoContext.Quizzes
+            .Find(quiz => enrolledCourseIds.Contains(quiz.CourseId) && quiz.EndsAtUtc >= serverUtc)
+            .SortBy(quiz => quiz.StartsAtUtc)
             .ToListAsync(ct);
 
         var quizIds = quizzes.Select(q => q.Id).ToList();
 
-        var studentAttempts = await dbContext.QuizAttempts
-            .AsNoTracking()
-            .Where(a => a.StudentId == request.StudentId &&
-                        quizIds.Contains(a.QuizId))
-            .Select(a => new { a.QuizId, a.Id, a.Status })
+        var studentAttempts = await mongoContext.QuizAttempts
+            .Find(a => a.StudentId == request.StudentId && quizIds.Contains(a.QuizId))
+            .Project(a => new { a.QuizId, a.Id, a.Status })
             .ToListAsync(ct);
 
         var attemptByQuizId = studentAttempts
