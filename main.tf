@@ -28,15 +28,15 @@ resource "azurerm_container_app" "backend_app" {
       memory = "1Gi"
 
       env {
-        name  = "AppSettings__Cors__AllowedOrigins__0"
+        name  = "CorsSettings__AllowedOrigins__0"
         value = "https://moamenelbarqy.github.io"
       }
       env {
-        name  = "AppSettings__Cors__AllowedOrigins__1"
+        name  = "CorsSettings__AllowedOrigins__1"
         value = "https://quiznova.dev"
       }
       env {
-        name  = "AppSettings__Cors__AllowedOrigins__2"
+        name  = "CorsSettings__AllowedOrigins__2"
         value = "https://www.quiznova.dev"
       }
       env {
@@ -69,6 +69,15 @@ resource "azurerm_container_app" "backend_app" {
         name  = "ConnectionStrings__DefaultConnection"
         value = var.db_connection_string
       }
+      env {
+        name  = "MongoDbSettings__ConnectionString"
+        value = var.mongodb_connection_string
+      }
+      env {
+        name  = "MongoDbSettings__DatabaseName"
+        value = "QuizNovaDb"
+      }
+
       env {
         name  = "SERILOG__USING__0"
         value = "Serilog.Sinks.Grafana.Loki"

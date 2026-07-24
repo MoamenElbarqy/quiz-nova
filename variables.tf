@@ -39,3 +39,11 @@ variable "grafana_otlp_auth_header" {
   sensitive   = true
   default     = ""
 }
+
+variable "mongodb_connection_string" {
+  type        = string
+  description = "MongoDB Atlas Connection String"
+  sensitive   = true
+  default     = ""
+}
+

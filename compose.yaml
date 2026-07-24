@@ -19,6 +19,24 @@ services:
     networks:
       - backend
 
+  mongodb:
+    image: mongo:7.0
+    container_name: quiznova-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: QuizNovaDb
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
   api:
     build:
       context: .
@@ -29,16 +47,20 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mongodb:
+        condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      MongoDbSettings__ConnectionString: mongodb://mongodb:27017
+      MongoDbSettings__DatabaseName: QuizNovaDb
       JwtSettings__Issuer: QuizNova.Api
       JwtSettings__Audiences__0: QuizNova.Client
       JwtSettings__Secret: ${JWT_SECRET:-QuizNova-Development-Secret-Key-Change-This-2026}
       JwtSettings__ExpiryMinutes: 7
-      AppSettings__Cors__PolicyName: "AngularClient"
-      AppSettings__Cors__AllowedOrigins__0: "http://localhost:4200"
+      CorsSettings__PolicyName: "AngularClient"
+      CorsSettings__AllowedOrigins__0: "http://localhost:4200"
       DisableRateLimiting: "true"
       Serilog__WriteTo__1__Args__serverUrl: "http://seq:5341"
       OTEL_EXPORTER_OTLP_ENDPOINT: http://seq:5341/ingest/otlp
@@ -105,6 +127,7 @@ services:
       - backend
 volumes:
   postgres_data:
+  mongodb_data:
   grafana-data:
 
 networks:
@@ -112,3 +135,4 @@ networks:
     driver: bridge
   backend:
     driver: bridge
+

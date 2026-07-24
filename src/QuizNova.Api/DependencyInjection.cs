@@ -192,13 +192,13 @@ public static class DependencyInjection
     {
         services.AddCors();
         services.AddOptions<CorsOptions>()
-            .Configure<IOptions<AppSettings>>((options, appSettings) =>
+            .Configure<IOptions<CorsSettings>>((options, corsSettings) =>
             {
                 options.AddPolicy(
-                    appSettings.Value.Cors.PolicyName,
+                    corsSettings.Value.PolicyName,
                     policy =>
                     {
-                        policy.WithOrigins(appSettings.Value.Cors.AllowedOrigins)
+                        policy.WithOrigins(corsSettings.Value.AllowedOrigins)
                             .AllowAnyMethod()
                             .AllowAnyHeader()
                             .AllowCredentials();
@@ -237,8 +237,9 @@ public static class DependencyInjection
                 // trace the incoming and outgoing HTTP requests
                 tracing.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation();
 
-                // trace PostgreSQL database queries
-                tracing.AddNpgsql();
+                // trace PostgreSQL and MongoDB database queries
+                tracing.AddNpgsql()
+                       .AddSource("MongoDB.Driver.Core.Extensions.DiagnosticSources");
 
                 // export the traces to the endpoint defined in OTEL_EXPORTER_OTLP_ENDPOINT defined in compose that will go to the seq
                 tracing.AddOtlpExporter();

@@ -13,6 +13,7 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Infrastructure.BackgroundJobs;
 using QuizNova.Infrastructure.Caching;
 using QuizNova.Infrastructure.Data;
+using QuizNova.Infrastructure.Data.MongoDb;
 using QuizNova.Infrastructure.Identity;
 using QuizNova.Infrastructure.Settings;
 
@@ -42,13 +43,14 @@ public static class DependencyInjection
         using var scope = serviceProvider.CreateScope();
         var dbInitializer = scope.ServiceProvider.GetRequiredService<DbInitializer>();
         await dbInitializer.InitializeAsync(ct);
+
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        await MongoDbInitializer.InitializeIndexesAsync(mongoContext);
     }
 
     private static IServiceCollection ConfigureCaching(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
-                               ?? throw new InvalidOperationException(
-                                   "The connection string 'DefaultConnection' is not configured.");
+        var connectionString = GetPostgresConnectionString(configuration);
 
         services.AddDistributedPostgreSqlCache(options =>
         {
@@ -67,12 +69,7 @@ public static class DependencyInjection
 
     private static IServiceCollection ConfigureDataBase(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
-
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            throw new InvalidOperationException("The connection string 'DefaultConnection' is not configured.");
-        }
+        var connectionString = GetPostgresConnectionString(configuration);
 
         services.AddDbContext<AppDbContext>(options => options
             .UseNpgsql(connectionString, npgsqlOptions =>
@@ -82,6 +79,8 @@ public static class DependencyInjection
                     .PendingModelChangesWarning)));
 
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+
+        services.AddSingleton<IMongoDbContext, MongoDbContext>();
 
         services.AddIdentityCore<AppUser>(options =>
             {
@@ -101,13 +100,33 @@ public static class DependencyInjection
 
     private static IServiceCollection ConfigureSettings(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddOptions<AppSettings>()
-            .Bind(configuration.GetSection(AppSettings.SectionName));
+        services.AddOptions<CorsSettings>()
+            .Bind(configuration.GetSection(CorsSettings.SectionName));
+
+        services.AddOptions<PostgresSettings>()
+            .Bind(configuration.GetSection(PostgresSettings.SectionName));
 
         services.AddOptions<JwtSettings>()
             .Bind(configuration.GetSection(JwtSettings.SectionName));
 
+        services.AddOptions<MongoDbSettings>()
+            .Bind(configuration.GetSection(MongoDbSettings.SectionName));
+
         return services;
+    }
+
+    private static string GetPostgresConnectionString(IConfiguration configuration)
+    {
+        var postgresSettings = configuration.GetSection(PostgresSettings.SectionName).Get<PostgresSettings>();
+        var connectionString = postgresSettings?.DefaultConnection
+            ?? configuration.GetConnectionString("DefaultConnection");
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException("The connection string 'DefaultConnection' in 'ConnectionStrings' is not configured.");
+        }
+
+        return connectionString;
     }
 
     private static IServiceCollection AddJwtAuthentication(

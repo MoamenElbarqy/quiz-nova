@@ -35,8 +35,8 @@ app.UseExceptionHandler();
 
 app.UseOutputCache();
 
-var appSettings = app.Services.GetRequiredService<IOptions<AppSettings>>().Value;
-app.UseCors(appSettings.Cors.PolicyName);
+var corsSettings = app.Services.GetRequiredService<IOptions<CorsSettings>>().Value;
+app.UseCors(corsSettings.PolicyName);
 
 app.UseAuthentication();
 app.UseAuthorization();
