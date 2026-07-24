@@ -206,26 +206,11 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     }
 
     [Fact]
-    public async Task CreateCourse_WhenAdmin_ReturnsForbidden()
+    public async Task CreateCourse_WhenAdmin_ReturnsCreatedCourse()
     {
         // Arrange
         using var client = factory.CreateAppHttpClient();
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
-        var request = new CreateCourseRequest("New Test Course", null, 50, 100);
-
-        // Act
-        var response = await client.PostAsJsonAsync("/courses", request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
-
-    [Fact]
-    public async Task CreateCourse_WhenInstructor_ReturnsCreatedCourse()
-    {
-        // Arrange
-        using var client = factory.CreateAppHttpClient();
-        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
         var (_, instructorId, _) = await GetSeededIdsAsync();
 
         var request = new CreateCourseRequest("New Integration Course", instructorId, 60, 100);
@@ -240,6 +225,21 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
         course.Should().NotBeNull();
         course.CourseName.Should().Be(request.Name);
         course.InstructorId.Should().Be(instructorId);
+    }
+
+    [Fact]
+    public async Task CreateCourse_WhenInstructor_ReturnsForbidden()
+    {
+        // Arrange
+        using var client = factory.CreateAppHttpClient();
+        await client.AuthenticateAsync(TestUsers.Instructor1.User.Email!, TestUsers.Instructor1.Password, "Instructor");
+        var request = new CreateCourseRequest("New Test Course", null, 50, 100);
+
+        // Act
+        var response = await client.PostAsJsonAsync("/courses", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     [Fact]

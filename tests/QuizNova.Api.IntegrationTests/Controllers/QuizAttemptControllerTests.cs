@@ -10,6 +10,7 @@ using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.QuizAttempts.DTOs;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.Quizzes;
+using QuizNova.Domain.Entities.Quizzes.Questions;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Tests.Common.Security;
@@ -247,19 +248,6 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    private static List<Tf> CreateQuestions(Guid quizId)
-    {
-        return Enumerable.Range(0, 3)
-            .Select(index => Tf.Create(
-                Guid.NewGuid(),
-                quizId,
-                $"Attempt question {index + 1}",
-                true,
-                index,
-                10).Value)
-            .ToList();
-    }
-
     private async Task<(Guid attemptId, Guid studentId, Guid quizId)> SeedQuizAttemptAsync()
     {
         using var scope = factory.Services.CreateScope();
@@ -267,7 +255,7 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
         var (quiz, questions, studentId) = await CreateQuizAsync(dbContext, active: false);
         var attemptId = Guid.NewGuid();
         var answers = questions
-            .Select(question => question.Solve(true, studentId, attemptId).Value)
+            .Select(question => ((Tf)question).Solve(true, studentId, attemptId).Value)
             .ToList();
         var attempt = QuizAttempt.Start(
             attemptId,
@@ -279,15 +267,14 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
             attempt.SubmitAnswer(answer);
         }
 
-        await dbContext.Quizzes.AddAsync(quiz);
-        await dbContext.Questions.AddRangeAsync(questions);
-        await dbContext.QuizAttempts.AddAsync(attempt);
-        await dbContext.SaveChangesAsync(CancellationToken.None);
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        await mongoContext.Quizzes.InsertOneAsync(quiz);
+        await mongoContext.QuizAttempts.InsertOneAsync(attempt);
 
         return (attemptId, studentId, quiz.Id);
     }
 
-    private async Task<(Quiz quiz, List<Tf> questions, Guid studentId)> CreateQuizAsync(
+    private async Task<(Quiz quiz, List<Question> questions, Guid studentId)> CreateQuizAsync(
         IAppDbContext dbContext,
         bool active)
     {
@@ -296,7 +283,13 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
         var student = await dbContext.Students
             .FirstAsync(s => s.PersonalInformation.Email == TestUsers.Student.User.Email);
         var quizId = Guid.NewGuid();
-        var questions = CreateQuestions(quizId);
+        var questionArgs = Enumerable.Range(0, 3)
+            .Select(index => new CreateTfArgs(
+                $"Attempt question {index + 1}",
+                10,
+                true))
+            .Cast<CreateQuestionArgs>()
+            .ToList();
         var startsAt = active ? DateTimeOffset.UtcNow.AddMinutes(-10) : DateTimeOffset.UtcNow.AddDays(-2);
         var endsAt = active ? DateTimeOffset.UtcNow.AddMinutes(10) : DateTimeOffset.UtcNow.AddDays(-1);
         var quiz = Quiz.Create(
@@ -306,9 +299,9 @@ public class QuizAttemptControllerTests(CustomWebApplicationFactory factory)
             $"Attempt {Guid.NewGuid():N}"[..20],
             startsAt,
             endsAt,
-            questions.Cast<Question>().ToList()).Value;
+            questionArgs).Value;
 
-        return (quiz, questions, student.Id);
+        return (quiz, [.. quiz.Questions], student.Id);
     }
 
     private async Task<(Guid courseId, Guid studentId, Guid instructorId)> GetSeededIdsAsync()

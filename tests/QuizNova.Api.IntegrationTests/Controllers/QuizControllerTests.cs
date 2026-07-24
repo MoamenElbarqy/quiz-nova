@@ -10,8 +10,7 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Quizzes.DTOs;
 using QuizNova.Domain.Entities.Quizzes;
-using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
-using QuizNova.Domain.Entities.Quizzes.Questions.Base;
+using QuizNova.Domain.Entities.Quizzes.Questions;
 using QuizNova.Tests.Common.Security;
 
 using Xunit;
@@ -275,7 +274,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
 
         var response = await PutQuestionAsync(client, quizId, questionId, request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent, await response.Content.ReadAsStringAsync());
     }
 
     [Fact]
@@ -289,7 +288,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
 
         var response = await client.PutAsJsonAsync($"/quizzes/{quizId}/course", request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent, await response.Content.ReadAsStringAsync());
     }
 
     [Fact]
@@ -301,7 +300,7 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
 
         var response = await client.DeleteAsync($"/quizzes/{quizId}/questions/{questionId}");
 
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent, await response.Content.ReadAsStringAsync());
     }
 
     [Fact]
@@ -393,11 +392,10 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
 
     private async Task<CreateQuizRequest> CreateValidQuizRequestAsync()
     {
-        var (courseId, instructorId, _) = await GetSeededIdsAsync();
+        var (courseId, _, _) = await GetSeededIdsAsync();
         return new CreateQuizRequest(
             "TESTING QUIZ TITLE",
             courseId,
-            instructorId,
             DateTimeOffset.UtcNow.AddDays(1),
             DateTimeOffset.UtcNow.AddDays(2),
             [
@@ -420,15 +418,12 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
         var course = await dbContext.Courses.FirstAsync();
         var instructor = await dbContext.Instructors.FirstAsync(instructor => instructor.Id == course.InstructorId);
         var quizId = Guid.NewGuid();
-        var questions = Enumerable.Range(0, questionCount)
-            .Select(index => Tf.Create(
-                Guid.NewGuid(),
-                quizId,
+        var questionArgs = Enumerable.Range(0, questionCount)
+            .Select(index => new CreateTfArgs(
                 $"Seed question {index + 1}",
-                index % 2 == 0,
-                index,
-                10).Value)
-            .Cast<Question>()
+                10,
+                index % 2 == 0))
+            .Cast<CreateQuestionArgs>()
             .ToList();
         var quiz = Quiz.Create(
             quizId,
@@ -437,21 +432,20 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
             $"Seed {Guid.NewGuid():N}"[..20],
             DateTimeOffset.UtcNow.AddDays(1),
             DateTimeOffset.UtcNow.AddDays(2),
-            questions).Value;
+            questionArgs).Value;
 
-        await dbContext.Quizzes.AddAsync(quiz);
-        await dbContext.Questions.AddRangeAsync(questions);
-        await dbContext.SaveChangesAsync(CancellationToken.None);
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        await mongoContext.Quizzes.InsertOneAsync(quiz);
 
-        return (quizId, questions[0].Id);
+        return (quizId, quiz.Questions.First().Id);
     }
 
     private async Task<(Guid courseId, Guid instructorId, Guid studentId)> GetSeededIdsAsync()
     {
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var course = await dbContext.Courses.FirstAsync();
-        var instructor = await dbContext.Instructors.FirstAsync(instructor => instructor.Id == course.InstructorId);
+        var instructor = await dbContext.Instructors.FirstAsync(i => i.PersonalInformation.Email == TestUsers.Instructor1.User.Email);
+        var course = await dbContext.Courses.FirstAsync(c => c.InstructorId == instructor.Id);
         var student = await dbContext.Students.FirstAsync();
 
         return (course.Id, instructor.Id, student.Id);
@@ -461,8 +455,8 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     {
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var course = await dbContext.Courses.OrderByDescending(c => c.Name).FirstAsync();
-        var instructor = await dbContext.Instructors.FirstAsync(instructor => instructor.Id == course.InstructorId);
+        var instructor = await dbContext.Instructors.FirstAsync(i => i.PersonalInformation.Email == TestUsers.Instructor1.User.Email);
+        var course = await dbContext.Courses.Where(c => c.InstructorId == instructor.Id).OrderByDescending(c => c.Name).FirstAsync();
         var student = await dbContext.Students.FirstAsync();
 
         return (course.Id, instructor.Id, student.Id);

@@ -12,8 +12,7 @@ using QuizNova.Application.Features.QuizAttempts.DTOs;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers.EssayAnswer;
 using QuizNova.Domain.Entities.Quizzes;
-using QuizNova.Domain.Entities.Quizzes.Questions.Base;
-using QuizNova.Domain.Entities.Quizzes.Questions.ManuallyGradedQuestions;
+using QuizNova.Domain.Entities.Quizzes.Questions;
 using QuizNova.Tests.Common.Security;
 
 using Xunit;
@@ -119,7 +118,7 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
         var response = await client.PutAsJsonAsync($"/quiz-attempts/manually-graded-answers/{answerId}", request);
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent, await response.Content.ReadAsStringAsync());
     }
 
     [Fact]
@@ -173,7 +172,7 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
         // 1. Grade the first time
         var firstResponse =
             await client.PutAsJsonAsync($"/quiz-attempts/manually-graded-answers/{answerId}", firstRequest);
-        firstResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        firstResponse.StatusCode.Should().Be(HttpStatusCode.NoContent, await firstResponse.Content.ReadAsStringAsync());
 
         // 2. Grade a second time (should be refused!)
         var secondResponse =
@@ -193,21 +192,25 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
                              .FirstOrDefaultAsync(i => i.PersonalInformation.Email == instructorEmail)
                          ?? throw new InvalidOperationException($"Instructor {instructorEmail} not found.");
 
-        var course = instructor.Courses.FirstOrDefault()
-                     ?? throw new InvalidOperationException($"No courses found for instructor {instructorEmail}.");
+        var course = instructor.Courses.FirstOrDefault();
+        if (course is null)
+        {
+            course = await dbContext.Courses.FirstAsync();
+            course.UpdateInstructor(instructor.Id);
+            await dbContext.SaveChangesAsync();
+        }
 
         var student = await dbContext.Students.FirstOrDefaultAsync()
                       ?? throw new InvalidOperationException("No students found in database.");
 
         var quizId = Guid.NewGuid();
 
-        // Satisfy the Quiz domain rule: At least 1 question, display order starting at 0, 1, 2
-        var question1 = Essay.Create(Guid.NewGuid(), quizId, "Question 1Text", "Ref 1", 0, 10).Value;
-        var question2 = Essay.Create(Guid.NewGuid(), quizId, "Question 2Text", "Ref 2", 1, 10).Value;
-
-        var questionId = Guid.NewGuid();
-        var question3 = Essay.Create(questionId, quizId, "Explain REST API principles in detail.", "Ref 3", 2, 10)
-            .Value;
+        var questionArgs = new List<CreateQuestionArgs>
+        {
+            new CreateEssayArgs("Question 1Text", 10, "Ref 1"),
+            new CreateEssayArgs("Question 2Text", 10, "Ref 2"),
+            new CreateEssayArgs("Explain REST API principles in detail.", 10, "Ref 3"),
+        };
 
         var quiz = Quiz.Create(
             quizId,
@@ -216,7 +219,9 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
             "Essay Quiz",
             DateTimeOffset.UtcNow.AddDays(1),
             DateTimeOffset.UtcNow.AddDays(2),
-            [question1, question2, question3]).Value;
+            questionArgs).Value;
+
+        var questionId = quiz.Questions.Last().Id;
 
         var attemptId = Guid.NewGuid();
         var answerId = Guid.NewGuid();
@@ -233,13 +238,11 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
             quizId,
             DateTime.UtcNow.AddMinutes(2)).Value;
         attempt.SubmitAnswer(answer);
-        attempt.Complete(DateTime.UtcNow.AddMinutes(4), DateTime.UtcNow.AddHours(2));
+        attempt.Complete(DateTime.UtcNow.AddMinutes(4));
 
-        await dbContext.Quizzes.AddAsync(quiz);
-        await dbContext.Questions.AddRangeAsync(new List<Question> { question1, question2, question3 });
-        await dbContext.QuizAttempts.AddAsync(attempt);
-        await dbContext.ManuallyGradedAnswers.AddAsync(answer);
-        await dbContext.SaveChangesAsync(CancellationToken.None);
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        await mongoContext.Quizzes.InsertOneAsync(quiz);
+        await mongoContext.QuizAttempts.InsertOneAsync(attempt);
 
         return (attemptId, answerId, questionId);
     }
