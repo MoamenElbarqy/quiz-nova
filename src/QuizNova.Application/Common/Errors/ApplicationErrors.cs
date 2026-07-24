@@ -66,6 +66,11 @@ public static class ApplicationErrors
             code: "Quiz.Course.NotFound",
             description: $"Course with ID '{courseId}' was not found.");
 
+    public static Error QuizCourseCompleted(Guid courseId) =>
+        Error.Validation(
+            code: "Quiz.Course.Completed",
+            description: $"Cannot perform operations on a quiz for completed course with ID '{courseId}'.");
+
     public static Error QuizInstructorNotFound(Guid instructorId) =>
         Error.NotFound(
             code: "Quiz.Instructor.NotFound",
