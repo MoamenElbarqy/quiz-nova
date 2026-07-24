@@ -11,6 +11,7 @@ namespace QuizNova.Application.Features.Quizzes.Commands.UpdateQuizCourseId;
 
 public sealed class UpdateQuizCourseIdCommandHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<UpdateQuizCourseIdCommandHandler> logger,
     ICacheInvalidator cacheInvalidator)
     : IRequestHandler<UpdateQuizCourseIdCommand, Result<Updated>>
@@ -22,9 +23,9 @@ public sealed class UpdateQuizCourseIdCommandHandler(
             request.QuizId,
             request.NewCourseId);
 
-        var quiz = await dbContext.Quizzes
-            .Include(q => q.Questions)
-            .FirstOrDefaultAsync(q => q.Id == request.QuizId, ct);
+        var quiz = await mongoContext.Quizzes
+            .Find(q => q.Id == request.QuizId)
+            .FirstOrDefaultAsync(ct);
 
         if (quiz is null)
         {
@@ -52,7 +53,7 @@ public sealed class UpdateQuizCourseIdCommandHandler(
             return updateResult.TopError;
         }
 
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.Quizzes.ReplaceOneAsync(q => q.Id == quiz.Id, quiz, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync(["quizzes", "courses"], ct);
 
         logger.LogInformation(

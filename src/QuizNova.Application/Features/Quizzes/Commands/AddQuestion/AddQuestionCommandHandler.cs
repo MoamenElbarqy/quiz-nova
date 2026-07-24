@@ -18,7 +18,7 @@ using QuizNova.Domain.Entities.Quizzes.Questions.ManuallyGradedQuestions;
 namespace QuizNova.Application.Features.Quizzes.Commands.AddQuestion;
 
 public sealed class AddQuestionCommandHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<AddQuestionCommandHandler> logger,
     ICacheInvalidator cacheInvalidator)
     : IRequestHandler<AddQuestionCommand, Result<QuestionDto>>
@@ -27,9 +27,9 @@ public sealed class AddQuestionCommandHandler(
     {
         logger.LogInformation("Adding question to quiz: {QuizId}", request.QuizId);
 
-        var quiz = await dbContext.Quizzes
-            .Include(q => q.Questions)
-            .FirstOrDefaultAsync(q => q.Id == request.QuizId, ct);
+        var quiz = await mongoContext.Quizzes
+            .Find(q => q.Id == request.QuizId)
+            .FirstOrDefaultAsync(ct);
 
         if (quiz is null)
         {
@@ -72,9 +72,7 @@ public sealed class AddQuestionCommandHandler(
             return addResult.TopError;
         }
 
-        dbContext.Questions.Add(createQuestionResult.Value);
-
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.Quizzes.ReplaceOneAsync(q => q.Id == quiz.Id, quiz, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync(["quizzes"], ct);
 
         logger.LogInformation(

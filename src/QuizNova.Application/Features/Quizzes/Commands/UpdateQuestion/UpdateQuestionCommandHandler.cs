@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
@@ -11,12 +10,12 @@ using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices
 namespace QuizNova.Application.Features.Quizzes.Commands.UpdateQuestion;
 
 public sealed class UpdateQuestionCommandHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<UpdateQuestionCommandHandler> logger,
     ICacheInvalidator cacheInvalidator)
     : IRequestHandler<UpdateMcqCommand, Result<Updated>>,
-      IRequestHandler<UpdateTfCommand, Result<Updated>>,
-      IRequestHandler<UpdateEssayCommand, Result<Updated>>
+        IRequestHandler<UpdateTfCommand, Result<Updated>>,
+        IRequestHandler<UpdateEssayCommand, Result<Updated>>
 {
     public async Task<Result<Updated>> Handle(UpdateMcqCommand request, CancellationToken ct)
     {
@@ -40,9 +39,9 @@ public sealed class UpdateQuestionCommandHandler(
             request.QuestionId,
             request.QuizId);
 
-        var quiz = await dbContext.Quizzes
-            .Include(q => q.Questions)
-            .FirstOrDefaultAsync(q => q.Id == request.QuizId, ct);
+        var quiz = await mongoContext.Quizzes
+            .Find(q => q.Id == request.QuizId)
+            .FirstOrDefaultAsync(ct);
 
         if (quiz is null)
         {
@@ -113,7 +112,7 @@ public sealed class UpdateQuestionCommandHandler(
             return updateResult.TopError;
         }
 
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.Quizzes.ReplaceOneAsync(q => q.Id == quiz.Id, quiz, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync(["quizzes"], ct);
 
         logger.LogInformation(

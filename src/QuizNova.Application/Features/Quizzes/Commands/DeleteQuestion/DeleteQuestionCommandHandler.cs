@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
@@ -11,7 +10,7 @@ using QuizNova.Domain.Entities.Quizzes;
 namespace QuizNova.Application.Features.Quizzes.Commands.DeleteQuestion;
 
 public sealed class DeleteQuestionCommandHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<DeleteQuestionCommandHandler> logger,
     ICacheInvalidator cacheInvalidator)
     : IRequestHandler<DeleteQuestionCommand, Result<Deleted>>
@@ -23,9 +22,9 @@ public sealed class DeleteQuestionCommandHandler(
             request.QuestionId,
             request.QuizId);
 
-        var quiz = await dbContext.Quizzes
-            .Include(q => q.Questions)
-            .FirstOrDefaultAsync(q => q.Id == request.QuizId, ct);
+        var quiz = await mongoContext.Quizzes
+            .Find(q => q.Id == request.QuizId)
+            .FirstOrDefaultAsync(ct);
 
         if (quiz is null)
         {
@@ -52,8 +51,7 @@ public sealed class DeleteQuestionCommandHandler(
             return deleteResult.TopError;
         }
 
-        dbContext.Questions.Remove(question);
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.Quizzes.ReplaceOneAsync(q => q.Id == quiz.Id, quiz, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync(["quizzes"], ct);
 
         logger.LogInformation(

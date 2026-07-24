@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
@@ -10,7 +9,7 @@ using QuizNova.Domain.Common.Results;
 namespace QuizNova.Application.Features.Quizzes.Commands.UpdateQuizMetadata;
 
 public sealed class UpdateQuizMetadataCommandHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<UpdateQuizMetadataCommandHandler> logger,
     ICacheInvalidator cacheInvalidator)
     : IRequestHandler<UpdateQuizMetadataCommand, Result<Updated>>
@@ -19,8 +18,9 @@ public sealed class UpdateQuizMetadataCommandHandler(
     {
         logger.LogInformation("Updating quiz metadata for quiz: {QuizId}", request.QuizId);
 
-        var quiz = await dbContext.Quizzes
-            .FirstOrDefaultAsync(q => q.Id == request.QuizId, ct);
+        var quiz = await mongoContext.Quizzes
+            .Find(q => q.Id == request.QuizId)
+            .FirstOrDefaultAsync(ct);
 
         if (quiz is null)
         {
@@ -42,7 +42,7 @@ public sealed class UpdateQuizMetadataCommandHandler(
             return updateResult.TopError;
         }
 
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.Quizzes.ReplaceOneAsync(q => q.Id == quiz.Id, quiz, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync(["quizzes"], ct);
 
         logger.LogInformation("Successfully updated quiz metadata for quiz: {QuizId}", request.QuizId);
