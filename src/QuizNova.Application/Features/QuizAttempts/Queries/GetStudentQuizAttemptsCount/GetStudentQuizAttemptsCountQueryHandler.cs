@@ -12,6 +12,7 @@ namespace QuizNova.Application.Features.QuizAttempts.Queries.GetStudentQuizAttem
 
 public sealed class GetStudentQuizAttemptsCountQueryHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetStudentQuizAttemptsCountQueryHandler> logger)
     : IRequestHandler<GetStudentQuizAttemptsCountQuery, Result<QuizAttemptsCountDto>>
 {
@@ -29,13 +30,13 @@ public sealed class GetStudentQuizAttemptsCountQueryHandler(
             return ApplicationErrors.StudentNotFound(request.StudentId);
         }
 
-        var quizAttemptCount = await dbContext.QuizAttempts
-            .AsNoTracking()
-            .CountAsync(quizAttempt => quizAttempt.StudentId == request.StudentId, ct);
+        var quizAttemptCount = (int)await mongoContext.QuizAttempts
+            .CountDocumentsAsync(quizAttempt => quizAttempt.StudentId == request.StudentId, cancellationToken: ct);
 
         logger.LogInformation("Successfully retrieved quiz attempts count for student {StudentId}: {Count}", request.StudentId, quizAttemptCount);
 
         return new QuizAttemptsCountDto(quizAttemptCount);
     }
 }
+
 

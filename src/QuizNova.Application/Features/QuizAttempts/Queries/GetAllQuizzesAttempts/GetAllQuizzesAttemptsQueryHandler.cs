@@ -10,44 +10,79 @@ using QuizNova.Application.Features.QuizAttempts.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
-using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
-using QuizNova.Domain.Entities.Quizzes.Questions.Base;
+using QuizNova.Domain.Entities.Quizzes;
 
 namespace QuizNova.Application.Features.QuizAttempts.Queries.GetAllQuizzesAttempts;
 
 public sealed class GetAllQuizzesAttemptsQueryHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetAllQuizzesAttemptsQueryHandler> logger)
     : IRequestHandler<GetAllQuizzesAttemptsQuery, Result<PaginatedList<QuizAttemptDto>>>
 {
-    public async Task<Result<PaginatedList<QuizAttemptDto>>> Handle(GetAllQuizzesAttemptsQuery request,
+    public async Task<Result<PaginatedList<QuizAttemptDto>>> Handle(
+        GetAllQuizzesAttemptsQuery request,
         CancellationToken ct)
     {
         logger.LogInformation("Retrieving all quiz attempts");
 
-        IQueryable<QuizAttempt> query = dbContext.QuizAttempts
-            .AsNoTracking()
-            .AsQueryable();
+        var filterBuilder = Builders<QuizAttempt>.Filter;
+        var filter = filterBuilder.Empty;
 
-        query = ApplySearchTerm(query, request, dbContext);
-        query = ApplyFiltering(query, request);
-        query = ApplySorting(query);
+        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+        {
+            var searchTerm = request.SearchTerm.Trim();
 
-        var totalCount = await query.CountAsync(ct);
+            var matchingStudentIds = await dbContext.Students
+                .Where(s => EF.Functions.Like(s.PersonalInformation.Name, $"%{searchTerm}%"))
+                .Select(s => s.Id)
+                .ToListAsync(ct);
 
-        var attempts = await query
-            .Skip((request.PageNumber - 1) * request.PageSize)
-            .Take(request.PageSize)
-            .Include(quizAttempt => quizAttempt.Quiz)
-                .ThenInclude(quiz => quiz!.Questions)
-                    .ThenInclude((Question question) => (question as Mcq)!.Choices)
-            .Include(quizAttempt => quizAttempt.StudentAnswers)
-            .AsSplitQuery()
+            var matchingQuizIds = await mongoContext.Quizzes
+                .Find(Builders<Quiz>.Filter.Text(searchTerm))
+                .Project(q => q.Id)
+                .ToListAsync(ct);
+
+            filter &= filterBuilder.In(a => a.StudentId, matchingStudentIds) |
+                      filterBuilder.In(a => a.QuizId, matchingQuizIds);
+        }
+
+        var allMatchingAttempts = await mongoContext.QuizAttempts
+            .Find(filter)
+            .SortByDescending(quizAttempt => quizAttempt.SubmittedAt)
             .ToListAsync(ct);
 
-        var response = attempts
-            .Select(attempt => attempt.ToQuizAttemptDto())
+        if (request.CorrectAnswers.HasValue)
+        {
+            allMatchingAttempts = allMatchingAttempts
+                .Where(a => a.StudentAnswers.OfType<AutoGradedAnswer>().Count(ans => ans.IsCorrect) == request.CorrectAnswers.Value)
+                .ToList();
+        }
+
+        var totalCount = allMatchingAttempts.Count;
+
+        var pagedAttempts = allMatchingAttempts
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
             .ToList();
+
+        var quizIds = pagedAttempts.Select(a => a.QuizId).Distinct().ToList();
+        var quizzes = await mongoContext.Quizzes
+            .Find(q => quizIds.Contains(q.Id))
+            .ToListAsync(ct);
+
+        var quizMap = quizzes.ToDictionary(q => q.Id);
+
+        var response = pagedAttempts.Select(attempt =>
+        {
+            if (quizMap.TryGetValue(attempt.QuizId, out var quiz))
+            {
+                attempt.Quiz = quiz;
+                attempt.AttachQuizQuestions(quiz.Questions);
+            }
+
+            return attempt.ToQuizAttemptDto();
+        }).ToList();
 
         var paginatedResponse = new PaginatedList<QuizAttemptDto>(
             response,
@@ -60,46 +95,5 @@ public sealed class GetAllQuizzesAttemptsQueryHandler(
 
         return paginatedResponse;
     }
-
-    private static IQueryable<QuizAttempt> ApplyFiltering(
-        IQueryable<QuizAttempt> query,
-        GetAllQuizzesAttemptsQuery request)
-    {
-        if (request.CorrectAnswers.HasValue)
-        {
-            query = query.Where(quizAttempt =>
-                quizAttempt.StudentAnswers.OfType<AutoGradedAnswer>().Count(answer => answer.IsCorrect) ==
-                request.CorrectAnswers.Value);
-        }
-
-        return query;
-    }
-
-    private static IQueryable<QuizAttempt> ApplySearchTerm(
-        IQueryable<QuizAttempt> query,
-        GetAllQuizzesAttemptsQuery request,
-        IAppDbContext dbContext)
-    {
-        if (string.IsNullOrWhiteSpace(request.SearchTerm))
-        {
-            return query;
-        }
-
-        return query.Where(quizAttempt =>
-            dbContext.Quizzes
-                .Where(quiz => quiz.Id == quizAttempt.QuizId)
-                .Select(quiz => quiz.Title)
-                .FirstOrDefault()!
-                .Contains(request.SearchTerm) ||
-            dbContext.Students
-                .Where(student => student.Id == quizAttempt.StudentId)
-                .Select(student => student.PersonalInformation.Name)
-                .FirstOrDefault()!
-                .Contains(request.SearchTerm));
-    }
-
-    private static IOrderedQueryable<QuizAttempt> ApplySorting(IQueryable<QuizAttempt> query)
-    {
-        return query.OrderByDescending(quizAttempt => quizAttempt.SubmittedAt);
-    }
 }
+
