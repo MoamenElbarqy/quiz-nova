@@ -1,6 +1,6 @@
 using QuizNova.Application.Features.Quizzes.Mappers;
+using QuizNova.Domain.Entities.Quizzes.Questions;
 using QuizNova.Tests.Common.Quizzes;
-using QuizNova.Tests.Common.Quizzes.Questions;
 
 using Xunit;
 
@@ -13,14 +13,17 @@ public class QuizMapperTests
     {
         // Arrange
         var quizId = Guid.NewGuid();
-        var q1 = QuestionFactory.CreateTfQuestion(quizId: quizId, displayOrder: 0, marks: 5).Value;
-        var q2 = QuestionFactory.CreateTfQuestion(quizId: quizId, displayOrder: 1, marks: 15).Value;
-        var q3 = QuestionFactory.CreateTfQuestion(quizId: quizId, displayOrder: 2, marks: 10).Value;
+        var questionArgs = new List<CreateQuestionArgs>
+        {
+            new CreateTfArgs("Question 1", 5, true),
+            new CreateTfArgs("Question 2", 15, false),
+            new CreateTfArgs("Question 3", 10, true),
+        };
 
         var quiz = QuizFactory.CreateQuiz(
             id: quizId,
             title: "Advanced C# Quiz",
-            questions: [q1, q2, q3]).Value;
+            questionArgs: questionArgs).Value;
 
         // Act
         var dto = quiz.ToQuizDto("Course", "Instructor");
@@ -40,9 +43,9 @@ public class QuizMapperTests
         // Assert questions mapped
         Assert.NotNull(dto.Questions);
         Assert.Equal(3, dto.Questions.Count);
-        Assert.Equal(q1.Id, dto.Questions.ElementAt(0).Id);
-        Assert.Equal(q2.Id, dto.Questions.ElementAt(1).Id);
-        Assert.Equal(q3.Id, dto.Questions.ElementAt(2).Id);
+        Assert.Equal(quiz.Questions.ElementAt(0).Id, dto.Questions.ElementAt(0).Id);
+        Assert.Equal(quiz.Questions.ElementAt(1).Id, dto.Questions.ElementAt(1).Id);
+        Assert.Equal(quiz.Questions.ElementAt(2).Id, dto.Questions.ElementAt(2).Id);
     }
 
     [Fact]

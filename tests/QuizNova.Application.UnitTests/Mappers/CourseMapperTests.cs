@@ -16,7 +16,7 @@ public class CourseMapperTests
         var course = CourseFactory.CreateCourse(instructorId: instructor.Id).Value;
 
         // Act
-        var dto = course.ToCourseDto(0);
+        var dto = course.ToCourseDto("Dr. John", 0, 0, course.MaximumMarks);
 
         // Assert
         Assert.NotNull(dto);
@@ -24,8 +24,8 @@ public class CourseMapperTests
         Assert.Equal(course.Name, dto.CourseName);
         Assert.Equal(course.InstructorId, dto.InstructorId);
         Assert.Equal(0, dto.EnrolledStudentsCount);
-        Assert.Equal(course.Quizzes.Count(), dto.QuizzesCount);
-        Assert.Equal(course.RemainingMarks, dto.RemainingMarks);
+        Assert.Equal(0, dto.QuizzesCount);
+        Assert.Equal(course.MaximumMarks, dto.RemainingMarks);
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public class CourseMapperTests
         var course = CourseFactory.CreateCourse(instructorId: null).Value;
 
         // Act
-        var dto = course.ToCourseDto(0);
+        var dto = course.ToCourseDto(null, 0, 0, course.MaximumMarks);
 
         // Assert
         Assert.NotNull(dto);
