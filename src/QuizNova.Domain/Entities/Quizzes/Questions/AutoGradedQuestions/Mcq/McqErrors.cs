@@ -15,4 +15,14 @@ public static class McqErrors
 
     public static readonly Error TitleTooLong =
         Error.Validation("Mcq_Title_TooLong", "MCQ question text cannot exceed 500 characters.");
+
+    public static Error CorrectChoiceNotFound(Guid questionId, Guid correctChoiceId) =>
+        Error.Validation(
+            code: "Quiz.Question.CorrectChoice.NotFound",
+            description: $"Correct choice with ID '{correctChoiceId}' was not found for question with ID '{questionId}'.");
+
+    public static Error ChoiceIdsMustBeUnique(Guid questionId) =>
+        Error.Validation(
+            code: "Quiz.Question.ChoiceIds.NotUnique",
+            description: $"Choice IDs must be unique for question with ID '{questionId}'.");
 }

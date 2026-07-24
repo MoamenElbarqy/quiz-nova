@@ -8,13 +8,14 @@ using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers.EssayAnswer;
 using QuizNova.Domain.Entities.QuizAttempts.Enums;
 using QuizNova.Domain.Entities.Quizzes;
+using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Domain.Entities.QuizAttempts;
 
 public class QuizAttempt : Entity
 {
-    private readonly List<QuestionAnswer> _studentAnswers;
+    private List<QuestionAnswer> _studentAnswers;
 
     private QuizAttempt()
     {
@@ -51,7 +52,7 @@ public class QuizAttempt : Entity
 
     public Student? Student { get; init; }
 
-    public Quiz? Quiz { get; init; }
+    public Quiz? Quiz { get; set; }
 
     public GradingState GradingState => _studentAnswers.All(a => a is not ManuallyGradedAnswers { IsGraded: false })
         ? GradingState.FullyGraded
@@ -65,7 +66,11 @@ public class QuizAttempt : Entity
         _ => 0
     });
 
-    public IEnumerable<QuestionAnswer> StudentAnswers => _studentAnswers.AsReadOnly();
+    public IEnumerable<QuestionAnswer> StudentAnswers
+    {
+        get => _studentAnswers.AsReadOnly();
+        private set => _studentAnswers = [.. value];
+    }
 
     public static Result<QuizAttempt> Start(
         Guid id,
@@ -149,7 +154,7 @@ public class QuizAttempt : Entity
         return Result.Validated;
     }
 
-    public Result<Completed> Complete(DateTime submittedAt, DateTime quizEndsAtUtc)
+    public Result<Completed> Complete(DateTime submittedAt)
     {
         if (Status != QuizAttemptStatus.InProgress)
         {
@@ -166,14 +171,26 @@ public class QuizAttempt : Entity
             return QuizAttemptErrors.SubmittedAtInvalid;
         }
 
-        if (submittedAt > quizEndsAtUtc)
+        if (Quiz is not null && submittedAt > Quiz.EndsAtUtc)
         {
-            return QuizAttemptErrors.SubmittedAtAfterQuizEnd(quizEndsAtUtc);
+            return QuizAttemptErrors.SubmittedAtAfterQuizEnd(Quiz.EndsAtUtc);
         }
 
         SubmittedAt = submittedAt;
         Status = QuizAttemptStatus.Completed;
 
         return Result.Completed;
+    }
+
+    public void AttachQuizQuestions(IEnumerable<Question> questions)
+    {
+        var questionMap = questions.ToDictionary(q => q.Id);
+        foreach (var answer in _studentAnswers)
+        {
+            if (questionMap.TryGetValue(answer.QuestionId, out var question))
+            {
+                answer.AttachQuestion(question);
+            }
+        }
     }
 }

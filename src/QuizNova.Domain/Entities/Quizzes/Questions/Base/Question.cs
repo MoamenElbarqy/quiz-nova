@@ -3,6 +3,10 @@ using System.Diagnostics.CodeAnalysis;
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
+using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
+using QuizNova.Domain.Entities.Quizzes.Questions.ManuallyGradedQuestions;
 
 namespace QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
@@ -28,7 +32,7 @@ public abstract class Question : Entity
         Marks = marks;
     }
 
-    public Guid QuizId { get; }
+    public Guid QuizId { get; private set; }
 
     public required string QuestionText { get; set; }
 
@@ -37,6 +41,22 @@ public abstract class Question : Entity
     public int Marks { get; private set; }
 
     public Quiz? Quiz { get; init; }
+
+    public static Result<Question> CreateFromArgs(
+        CreateQuestionArgs args,
+        int displayOrder,
+        Guid quizId)
+    {
+        return args switch
+        {
+            CreateTfArgs tf => CreateTf(tf, displayOrder, quizId),
+            CreateMcqArgs mcq => CreateMcq(mcq, displayOrder, quizId),
+            CreateEssayArgs essay => CreateEssay(essay, displayOrder, quizId),
+            _ => Error.Unexpected(
+                "Quiz.Question.Unsupported",
+                $"Unsupported question type '{args.GetType().Name}'."),
+        };
+    }
 
     internal Result<Updated> UpdateBase(
         string questionText,
@@ -84,6 +104,85 @@ public abstract class Question : Entity
         }
 
         return Result.Validated;
+    }
+
+    private static Result<Question> CreateTf(CreateTfArgs command, int displayOrder, Guid quizId)
+    {
+        var questionId = Guid.NewGuid();
+        var result = Tf.Create(
+            questionId,
+            quizId,
+            command.QuestionText,
+            command.CorrectChoice,
+            displayOrder,
+            command.Marks);
+
+        return result.IsError ? result.TopError : result.Value;
+    }
+
+    private static Result<Question> CreateMcq(CreateMcqArgs command, int displayOrder, Guid quizId)
+    {
+        var questionId = Guid.NewGuid();
+
+        if (command.Choices.All(choice => choice.Id != command.CorrectChoiceId))
+        {
+            return McqErrors.CorrectChoiceNotFound(questionId, command.CorrectChoiceId);
+        }
+
+        if (command.Choices.GroupBy(choice => choice.Id).Any(group => group.Count() > 1))
+        {
+            return McqErrors.ChoiceIdsMustBeUnique(questionId);
+        }
+
+        var choices = new List<Choice>(command.Choices.Count);
+        var actualCorrectChoiceId = Guid.Empty;
+
+        foreach (var choiceCommand in command.Choices)
+        {
+            var choiceId = Guid.NewGuid();
+            if (choiceCommand.Id == command.CorrectChoiceId)
+            {
+                actualCorrectChoiceId = choiceId;
+            }
+
+            var createChoiceResult = Choice.Create(
+                choiceId,
+                questionId,
+                choiceCommand.Text,
+                choiceCommand.DisplayOrder);
+
+            if (createChoiceResult.IsError)
+            {
+                return createChoiceResult.TopError;
+            }
+
+            choices.Add(createChoiceResult.Value);
+        }
+
+        var createQuestionResult = Mcq.Create(
+            questionId,
+            quizId,
+            command.QuestionText,
+            actualCorrectChoiceId,
+            displayOrder,
+            command.Marks,
+            choices);
+
+        return createQuestionResult.IsError ? createQuestionResult.TopError : createQuestionResult.Value;
+    }
+
+    private static Result<Question> CreateEssay(CreateEssayArgs command, int displayOrder, Guid quizId)
+    {
+        var questionId = Guid.NewGuid();
+        var result = Essay.Create(
+            questionId,
+            quizId,
+            command.QuestionText,
+            command.AnswerReference,
+            displayOrder,
+            command.Marks);
+
+        return result.IsError ? result.TopError : result.Value;
     }
 }
 

@@ -5,8 +5,8 @@ using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Courses.Enums;
 using QuizNova.Domain.Entities.QuizAttempts;
-
 using QuizNova.Domain.Entities.Quizzes.Enums;
+using QuizNova.Domain.Entities.Quizzes.Questions;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
@@ -18,12 +18,14 @@ namespace QuizNova.Domain.Entities.Quizzes;
 
 public class Quiz : Entity
 {
-    private readonly List<Question> _questions;
-    private readonly List<QuizAttempt> _quizAttempts;
+    private List<Question> _questions;
+    private List<QuizAttempt> _quizAttempts;
 
     [SetsRequiredMembers]
     private Quiz()
     {
+        _questions = [];
+        _quizAttempts = [];
     }
 
     [SetsRequiredMembers]
@@ -58,9 +60,17 @@ public class Quiz : Entity
 
     public int Marks => Questions.Sum(q => q.Marks);
 
-    public IEnumerable<Question> Questions => _questions.AsReadOnly();
+    public IEnumerable<Question> Questions
+    {
+        get => _questions.AsReadOnly();
+        private set => _questions = [.. value];
+    }
 
-    public IEnumerable<QuizAttempt> QuizAttempts => _quizAttempts.AsReadOnly();
+    public IEnumerable<QuizAttempt> QuizAttempts
+    {
+        get => _quizAttempts.AsReadOnly();
+        private set => _quizAttempts = [.. value];
+    }
 
     public Course? Course { get; init; }
 
@@ -79,7 +89,7 @@ public class Quiz : Entity
         string title,
         DateTimeOffset startsAtUtc,
         DateTimeOffset endsAtUtc,
-        List<Question> questions)
+        IEnumerable<CreateQuestionArgs> questionArgs)
     {
         if (courseId == Guid.Empty)
         {
@@ -118,31 +128,31 @@ public class Quiz : Entity
             return QuizErrors.ScheduleDurationTooShort;
         }
 
-        if (questions.Count < 1)
+        var questionsList = questionArgs.ToList();
+
+        if (questionsList.Count < 1)
         {
             return QuizErrors.QuestionsRequired;
+        }
+
+        var questions = new List<Question>(questionsList.Count);
+
+        for (int index = 0; index < questionsList.Count; index++)
+        {
+            var questionArg = questionsList[index];
+            var createQuestionResult = Question.CreateFromArgs(questionArg, index, id);
+
+            if (createQuestionResult.IsError)
+            {
+                return createQuestionResult.TopError;
+            }
+
+            questions.Add(createQuestionResult.Value);
         }
 
         if (questions.Sum(q => q.Marks) <= 0)
         {
             return QuizErrors.MarksInvalid;
-        }
-
-        var displayOrders = questions.Select(q => q.DisplayOrder).ToHashSet();
-
-        for (int i = 0; i < questions.Count; i++)
-        {
-            if (!displayOrders.Contains(i))
-            {
-                return QuizErrors.QuestionSequenceInvalid;
-            }
-        }
-
-        if (questions.Any(q => q.QuizId != id))
-        {
-            var invalidQuestion = questions.First(q => q.QuizId != id);
-
-            return QuizErrors.QuestionBelongsToDifferentQuiz(invalidQuestion.Id);
         }
 
         var quiz = new Quiz(
@@ -359,5 +369,4 @@ public class Quiz : Entity
             Id,
             startedAt.UtcDateTime);
     }
-
 }
