@@ -14,9 +14,6 @@ public sealed class CreateQuizCommandValidator : AbstractValidator<CreateQuizCom
         RuleFor(x => x.CourseId)
             .NotEmpty().WithMessage("Course ID is required.");
 
-        RuleFor(x => x.InstructorId)
-            .NotEmpty().WithMessage("Instructor ID is required.");
-
         RuleFor(x => x.StartsAtUtc)
             .NotEmpty().WithMessage("Start time is required.")
             .GreaterThanOrEqualTo(_ => DateTimeOffset.UtcNow.AddMinutes(-5))

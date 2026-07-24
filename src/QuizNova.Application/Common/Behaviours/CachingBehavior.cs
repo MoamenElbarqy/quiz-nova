@@ -24,16 +24,19 @@ public class CachingBehavior<TRequest, TResponse>(
             return await next(ct);
         }
 
-        logger.LogInformation("Checking cache for {RequestName}", typeof(TRequest).Name);
+        var key = cachedRequest.CacheKey;
+
+        logger.LogInformation("Checking cache for {RequestName} with key {CacheKey}", typeof(TRequest).Name, key);
 
         var result = await cache.GetOrCreateAsync<TResponse>(
-            cachedRequest.CacheKey,
+            key,
             _ => new ValueTask<TResponse>((TResponse)(object)null!),
             new HybridCacheEntryOptions
             {
                 Flags = HybridCacheEntryFlags.DisableUnderlyingData,
             },
-            cancellationToken: ct);
+            cachedRequest.Tags,
+            ct);
 
         if (result is null)
         {
@@ -44,10 +47,10 @@ public class CachingBehavior<TRequest, TResponse>(
                 return result;
             }
 
-            logger.LogInformation("Caching result for {RequestName}", typeof(TRequest).Name);
+            logger.LogInformation("Caching result for {RequestName} with key {CacheKey}", typeof(TRequest).Name, key);
 
             await cache.SetAsync(
-                cachedRequest.CacheKey,
+                key,
                 result,
                 new HybridCacheEntryOptions
                 {
