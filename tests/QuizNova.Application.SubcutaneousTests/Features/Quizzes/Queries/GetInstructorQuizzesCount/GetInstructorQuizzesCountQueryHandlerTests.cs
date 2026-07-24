@@ -3,10 +3,14 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.Features.Quizzes.Queries.GetInstructorQuizzesCount;
 using QuizNova.Application.SubcutaneousTests.Common;
+using QuizNova.Infrastructure.Identity;
+using QuizNova.Tests.Common.Security;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Quizzes.Queries.GetInstructorQuizzesCount;
 
@@ -50,11 +54,12 @@ public class GetInstructorQuizzesCountQueryHandlerTests(CustomWebApplicationFact
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
             var course = await dbContext.Courses.FirstAsync();
             courseId = course.Id;
             instructorId = course.InstructorId!.Value;
 
-            initialCount = await dbContext.Quizzes.CountAsync(q => q.InstructorId == instructorId);
+            initialCount = (int)await mongoContext.Quizzes.CountDocumentsAsync(q => q.InstructorId == instructorId);
         }
 
         var questions = new List<CreateQuestionCommand>
@@ -64,7 +69,9 @@ public class GetInstructorQuizzesCountQueryHandlerTests(CustomWebApplicationFact
             new CreateTfCommand("Question 3", 1, true),
         };
 
-        await mediator.Send(new CreateQuizCommand("Count Quiz 1", courseId, instructorId,
+        TestCurrentUser.Set(new AppUser { Id = instructorId.ToString() });
+
+        await mediator.Send(new CreateQuizCommand("Count Quiz 1", courseId,
             DateTimeOffset.UtcNow.AddDays(1), DateTimeOffset.UtcNow.AddDays(1).AddHours(1), questions));
 
         var query = new GetInstructorQuizzesCountQuery(instructorId);

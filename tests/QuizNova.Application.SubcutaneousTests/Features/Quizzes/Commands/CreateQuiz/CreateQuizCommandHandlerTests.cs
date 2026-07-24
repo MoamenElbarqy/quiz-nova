@@ -5,10 +5,14 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.SubcutaneousTests.Common;
+using QuizNova.Infrastructure.Identity;
+using QuizNova.Tests.Common.Security;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Quizzes.Commands.CreateQuiz;
 
@@ -27,7 +31,7 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
     public async Task Handle_WithEmptyTitle_ShouldReturnValidationError()
     {
         var mediator = factory.CreateMediator();
-        var command = new CreateQuizCommand(string.Empty, Guid.NewGuid(), Guid.NewGuid(),
+        var command = new CreateQuizCommand(string.Empty, Guid.NewGuid(),
             DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30), _validQuestions);
 
         var result = await mediator.Send(command);
@@ -40,7 +44,7 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
     public async Task Handle_WithTitleTooShort_ShouldReturnValidationError()
     {
         var mediator = factory.CreateMediator();
-        var command = new CreateQuizCommand("ab", Guid.NewGuid(), Guid.NewGuid(),
+        var command = new CreateQuizCommand("ab", Guid.NewGuid(),
             DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30), _validQuestions);
 
         var result = await mediator.Send(command);
@@ -53,7 +57,7 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
     public async Task Handle_WithTitleTooLong_ShouldReturnValidationError()
     {
         var mediator = factory.CreateMediator();
-        var command = new CreateQuizCommand(new string('a', 31), Guid.NewGuid(), Guid.NewGuid(),
+        var command = new CreateQuizCommand(new string('a', 31), Guid.NewGuid(),
             DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30), _validQuestions);
 
         var result = await mediator.Send(command);
@@ -66,7 +70,7 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
     public async Task Handle_WithEmptyCourseId_ShouldReturnValidationError()
     {
         var mediator = factory.CreateMediator();
-        var command = new CreateQuizCommand("Valid Title", Guid.Empty, Guid.NewGuid(),
+        var command = new CreateQuizCommand("Valid Title", Guid.Empty,
             DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30), _validQuestions);
 
         var result = await mediator.Send(command);
@@ -76,23 +80,10 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
-    public async Task Handle_WithEmptyInstructorId_ShouldReturnValidationError()
-    {
-        var mediator = factory.CreateMediator();
-        var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(), Guid.Empty,
-            DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30), _validQuestions);
-
-        var result = await mediator.Send(command);
-
-        result.IsError.Should().BeTrue();
-        result.Errors.Should().Contain(e => e.Code == "InstructorId");
-    }
-
-    [Fact]
     public async Task Handle_WithStartsAtUtcInPast_ShouldReturnValidationError()
     {
         var mediator = factory.CreateMediator();
-        var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(), Guid.NewGuid(),
+        var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(),
             DateTimeOffset.UtcNow.AddMinutes(-10), DateTimeOffset.UtcNow.AddMinutes(30), _validQuestions);
 
         var result = await mediator.Send(command);
@@ -106,7 +97,7 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
     {
         var mediator = factory.CreateMediator();
         var startsAt = DateTimeOffset.UtcNow.AddMinutes(10);
-        var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(), Guid.NewGuid(),
+        var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(),
             startsAt, startsAt.AddMinutes(-5), _validQuestions);
 
         var result = await mediator.Send(command);
@@ -120,7 +111,7 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
     {
         var mediator = factory.CreateMediator();
         var startsAt = DateTimeOffset.UtcNow.AddMinutes(10);
-        var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(), Guid.NewGuid(),
+        var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(),
             startsAt, startsAt.AddMinutes(5), _validQuestions);
 
         var result = await mediator.Send(command);
@@ -133,7 +124,7 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
     public async Task Handle_WithEmptyQuestionsList_ShouldReturnValidationError()
     {
         var mediator = factory.CreateMediator();
-        var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(), Guid.NewGuid(),
+        var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(),
             DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30),
             new List<CreateQuestionCommand>());
 
@@ -159,7 +150,9 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
             instructorId = course.InstructorId!.Value;
         }
 
-        var command = new CreateQuizCommand("Valid Title", courseId, instructorId,
+        TestCurrentUser.Set(new AppUser { Id = instructorId.ToString() });
+
+        var command = new CreateQuizCommand("Valid Title", courseId,
             DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30),
             []);
 
@@ -173,73 +166,15 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
     public async Task Handle_WithNonExistentCourse_ShouldReturnCourseNotFoundError()
     {
         var mediator = factory.CreateMediator();
+        TestCurrentUser.Set(TestUsers.Instructor1.User);
 
-        Guid instructorId;
-        using (var scope = factory.Services.CreateScope())
-        {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            var instructor = await dbContext.Instructors.FirstAsync();
-            instructorId = instructor.Id;
-        }
-
-        var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(), instructorId,
+        var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(),
             DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30), _validQuestions);
 
         var result = await mediator.Send(command);
 
         result.IsError.Should().BeTrue();
         result.TopError.Code.Should().Be(ApplicationErrors.QuizCourseNotFound(command.CourseId).Code);
-    }
-
-    [Fact]
-    public async Task Handle_WithNonExistentInstructor_ShouldReturnInstructorNotFoundError()
-    {
-        var mediator = factory.CreateMediator();
-
-        Guid courseId;
-        using (var scope = factory.Services.CreateScope())
-        {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            var course = await dbContext.Courses.FirstAsync();
-            courseId = course.Id;
-        }
-
-        var command = new CreateQuizCommand("Valid Title", courseId, Guid.NewGuid(),
-            DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30), _validQuestions);
-
-        var result = await mediator.Send(command);
-
-        result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be(ApplicationErrors.QuizInstructorNotFound(command.InstructorId).Code);
-    }
-
-    [Fact]
-    public async Task Handle_WithInstructorNotAssignedToCourse_ShouldReturnNotAssignedError()
-    {
-        var mediator = factory.CreateMediator();
-
-        Guid courseId;
-        Guid wrongInstructorId;
-        using (var scope = factory.Services.CreateScope())
-        {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            var course = await dbContext.Courses.FirstAsync();
-            courseId = course.Id;
-
-            // Get an instructor that is NOT the instructor for this course
-            var wrongInstructor = await dbContext.Instructors
-                .FirstAsync(i => i.Id != course.InstructorId);
-            wrongInstructorId = wrongInstructor.Id;
-        }
-
-        var command = new CreateQuizCommand("Valid Title", courseId, wrongInstructorId,
-            DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30), _validQuestions);
-
-        var result = await mediator.Send(command);
-
-        result.IsError.Should().BeTrue();
-        result.TopError.Code.Should().Be(
-            ApplicationErrors.QuizInstructorIsNotAssignedToCourse(wrongInstructorId, courseId).Code);
     }
 
     [Fact]
@@ -257,7 +192,9 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
             instructorId = course.InstructorId!.Value;
         }
 
-        var command = new CreateQuizCommand("Brand New Quiz", courseId, instructorId,
+        TestCurrentUser.Set(new AppUser { Id = instructorId.ToString() });
+
+        var command = new CreateQuizCommand("Brand New Quiz", courseId,
             DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30), _validQuestions);
 
         var result = await mediator.Send(command);
@@ -269,10 +206,10 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            var quiz = await dbContext.Quizzes
-                .Include(q => q.Questions)
-                .FirstOrDefaultAsync(q => q.Id == result.Value.QuizId);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            var quiz = await mongoContext.Quizzes
+                .Find(q => q.Id == result.Value.QuizId)
+                .FirstOrDefaultAsync();
 
             quiz.Should().NotBeNull();
             quiz.Title.Should().Be("Brand New Quiz");
@@ -288,7 +225,7 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
         using var client = factory.CreateAppHttpClient();
         await client.AuthenticateAsync("admin@quiznova.local", "Admin123!", "Admin");
 
-        var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(), Guid.NewGuid(),
+        var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(),
             DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30), _validQuestions);
 
         // Act
@@ -305,7 +242,7 @@ public class CreateQuizCommandHandlerTests(CustomWebApplicationFactory factory)
         using var client = factory.CreateAppHttpClient();
         await client.AuthenticateAsync("omar.yasser@quiznova.local", "Student123!", "Student");
 
-        var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(), Guid.NewGuid(),
+        var command = new CreateQuizCommand("Valid Title", Guid.NewGuid(),
             DateTimeOffset.UtcNow.AddMinutes(10), DateTimeOffset.UtcNow.AddMinutes(30), _validQuestions);
 
         // Act

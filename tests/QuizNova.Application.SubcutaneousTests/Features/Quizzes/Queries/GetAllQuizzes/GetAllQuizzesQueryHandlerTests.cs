@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Quizzes.Queries.GetAllQuizzes;
 using QuizNova.Application.SubcutaneousTests.Common;
+using QuizNova.Infrastructure.Data.MongoDb;
 using QuizNova.Tests.Common.Courses;
 using QuizNova.Tests.Common.Quizzes;
 using QuizNova.Tests.Common.Users.Instructors;
@@ -88,17 +89,19 @@ public class GetAllQuizzesQueryHandlerTests(CustomWebApplicationFactory factory)
         var course = CourseFactory.CreateCourse(instructorId: instructor.Id).Value;
 
         var quiz1 = QuizFactory
-            .CreateQuiz(courseId: course.Id, instructorId: instructor.Id, title: "SearchableQuizName").Value;
-        var quiz2 = QuizFactory.CreateQuiz(courseId: course.Id, instructorId: instructor.Id, title: "OtherQuizName")
+            .CreateQuiz(courseId: course.Id, instructorId: instructor.Id, title: "SearchableQuiz Name").Value;
+        var quiz2 = QuizFactory.CreateQuiz(courseId: course.Id, instructorId: instructor.Id, title: "OtherQuiz Name")
             .Value;
 
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            await MongoDbInitializer.InitializeIndexesAsync(mongoContext);
             dbContext.Instructors.Add(instructor);
             dbContext.Courses.Add(course);
-            dbContext.Quizzes.AddRange(quiz1, quiz2);
             await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Quizzes.InsertManyAsync([quiz1, quiz2]);
         }
 
         var query = new GetAllQuizzesQuery(SearchTerm: "SearchableQuiz");
@@ -127,10 +130,11 @@ public class GetAllQuizzesQueryHandlerTests(CustomWebApplicationFactory factory)
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
             dbContext.Instructors.Add(instructor);
             dbContext.Courses.Add(course);
-            dbContext.Quizzes.Add(quiz);
             await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Quizzes.InsertOneAsync(quiz);
         }
 
         var queryMatch = new GetAllQuizzesQuery(Marks: 30);

@@ -61,12 +61,14 @@ public class GetAllQuizzesAttemptsQueryHandlerTests(CustomWebApplicationFactory 
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            await QuizNova.Infrastructure.Data.MongoDb.MongoDbInitializer.InitializeIndexesAsync(mongoContext);
             dbContext.Students.AddRange(student1, student2);
             dbContext.Instructors.Add(instructor);
             dbContext.Courses.Add(course);
-            dbContext.Quizzes.Add(quiz);
-            dbContext.QuizAttempts.AddRange(attempt1, attempt2);
             await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Quizzes.InsertOneAsync(quiz);
+            await mongoContext.QuizAttempts.InsertManyAsync([attempt1, attempt2]);
         }
 
         var query = new GetAllQuizzesAttemptsQuery(SearchTerm: student1.PersonalInformation.Name);
@@ -102,12 +104,13 @@ public class GetAllQuizzesAttemptsQueryHandlerTests(CustomWebApplicationFactory 
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
             dbContext.Students.Add(student);
             dbContext.Instructors.Add(instructor);
             dbContext.Courses.Add(course);
-            dbContext.Quizzes.Add(quiz);
-            dbContext.QuizAttempts.Add(attempt);
             await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Quizzes.InsertOneAsync(quiz);
+            await mongoContext.QuizAttempts.InsertOneAsync(attempt);
         }
 
         var queryMatch = new GetAllQuizzesAttemptsQuery(CorrectAnswers: 1);

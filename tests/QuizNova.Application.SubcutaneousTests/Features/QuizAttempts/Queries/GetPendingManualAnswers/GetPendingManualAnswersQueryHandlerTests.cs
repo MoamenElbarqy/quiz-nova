@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.QuizAttempts.Queries.GetPendingManualAnswers;
 using QuizNova.Application.SubcutaneousTests.Common;
-using QuizNova.Domain.Entities.Quizzes.Questions.ManuallyGradedQuestions;
+using QuizNova.Domain.Entities.Quizzes.Questions;
 using QuizNova.Tests.Common.Courses;
 using QuizNova.Tests.Common.QuizAttempts;
 using QuizNova.Tests.Common.QuizAttempts.Answers;
@@ -63,18 +63,27 @@ public class GetPendingManualAnswersQueryHandlerTests(CustomWebApplicationFactor
         var quizId1 = Guid.NewGuid();
         var quizId2 = Guid.NewGuid();
 
-        var q1 = Essay.Create(Guid.NewGuid(), quizId1, "Question 1", "Ref1", 0, 5).Value;
-        var q2 = Essay.Create(Guid.NewGuid(), quizId1, "Question 2", "Ref2", 1, 5).Value;
-        var q3 = Essay.Create(Guid.NewGuid(), quizId1, "Question 3", "Ref3", 2, 5).Value;
+        var questionArgs1 = new List<CreateQuestionArgs>
+        {
+            new CreateEssayArgs("Question 1", 5, "Ref1"),
+            new CreateEssayArgs("Question 2", 5, "Ref2"),
+            new CreateEssayArgs("Question 3", 5, "Ref3"),
+        };
 
-        var q4 = Essay.Create(Guid.NewGuid(), quizId2, "Question 4", "Ref4", 0, 5).Value;
-        var q5 = Essay.Create(Guid.NewGuid(), quizId2, "Question 5", "Ref5", 1, 5).Value;
-        var q6 = Essay.Create(Guid.NewGuid(), quizId2, "Question 6", "Ref6", 2, 5).Value;
+        var questionArgs2 = new List<CreateQuestionArgs>
+        {
+            new CreateEssayArgs("Question 4", 5, "Ref4"),
+            new CreateEssayArgs("Question 5", 5, "Ref5"),
+            new CreateEssayArgs("Question 6", 5, "Ref6"),
+        };
 
         var quizWithPending = QuizFactory.CreateQuiz(id: quizId1, courseId: course.Id, instructorId: instructorId,
-            questions: [q1, q2, q3]).Value;
+            questionArgs: questionArgs1).Value;
         var quizAllScored = QuizFactory.CreateQuiz(id: quizId2, courseId: course.Id, instructorId: instructorId,
-            questions: [q4, q5, q6]).Value;
+            questionArgs: questionArgs2).Value;
+
+        var q1 = quizWithPending.Questions.First();
+        var q4 = quizAllScored.Questions.First();
 
         // 3. Setup Attempts
         // Attempt 1: has unscored essay answer
@@ -96,12 +105,13 @@ public class GetPendingManualAnswersQueryHandlerTests(CustomWebApplicationFactor
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
             dbContext.Instructors.Add(instructor);
             dbContext.Students.Add(student);
             dbContext.Courses.Add(course);
-            dbContext.Quizzes.AddRange(quizWithPending, quizAllScored);
-            dbContext.QuizAttempts.AddRange(attemptWithPending, attemptAllScored);
             await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Quizzes.InsertManyAsync([quizWithPending, quizAllScored]);
+            await mongoContext.QuizAttempts.InsertManyAsync([attemptWithPending, attemptAllScored]);
         }
 
         var query = new GetPendingManualAnswersQuery();

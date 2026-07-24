@@ -8,6 +8,8 @@ using QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.Features.Quizzes.Queries.GetStudentQuizzes;
 using QuizNova.Application.SubcutaneousTests.Common;
+using QuizNova.Infrastructure.Identity;
+using QuizNova.Tests.Common.Security;
 using QuizNova.Tests.Common.Users.Students;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Quizzes.Queries.GetStudentQuizzes;
@@ -86,7 +88,8 @@ public class GetStudentQuizzesQueryHandlerTests(CustomWebApplicationFactory fact
             new CreateTfCommand("Question 3", 1, true),
         };
         var quizTitle = $"Quiz {Guid.NewGuid().ToString()[..8]}";
-        var quizResult = await mediator.Send(new CreateQuizCommand(quizTitle, courseId, instructorId,
+        TestCurrentUser.Set(new AppUser { Id = instructorId.ToString() });
+        var quizResult = await mediator.Send(new CreateQuizCommand(quizTitle, courseId,
             DateTimeOffset.UtcNow.AddDays(1), DateTimeOffset.UtcNow.AddDays(1).AddHours(1), questions));
         quizResult.IsSuccess.Should().BeTrue();
 

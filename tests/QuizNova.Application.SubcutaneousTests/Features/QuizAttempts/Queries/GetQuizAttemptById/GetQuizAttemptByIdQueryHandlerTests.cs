@@ -74,12 +74,13 @@ public class GetQuizAttemptByIdQueryHandlerTests(CustomWebApplicationFactory fac
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
             dbContext.Students.Add(student);
             dbContext.Instructors.Add(instructor);
             dbContext.Courses.Add(course);
-            dbContext.Quizzes.Add(quiz);
-            dbContext.QuizAttempts.Add(attempt);
             await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Quizzes.InsertOneAsync(quiz);
+            await mongoContext.QuizAttempts.InsertOneAsync(attempt);
         }
 
         var query = new GetQuizAttemptByIdQuery(attempt.Id);

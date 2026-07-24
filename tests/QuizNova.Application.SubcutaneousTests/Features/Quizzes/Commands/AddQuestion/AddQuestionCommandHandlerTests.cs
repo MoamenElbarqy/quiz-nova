@@ -3,6 +3,8 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Quizzes.Commands.AddQuestion;
@@ -79,6 +81,7 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
             var course = await dbContext.Courses.FirstAsync();
 
             var quiz = QuizFactory.CreateQuiz(
@@ -88,8 +91,7 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
                 startsAtUtc: fakeTime.GetUtcNow().AddMinutes(-10),
                 endsAtUtc: fakeTime.GetUtcNow().AddHours(1)).Value;
 
-            await dbContext.Quizzes.AddAsync(quiz);
-            await dbContext.SaveChangesAsync();
+            await mongoContext.Quizzes.InsertOneAsync(quiz);
             quizId = quiz.Id;
         }
 
@@ -111,6 +113,7 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
             var course = await dbContext.Courses.FirstAsync();
 
             var quiz = QuizFactory.CreateQuiz(
@@ -120,8 +123,7 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
                 startsAtUtc: fakeTime.GetUtcNow().AddMinutes(-10),
                 endsAtUtc: fakeTime.GetUtcNow().AddMinutes(30)).Value;
 
-            await dbContext.Quizzes.AddAsync(quiz);
-            await dbContext.SaveChangesAsync();
+            await mongoContext.Quizzes.InsertOneAsync(quiz);
             quizId = quiz.Id;
         }
 
@@ -146,6 +148,7 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
             var course = await dbContext.Courses.FirstAsync();
 
             var quiz = QuizFactory.CreateQuiz(
@@ -155,8 +158,7 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
                 startsAtUtc: fakeTime.GetUtcNow().AddDays(1),
                 endsAtUtc: fakeTime.GetUtcNow().AddDays(1).AddHours(1)).Value;
 
-            await dbContext.Quizzes.AddAsync(quiz);
-            await dbContext.SaveChangesAsync();
+            await mongoContext.Quizzes.InsertOneAsync(quiz);
             quizId = quiz.Id;
             initialQuestionCount = quiz.Questions.Count();
         }
@@ -170,8 +172,8 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            var quiz = await dbContext.Quizzes.Include(q => q.Questions).FirstAsync(q => q.Id == quizId);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            var quiz = await mongoContext.Quizzes.Find(q => q.Id == quizId).FirstAsync();
 
             quiz.Questions.Count().Should().Be(initialQuestionCount + 1);
             quiz.Questions.Should().Contain(q => q.QuestionText == "Valid Tf Question");
