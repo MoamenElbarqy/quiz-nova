@@ -8,11 +8,13 @@ using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Instructors.DTOs;
 using QuizNova.Application.Features.Instructors.Mappers;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Application.Features.Instructors.Queries.GetAllInstructors;
 
 public sealed class GetAllInstructorsQueryHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetAllInstructorsQueryHandler> logger)
     : IRequestHandler<GetAllInstructorsQuery, Result<PaginatedList<InstructorDto>>>
 {
@@ -23,7 +25,6 @@ public sealed class GetAllInstructorsQueryHandler(
         var query = dbContext.Instructors
             .AsNoTracking()
             .Include(i => i.Courses)
-            .Include(i => i.Quizzes)
             .AsQueryable();
 
         query = ApplySearchTerm(query, request);
@@ -32,11 +33,26 @@ public sealed class GetAllInstructorsQueryHandler(
 
         var totalCount = await query.CountAsync(ct);
 
-        var instructors = await query
+        var instructorsList = await query
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(instructor => instructor.ToInstructorDto(instructor.Courses.Count(), instructor.Quizzes.Count()))
             .ToListAsync(ct);
+
+        var instructorIds = instructorsList.Select(i => i.Id).ToList();
+
+        var quizCounts = await mongoContext.Quizzes
+            .Aggregate()
+            .Match(q => instructorIds.Contains(q.InstructorId))
+            .Group(q => q.InstructorId, g => new { InstructorId = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
+        var quizCountDict = quizCounts.ToDictionary(g => g.InstructorId, g => g.Count);
+
+        var instructors = instructorsList
+            .Select(instructor => instructor.ToInstructorDto(
+                instructor.Courses.Count(),
+                quizCountDict.GetValueOrDefault(instructor.Id, 0)))
+            .ToList();
 
         var response = new PaginatedList<InstructorDto>(
             instructors,
@@ -52,8 +68,8 @@ public sealed class GetAllInstructorsQueryHandler(
         return response;
     }
 
-    private static IQueryable<Domain.Entities.Users.Instructors.Instructor> ApplyFiltering(
-        IQueryable<Domain.Entities.Users.Instructors.Instructor> query,
+    private static IQueryable<Instructor> ApplyFiltering(
+        IQueryable<Instructor> query,
         GetAllInstructorsQuery request,
         IAppDbContext dbContext)
     {
@@ -64,18 +80,11 @@ public sealed class GetAllInstructorsQueryHandler(
                 request.CoursesCount.Value);
         }
 
-        if (request.QuizzesCount.HasValue)
-        {
-            query = query.Where(instructor =>
-                dbContext.Quizzes.Count(quiz => quiz.InstructorId == instructor.Id) ==
-                request.QuizzesCount.Value);
-        }
-
         return query;
     }
 
-    private static IQueryable<Domain.Entities.Users.Instructors.Instructor> ApplySearchTerm(
-        IQueryable<Domain.Entities.Users.Instructors.Instructor> query,
+    private static IQueryable<Instructor> ApplySearchTerm(
+        IQueryable<Instructor> query,
         GetAllInstructorsQuery request)
     {
         if (string.IsNullOrWhiteSpace(request.SearchTerm))
@@ -88,7 +97,8 @@ public sealed class GetAllInstructorsQueryHandler(
             instructor.PersonalInformation.Email.Contains(request.SearchTerm));
     }
 
-    private static IOrderedQueryable<Domain.Entities.Users.Instructors.Instructor> ApplySorting(IQueryable<Domain.Entities.Users.Instructors.Instructor> query)
+    private static IOrderedQueryable<Instructor> ApplySorting(
+        IQueryable<Instructor> query)
     {
         return query.OrderBy(instructor => instructor.PersonalInformation.Name);
     }

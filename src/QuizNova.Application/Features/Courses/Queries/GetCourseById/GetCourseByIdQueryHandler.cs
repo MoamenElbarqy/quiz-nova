@@ -12,6 +12,7 @@ namespace QuizNova.Application.Features.Courses.Queries.GetCourseById;
 
 public sealed class GetCourseByIdQueryHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetCourseByIdQueryHandler> logger)
     : IRequestHandler<GetCourseByIdQuery, Result<CourseDto>>
 {
@@ -33,11 +34,6 @@ public sealed class GetCourseByIdQueryHandler(
                     .Select(i => i.PersonalInformation.Name)
                     .FirstOrDefault() ?? string.Empty,
                 EnrolledStudentsCount = dbContext.Enrollments.Count(sc => sc.CourseId == c.Id),
-                QuizzesCount = dbContext.Quizzes.Count(q => q.CourseId == c.Id),
-                ConsumedMarks = dbContext.Quizzes
-                    .Where(q => q.CourseId == c.Id)
-                    .SelectMany(q => q.Questions)
-                    .Sum(q => q.Marks),
             })
             .FirstOrDefaultAsync(ct);
 
@@ -47,17 +43,33 @@ public sealed class GetCourseByIdQueryHandler(
             return ApplicationErrors.CourseNotFound(request.CourseId);
         }
 
+        var stats = await mongoContext.Quizzes
+            .Aggregate()
+            .Match(q => q.CourseId == request.CourseId)
+            .Group(
+                _ => 1,
+                g => new
+                {
+                    Count = g.Count(),
+                    TotalMarks = g.Sum(q => q.Questions.Sum(question => question.Marks)),
+                })
+            .FirstOrDefaultAsync(ct);
+
+        var quizzesCount = stats?.Count ?? 0;
+        var consumedMarks = stats?.TotalMarks ?? 0;
+
         var response = new CourseDto(
             course.Id,
             course.Name,
             course.InstructorId,
             course.InstructorName,
             course.EnrolledStudentsCount,
-            course.QuizzesCount,
-            course.MaximumMarks - course.ConsumedMarks);
+            quizzesCount,
+            course.MaximumMarks - consumedMarks);
 
         logger.LogInformation("Successfully retrieved course with ID: {CourseId}", request.CourseId);
 
         return response;
     }
 }
+

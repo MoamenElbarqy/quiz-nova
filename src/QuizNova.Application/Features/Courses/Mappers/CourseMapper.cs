@@ -5,17 +5,20 @@ namespace QuizNova.Application.Features.Courses.Mappers;
 
 public static class CourseMapper
 {
-    public static CourseDto ToCourseDto(this Course course, int enrolledStudentsCount)
+    public static CourseDto ToCourseDto(
+        this Course course,
+        string? instructorName,
+        int enrolledStudentsCount,
+        int quizzesCount,
+        int remainingMarks)
     {
-        var quizzesCount = course.Quizzes.Count();
-
         return new CourseDto(
             course.Id,
             course.Name,
             course.InstructorId,
-            course.Instructor?.PersonalInformation.Name,
+            instructorName,
             enrolledStudentsCount,
             quizzesCount,
-            course.RemainingMarks);
+            remainingMarks);
     }
 }

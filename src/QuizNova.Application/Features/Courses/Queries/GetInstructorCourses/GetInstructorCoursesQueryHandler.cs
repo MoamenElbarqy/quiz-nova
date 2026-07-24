@@ -12,6 +12,7 @@ namespace QuizNova.Application.Features.Courses.Queries.GetInstructorCourses;
 
 public sealed class GetInstructorCoursesQueryHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetInstructorCoursesQueryHandler> logger)
     : IRequestHandler<GetInstructorCoursesQuery, Result<List<CourseDto>>>
 {
@@ -26,20 +27,42 @@ public sealed class GetInstructorCoursesQueryHandler(
             return ApplicationErrors.InstructorNotFound(request.InstructorId);
         }
 
-        var instructorCourses = await dbContext.Courses
+        var courses = await dbContext.Courses
             .Where(c => c.InstructorId == request.InstructorId)
+            .Select(c => new
+            {
+                c.Id,
+                c.Name,
+                c.InstructorId,
+                InstructorName = c.Instructor != null ? c.Instructor.PersonalInformation.Name : string.Empty,
+                StudentsCount = c.Enrollments.Count(),
+                c.MaximumMarks,
+            })
             .AsNoTracking()
-            .Select(course => new CourseDto(
-                course.Id,
-                course.Name,
-                course.InstructorId,
-                course.Instructor != null ? course.Instructor.PersonalInformation.Name : string.Empty,
-                course.Enrollments.Count(),
-                course.Quizzes.Count(),
-                course.MaximumMarks - course.Quizzes
-                    .SelectMany(quiz => quiz.Questions)
-                    .Sum(q => q.Marks)))
             .ToListAsync(ct);
+
+        var courseIds = courses.Select(c => c.Id).ToList();
+
+        var quizzes = await mongoContext.Quizzes
+            .Find(q => courseIds.Contains(q.CourseId))
+            .ToListAsync(ct);
+
+        var instructorCourses = courses.Select(c =>
+        {
+            var courseQuizzes = quizzes.Where(q => q.CourseId == c.Id).ToList();
+            var quizzesCount = courseQuizzes.Count;
+            var allocatedMarks = courseQuizzes.Sum(q => q.Questions.Sum(question => question.Marks));
+            var remainingMarks = c.MaximumMarks - allocatedMarks;
+
+            return new CourseDto(
+                c.Id,
+                c.Name,
+                c.InstructorId,
+                c.InstructorName,
+                c.StudentsCount,
+                quizzesCount,
+                remainingMarks);
+        }).ToList();
 
         logger.LogInformation("Successfully retrieved {Count} courses for instructor {InstructorId}",
             instructorCourses.Count, request.InstructorId);

@@ -12,6 +12,7 @@ namespace QuizNova.Application.Features.Courses.Commands.UpdateCourseInstructor;
 
 public sealed class UpdateCourseInstructorCommandHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<UpdateCourseInstructorCommandHandler> logger,
     ICacheInvalidator cacheInvalidator)
     : IRequestHandler<UpdateCourseInstructorCommand, Result<CourseDto>>
@@ -58,13 +59,12 @@ public sealed class UpdateCourseInstructorCommandHandler(
         var enrolledStudentsCount = await dbContext.Enrollments
             .CountAsync(enrollment => enrollment.CourseId == course.Id, ct);
 
-        var quizzesCount = await dbContext.Quizzes
-            .CountAsync(quiz => quiz.CourseId == course.Id, ct);
+        var courseQuizzes = await mongoContext.Quizzes
+            .Find(q => q.CourseId == course.Id)
+            .ToListAsync(ct);
 
-        var consumedMarks = await dbContext.Quizzes
-            .Where(quiz => quiz.CourseId == course.Id)
-            .SelectMany(quiz => quiz.Questions)
-            .SumAsync(q => q.Marks, ct);
+        var quizzesCount = courseQuizzes.Count;
+        var consumedMarks = courseQuizzes.Sum(q => q.Questions.Sum(question => question.Marks));
 
         logger.LogInformation("Successfully updated instructor for course {CourseId}", request.CourseId);
 
@@ -78,3 +78,4 @@ public sealed class UpdateCourseInstructorCommandHandler(
             course.MaximumMarks - consumedMarks);
     }
 }
+

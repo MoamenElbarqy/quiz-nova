@@ -12,6 +12,7 @@ namespace QuizNova.Application.Features.Enrollments.Queries.GetStudentEnrollment
 
 public sealed class GetStudentEnrollmentsByIdQueryHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetStudentEnrollmentsByIdQueryHandler> logger)
     : IRequestHandler<GetStudentEnrollmentsByIdQuery, Result<List<EnrollmentDto>>>
 {
@@ -26,24 +27,57 @@ public sealed class GetStudentEnrollmentsByIdQueryHandler(
             return ApplicationErrors.StudentNotFound(request.StudentId);
         }
 
-        var enrollments = await dbContext.Enrollments
+        var enrollmentsList = await dbContext.Enrollments
             .Where(sc => sc.StudentId == request.StudentId)
             .AsNoTracking()
-            .Select(sc => new EnrollmentDto(
+            .Select(sc => new
+            {
                 sc.Id,
                 sc.CourseId,
-                sc.Course!.Name,
-                new EnrollmentInstructorDto(
-                    sc.Course.InstructorId ?? Guid.Empty,
-                    sc.Course.Instructor!.PersonalInformation.Name),
-                new EnrollmentStudentDto(
-                    sc.StudentId,
-                    sc.Student!.PersonalInformation.Name,
-                    dbContext.QuizAttempts.Count(qa =>
-                        qa.StudentId == sc.StudentId && qa.Quiz!.CourseId == sc.CourseId)),
-                sc.EnrolledOnUtc))
+                CourseName = sc.Course!.Name,
+                InstructorId = sc.Course.InstructorId ?? Guid.Empty,
+                InstructorName = sc.Course.Instructor != null
+                    ? sc.Course.Instructor.PersonalInformation.Name
+                    : string.Empty,
+                sc.StudentId,
+                StudentName = sc.Student!.PersonalInformation.Name,
+                sc.EnrolledOnUtc,
+            })
             .ToListAsync(ct);
+
+        var courseIds = enrollmentsList.Select(e => e.CourseId).ToList();
+
+        var quizzesTask = mongoContext.Quizzes
+            .Find(q => courseIds.Contains(q.CourseId))
+            .Project(q => new { q.Id, q.CourseId })
+            .ToListAsync(ct);
+
+        var attemptsTask = mongoContext.QuizAttempts
+            .Find(a => a.StudentId == request.StudentId)
+            .Project(a => new { a.QuizId })
+            .ToListAsync(ct);
+
+        await Task.WhenAll(quizzesTask, attemptsTask);
+
+        var quizzes = quizzesTask.Result;
+        var quizCourseMap = quizzes.ToDictionary(q => q.Id, q => q.CourseId);
+
+        var attemptCountsByCourse = attemptsTask.Result
+            .GroupBy(a => quizCourseMap.GetValueOrDefault(a.QuizId))
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        var enrollments = enrollmentsList.Select(sc => new EnrollmentDto(
+            sc.Id,
+            sc.CourseId,
+            sc.CourseName,
+            new EnrollmentInstructorDto(sc.InstructorId, sc.InstructorName),
+            new EnrollmentStudentDto(
+                sc.StudentId,
+                sc.StudentName,
+                attemptCountsByCourse.GetValueOrDefault(sc.CourseId, 0)),
+            sc.EnrolledOnUtc)).ToList();
 
         return enrollments;
     }
 }
+

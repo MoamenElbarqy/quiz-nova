@@ -13,6 +13,7 @@ namespace QuizNova.Application.Features.Instructors.Queries.GetInstructorById;
 
 public sealed class GetInstructorByIdQueryHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetInstructorByIdQueryHandler> logger)
     : IRequestHandler<GetInstructorByIdQuery, Result<InstructorDto>>
 {
@@ -23,7 +24,6 @@ public sealed class GetInstructorByIdQueryHandler(
         var instructor = await dbContext.Instructors
             .AsNoTracking()
             .Include(i => i.Courses)
-            .Include(i => i.Quizzes)
             .FirstOrDefaultAsync(i => i.Id == request.Id, ct);
 
         if (instructor is null)
@@ -32,8 +32,10 @@ public sealed class GetInstructorByIdQueryHandler(
             return ApplicationErrors.InstructorNotFound(request.Id);
         }
 
+        var quizzesCount = (int)await mongoContext.Quizzes.CountDocumentsAsync(q => q.InstructorId == request.Id, cancellationToken: ct);
+
         logger.LogInformation("Successfully retrieved instructor {InstructorId}", request.Id);
 
-        return instructor.ToInstructorDto(instructor.Courses.Count(), instructor.Quizzes.Count());
+        return instructor.ToInstructorDto(instructor.Courses.Count(), quizzesCount);
     }
 }

@@ -13,6 +13,7 @@ namespace QuizNova.Application.Features.Courses.Queries.GetAllCourses;
 
 public sealed class GetAllCoursesQueryHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetAllCoursesQueryHandler> logger)
     : IRequestHandler<GetAllCoursesQuery, Result<PaginatedList<CourseDto>>>
 {
@@ -30,24 +31,47 @@ public sealed class GetAllCoursesQueryHandler(
 
         var totalCount = await query.CountAsync(ct);
 
-        var courses = await query
+        var coursesList = await query
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(course => new CourseDto(
+            .ToListAsync(ct);
+
+        var courseIds = coursesList.Select(c => c.Id).ToList();
+        var instructorIds = coursesList.Select(c => c.InstructorId).Distinct().ToList();
+
+        var instructorNames = await dbContext.Instructors
+            .Where(i => instructorIds.Contains(i.Id))
+            .ToDictionaryAsync(i => i.Id, i => i.PersonalInformation.Name, ct);
+
+        var enrollmentsCounts = await dbContext.Enrollments
+            .Where(e => courseIds.Contains(e.CourseId))
+            .GroupBy(e => e.CourseId)
+            .Select(g => new { CourseId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.CourseId, g => g.Count, ct);
+
+        var quizzes = await mongoContext.Quizzes
+            .Find(q => courseIds.Contains(q.CourseId))
+            .ToListAsync(ct);
+
+        var quizGroup = quizzes.GroupBy(q => q.CourseId).ToDictionary(g => g.Key, g => g.ToList());
+
+        var courses = coursesList.Select(course =>
+        {
+            var courseQuizzes = quizGroup.TryGetValue(course.Id, out var qList) ? qList : [];
+            var quizzesCount = courseQuizzes.Count;
+
+            var consumedMarks = courseQuizzes.Sum(q => q.Questions.Sum(question => question.Marks));
+            return new CourseDto(
                 course.Id,
                 course.Name,
                 course.InstructorId,
-                dbContext.Instructors
-                    .Where(instructor => instructor.Id == course.InstructorId)
-                    .Select(instructor => instructor.PersonalInformation.Name)
-                    .FirstOrDefault() ?? string.Empty,
-                dbContext.Enrollments.Count(enrollment => enrollment.CourseId == course.Id),
-                dbContext.Quizzes.Count(quiz => quiz.CourseId == course.Id),
-                course.MaximumMarks - dbContext.Quizzes
-                    .Where(quiz => quiz.CourseId == course.Id)
-                    .SelectMany(quiz => quiz.Questions)
-                    .Sum(q => q.Marks)))
-            .ToListAsync(ct);
+                course.InstructorId.HasValue && instructorNames.TryGetValue(course.InstructorId.Value, out var iName)
+                    ? iName
+                    : string.Empty,
+                enrollmentsCounts.GetValueOrDefault(course.Id, 0),
+                quizzesCount,
+                course.MaximumMarks - consumedMarks);
+        }).ToList();
 
         var response = new PaginatedList<CourseDto>(
             courses,
@@ -55,7 +79,8 @@ public sealed class GetAllCoursesQueryHandler(
             request.PageNumber,
             request.PageSize);
 
-        logger.LogInformation("Successfully retrieved {Count} courses for page {PageNumber}", courses.Count, request.PageNumber);
+        logger.LogInformation("Successfully retrieved {Count} courses for page {PageNumber}", courses.Count,
+            request.PageNumber);
 
         return response;
     }
@@ -81,13 +106,6 @@ public sealed class GetAllCoursesQueryHandler(
             query = query.Where(course =>
                 dbContext.Enrollments.Count(enrollment => enrollment.CourseId == course.Id) ==
                 request.EnrolledStudentsCount.Value);
-        }
-
-        if (request.QuizzesCount.HasValue)
-        {
-            query = query.Where(course =>
-                dbContext.Quizzes.Count(quiz => quiz.CourseId == course.Id) ==
-                request.QuizzesCount.Value);
         }
 
         return query;

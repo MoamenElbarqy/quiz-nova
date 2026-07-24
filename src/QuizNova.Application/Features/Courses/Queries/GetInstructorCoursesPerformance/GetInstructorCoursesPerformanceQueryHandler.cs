@@ -7,13 +7,12 @@ using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
 
 namespace QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesPerformance;
 
 public sealed class GetInstructorCoursesPerformanceQueryHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetInstructorCoursesPerformanceQueryHandler> logger)
     : IRequestHandler<GetInstructorCoursesPerformanceQuery, Result<List<CoursePerformanceDto>>>
 {
@@ -31,37 +30,55 @@ public sealed class GetInstructorCoursesPerformanceQueryHandler(
             return ApplicationErrors.InstructorNotFound(request.InstructorId);
         }
 
-        var performanceData = await dbContext.Courses
+        var courses = await dbContext.Courses
             .Where(c => c.InstructorId == request.InstructorId)
-            .Select(course => new
+            .Select(c => new
             {
-                course.Id,
-                course.Name,
-                InstructorName = course.Instructor != null ? course.Instructor.PersonalInformation.Name : string.Empty,
-                StudentsCount = course.Enrollments.Count(),
-                Attempts = course.Quizzes
-                    .SelectMany(q => q.QuizAttempts)
-                    .Select(qa => new
-                    {
-                        AutoGradedScore = qa.StudentAnswers
-                            .OfType<AutoGradedAnswer>()
-                            .Where(a => a.IsCorrect && a.Question != null)
-                            .Sum(a => a.Question!.Marks),
-                        ManuallyGradedScore = qa.StudentAnswers
-                            .OfType<ManuallyGradedAnswers>()
-                            .Sum(a => a.Score ?? 0),
-                    })
-                    .ToList(),
+                c.Id,
+                c.Name,
+                InstructorName = c.Instructor != null ? c.Instructor.PersonalInformation.Name : string.Empty,
+                StudentsCount = c.Enrollments.Count(),
             })
             .AsNoTracking()
             .ToListAsync(ct);
 
-        var performanceList = performanceData.Select(p => new CoursePerformanceDto(
-            p.Id,
-            p.Name,
-            p.InstructorName,
-            p.StudentsCount,
-            p.Attempts.Any() ? p.Attempts.Average(a => a.AutoGradedScore + a.ManuallyGradedScore) : 0.0)).ToList();
+        var courseIds = courses.Select(c => c.Id).ToList();
+
+        var quizzes = await mongoContext.Quizzes
+            .Find(q => courseIds.Contains(q.CourseId))
+            .ToListAsync(ct);
+
+        var quizMap = quizzes.ToDictionary(q => q.Id);
+        var quizIds = quizMap.Keys.ToList();
+
+        var attempts = await mongoContext.QuizAttempts
+            .Find(qa => quizIds.Contains(qa.QuizId))
+            .ToListAsync(ct);
+
+        foreach (var attempt in attempts)
+        {
+            if (quizMap.TryGetValue(attempt.QuizId, out var quiz))
+            {
+                attempt.AttachQuizQuestions(quiz.Questions);
+            }
+        }
+
+        var performanceList = courses.Select(course =>
+        {
+            var courseQuizIds = quizzes.Where(q => q.CourseId == course.Id).Select(q => q.Id).ToHashSet();
+            var courseAttempts = attempts.Where(a => courseQuizIds.Contains(a.QuizId)).ToList();
+
+            var avgScore = courseAttempts.Count > 0
+                ? courseAttempts.Average(a => a.Score)
+                : 0.0;
+
+            return new CoursePerformanceDto(
+                course.Id,
+                course.Name,
+                course.InstructorName,
+                course.StudentsCount,
+                avgScore);
+        }).ToList();
 
         logger.LogInformation("Successfully retrieved performance data for {Count} courses", performanceList.Count);
 

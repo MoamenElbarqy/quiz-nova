@@ -15,11 +15,23 @@ namespace QuizNova.Application.Features.Courses.Commands.CreateCourse;
 public sealed class CreateCourseCommandHandler(
     IAppDbContext dbContext,
     ILogger<CreateCourseCommandHandler> logger,
-    ICacheInvalidator cacheInvalidator)
+    ICacheInvalidator cacheInvalidator,
+    IUser currentUser)
     : IRequestHandler<CreateCourseCommand, Result<CourseDto>>
 {
     public async Task<Result<CourseDto>> Handle(CreateCourseCommand request, CancellationToken ct)
     {
+        if (!Guid.TryParse(currentUser.Id, out var adminId))
+        {
+            return ApplicationErrors.UserIdClaimInvalid;
+        }
+
+        var admin = await dbContext.Admins.Where(a => a.Id == adminId).FirstOrDefaultAsync(ct);
+        if (admin is null)
+        {
+            return ApplicationErrors.AdminNotFound(adminId);
+        }
+
         if (request.InstructorId.HasValue &&
             !await dbContext.Instructors.AnyAsync(instructor => instructor.Id == request.InstructorId.Value, ct))
         {
@@ -47,6 +59,13 @@ public sealed class CreateCourseCommandHandler(
 
         logger.LogInformation("Successfully created course {CourseId}", createCourseResult.Value.Id);
 
-        return createCourseResult.Value.ToCourseDto(0);
+        var instructorName = request.InstructorId.HasValue
+            ? await dbContext.Instructors
+                .Where(i => i.Id == request.InstructorId.Value)
+                .Select(i => i.PersonalInformation.Name)
+                .FirstOrDefaultAsync(ct)
+            : null;
+
+        return createCourseResult.Value.ToCourseDto(instructorName, 0, 0, createCourseResult.Value.MaximumMarks);
     }
 }

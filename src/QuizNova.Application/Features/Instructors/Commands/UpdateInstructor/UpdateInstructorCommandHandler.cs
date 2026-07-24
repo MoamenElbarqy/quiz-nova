@@ -14,6 +14,7 @@ namespace QuizNova.Application.Features.Instructors.Commands.UpdateInstructor;
 
 public sealed class UpdateInstructorCommandHandler(
     IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<UpdateInstructorCommandHandler> logger,
     ICacheInvalidator cacheInvalidator)
     : IRequestHandler<UpdateInstructorCommand, Result<InstructorDto>>
@@ -24,7 +25,6 @@ public sealed class UpdateInstructorCommandHandler(
 
         var instructor = await dbContext.Instructors
             .Include(i => i.Courses)
-            .Include(i => i.Quizzes)
             .FirstOrDefaultAsync(entity => entity.Id == request.Id, ct);
 
         if (instructor is null)
@@ -72,8 +72,11 @@ public sealed class UpdateInstructorCommandHandler(
         await dbContext.SaveChangesAsync(ct);
         await cacheInvalidator.InvalidateAsync(["instructors"], ct);
 
+        var quizzesCount = (int)await mongoContext.Quizzes.CountDocumentsAsync(q => q.InstructorId == request.Id, cancellationToken: ct);
+
         logger.LogInformation("Successfully updated instructor {InstructorId}", request.Id);
 
-        return instructor.ToInstructorDto(instructor.Courses.Count(), instructor.Quizzes.Count());
+        return instructor.ToInstructorDto(instructor.Courses.Count(), quizzesCount);
     }
 }
+
