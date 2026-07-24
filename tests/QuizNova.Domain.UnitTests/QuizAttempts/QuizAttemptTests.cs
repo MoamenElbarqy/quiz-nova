@@ -115,7 +115,7 @@ public class QuizAttemptTests
     {
         var quiz = QuizFactory.CreateQuiz(startsAtUtc: DateTimeOffset.UtcNow.AddHours(-2)).Value;
         var attempt = quiz.StartAttempt(Guid.NewGuid()).Value;
-        attempt.Complete(DateTime.UtcNow, quiz.EndsAtUtc.UtcDateTime);
+        attempt.Complete(DateTime.UtcNow);
 
         var result = attempt.SubmitAnswer(AnswerFactory.CreateTfAnswer(
             studentId: attempt.StudentId, questionId: Guid.NewGuid(),
@@ -132,7 +132,7 @@ public class QuizAttemptTests
         var attempt = quiz.StartAttempt(Guid.NewGuid()).Value;
         var submittedAt = DateTime.UtcNow;
 
-        var result = attempt.Complete(submittedAt, quiz.EndsAtUtc.UtcDateTime);
+        var result = attempt.Complete(submittedAt);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(QuizAttemptStatus.Completed, attempt.Status);
@@ -144,9 +144,9 @@ public class QuizAttemptTests
     {
         var quiz = QuizFactory.CreateQuiz(startsAtUtc: DateTimeOffset.UtcNow.AddHours(-2)).Value;
         var attempt = quiz.StartAttempt(Guid.NewGuid()).Value;
-        attempt.Complete(DateTime.UtcNow, quiz.EndsAtUtc.UtcDateTime);
+        attempt.Complete(DateTime.UtcNow);
 
-        var result = attempt.Complete(DateTime.UtcNow, DateTime.UtcNow.AddHours(1));
+        var result = attempt.Complete(DateTime.UtcNow);
 
         Assert.True(result.IsError);
         Assert.Equal(QuizAttemptErrors.AttemptAlreadyCompleted, result.TopError);
@@ -157,7 +157,7 @@ public class QuizAttemptTests
     {
         var attempt = QuizAttemptFactory.CreateQuizAttempt().Value;
 
-        var result = attempt.Complete(default, DateTime.UtcNow.AddHours(1));
+        var result = attempt.Complete(default);
 
         Assert.True(result.IsError);
         Assert.Equal(QuizAttemptErrors.SubmittedAtRequired, result.TopError);
@@ -170,7 +170,7 @@ public class QuizAttemptTests
         var attempt = quiz.StartAttempt(Guid.NewGuid()).Value;
         var submittedAt = attempt.StartedAt.AddMinutes(-1);
 
-        var result = attempt.Complete(submittedAt, DateTime.UtcNow);
+        var result = attempt.Complete(submittedAt);
 
         Assert.True(result.IsError);
         Assert.Equal(QuizAttemptErrors.SubmittedAtInvalid, result.TopError);
@@ -179,13 +179,20 @@ public class QuizAttemptTests
     [Fact]
     public void Complete_ShouldFail_WhenSubmittedAfterQuizEnd()
     {
-        var quiz = QuizFactory.CreateQuiz(startsAtUtc: DateTimeOffset.UtcNow.AddHours(-2)).Value;
-        var attempt = quiz.StartAttempt(Guid.NewGuid()).Value;
+        var activeQuiz = QuizFactory.CreateQuiz(
+            startsAtUtc: DateTimeOffset.UtcNow.AddHours(-2),
+            endsAtUtc: DateTimeOffset.UtcNow.AddHours(2)).Value;
+        var attempt = activeQuiz.StartAttempt(Guid.NewGuid()).Value;
 
-        var result = attempt.Complete(attempt.StartedAt.AddMinutes(1), attempt.StartedAt);
+        var endedQuiz = QuizFactory.CreateQuiz(
+            startsAtUtc: DateTimeOffset.UtcNow.AddHours(-2),
+            endsAtUtc: DateTimeOffset.UtcNow.AddHours(-1)).Value;
+        attempt.Quiz = endedQuiz;
+
+        var result = attempt.Complete(DateTime.UtcNow);
 
         Assert.True(result.IsError);
-        Assert.Equal(QuizAttemptErrors.SubmittedAtAfterQuizEnd(attempt.StartedAt).Code, result.TopError.Code);
+        Assert.Equal(QuizAttemptErrors.SubmittedAtAfterQuizEnd(endedQuiz.EndsAtUtc).Code, result.TopError.Code);
     }
 
     [Fact]

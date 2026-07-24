@@ -1,5 +1,5 @@
 using QuizNova.Domain.Entities.Quizzes;
-using QuizNova.Domain.Entities.Quizzes.Questions.Base;
+using QuizNova.Domain.Entities.Quizzes.Questions;
 using QuizNova.Tests.Common.Courses;
 using QuizNova.Tests.Common.Quizzes;
 using QuizNova.Tests.Common.Quizzes.Questions;
@@ -19,13 +19,15 @@ public class QuizTests
         var starts = DateTimeOffset.UtcNow.AddHours(1);
         var ends = DateTimeOffset.UtcNow.AddHours(3);
 
-        var q1 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 0).Value;
-        var q2 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 1).Value;
-        var q3 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 2).Value;
-        List<Question> questions = [q1, q2, q3];
+        var questionArgs = new List<CreateQuestionArgs>
+        {
+            new CreateTfArgs("Question 1?", 10, true),
+            new CreateTfArgs("Question 2?", 10, false),
+            new CreateTfArgs("Question 3?", 10, true),
+        };
 
         // Act
-        var result = QuizFactory.CreateQuiz(id, courseId, instructorId, title, starts, ends, questions);
+        var result = QuizFactory.CreateQuiz(id, courseId, instructorId, title, starts, ends, questionArgs);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -35,6 +37,80 @@ public class QuizTests
         Assert.Equal(3, result.Value.Questions.Count());
 
         Assert.Empty(result.Value.DomainEvents);
+    }
+
+    [Fact]
+    public void Create_WithQuestionArgs_ShouldSuccess_WithValidData()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+        var courseId = Guid.NewGuid();
+        var instructorId = Guid.NewGuid();
+        const string title = "Domain Quiz Test";
+        var starts = DateTimeOffset.UtcNow.AddHours(1);
+        var ends = DateTimeOffset.UtcNow.AddHours(3);
+
+        var choice1Id = Guid.NewGuid();
+        var choice2Id = Guid.NewGuid();
+
+        var questionArgs = new List<CreateQuestionArgs>
+        {
+            new CreateTfArgs("Is C# strongly typed?", 10, true),
+            new CreateMcqArgs(
+                "Which pattern is used?",
+                15,
+                choice1Id,
+                [
+                    new CreateChoiceArgs(choice1Id, "Domain-Driven Design", 0),
+                    new CreateChoiceArgs(choice2Id, "Anemic Domain Model", 1),
+                ]),
+            new CreateEssayArgs("Describe DDD.", 20, "Domain Driven Design explanation"),
+        };
+
+        // Act
+        var result = Quiz.Create(id, courseId, instructorId, title, starts, ends, questionArgs);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value);
+        Assert.Equal(id, result.Value.Id);
+        Assert.Equal(3, result.Value.Questions.Count());
+        Assert.Equal(45, result.Value.Marks);
+    }
+
+    [Fact]
+    public void Create_WithQuestionArgs_ShouldFail_WhenMcqCorrectChoiceNotFound()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+        var courseId = Guid.NewGuid();
+        var instructorId = Guid.NewGuid();
+        const string title = "Domain Quiz Test";
+        var starts = DateTimeOffset.UtcNow.AddHours(1);
+        var ends = DateTimeOffset.UtcNow.AddHours(3);
+
+        var choice1Id = Guid.NewGuid();
+        var choice2Id = Guid.NewGuid();
+        var nonExistentChoiceId = Guid.NewGuid();
+
+        var questionArgs = new List<CreateQuestionArgs>
+        {
+            new CreateMcqArgs(
+                "Which pattern is used?",
+                15,
+                nonExistentChoiceId,
+                [
+                    new CreateChoiceArgs(choice1Id, "Option A", 0),
+                    new CreateChoiceArgs(choice2Id, "Option B", 1),
+                ]),
+        };
+
+        // Act
+        var result = Quiz.Create(id, courseId, instructorId, title, starts, ends, questionArgs);
+
+        // Assert
+        Assert.True(result.IsError);
+        Assert.Equal("Quiz.Question.CorrectChoice.NotFound", result.TopError.Code);
     }
 
     [Fact]
@@ -150,45 +226,11 @@ public class QuizTests
         // Act
         var result = QuizFactory.CreateQuiz(
             id: id,
-            questions: []);
+            questionArgs: []);
 
         // Assert
         Assert.True(result.IsError);
         Assert.Equal(QuizErrors.QuestionsRequired, result.TopError);
-    }
-
-    [Fact]
-    public void Create_ShouldFail_WithNonContiguousDisplayOrderSequence()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        var q1 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 0).Value;
-        var q2 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 1).Value;
-        var q3 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 3).Value; // 2 is missing!
-
-        // Act
-        var result = QuizFactory.CreateQuiz(id: id, questions: [q1, q2, q3]);
-
-        // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(QuizErrors.QuestionSequenceInvalid, result.TopError);
-    }
-
-    [Fact]
-    public void Create_ShouldSuccess_WithNonSequentialContiguousDisplayOrderSequence()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        var q1 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 2).Value;
-        var q2 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 0).Value;
-        var q3 = QuestionFactory.CreateTfQuestion(quizId: id, displayOrder: 1)
-            .Value; // DisplayOrders are {2, 0, 1} which are contiguous 0 to 2!
-
-        // Act
-        var result = QuizFactory.CreateQuiz(id: id, questions: [q1, q2, q3]);
-
-        // Assert
-        Assert.True(result.IsSuccess);
     }
 
     [Fact]
