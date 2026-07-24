@@ -78,7 +78,7 @@ public sealed class CourseController(ISender sender) : ApiController
     }
 
     [HttpPost("courses")]
-    [Authorize(Roles = nameof(UserRole.Instructor))]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [EndpointSummary("Creates a course.")]

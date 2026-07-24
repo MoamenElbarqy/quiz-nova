@@ -9,9 +9,7 @@ using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesPerformance;
 using QuizNova.Application.Features.Quizzes.Commands.AddQuestion;
-using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.Features.Quizzes.Commands.DeleteQuestion;
-using QuizNova.Application.Features.Quizzes.Commands.UpdateQuestion;
 using QuizNova.Application.Features.Quizzes.Commands.UpdateQuizCourseId;
 using QuizNova.Application.Features.Quizzes.Commands.UpdateQuizMetadata;
 using QuizNova.Application.Features.Quizzes.DTOs;
@@ -113,29 +111,7 @@ public static class QuizEndpoints
         quizzesGroup.MapPost("{quizId:guid}/questions",
                 async (ISender sender, Guid quizId, CreateQuizQuestionRequest request) =>
                 {
-                    CreateQuestionCommand questionCommand = request switch
-                    {
-                        CreateMcqRequest mcq => new CreateMcqCommand(
-                            mcq.QuestionText,
-                            mcq.Marks,
-                            mcq.CorrectChoiceId,
-                            mcq.Choices.Select(c => new CreateChoiceCommand(
-                                    c.Id,
-                                    c.Text,
-                                    c.DisplayOrder))
-                                .ToList()),
-                        CreateTfRequest tfq => new CreateTfCommand(
-                            tfq.QuestionText,
-                            tfq.Marks,
-                            tfq.CorrectChoice),
-                        CreateEssayRequest essay => new CreateEssayCommand(
-                            essay.QuestionText,
-                            essay.Marks,
-                            essay.AnswerReference),
-                        _ => throw new InvalidOperationException("Unknown question type")
-                    };
-
-                    var result = await sender.Send(new AddQuestionCommand(quizId, questionCommand));
+                    var result = await sender.Send(new AddQuestionCommand(quizId, request.ToCommand()));
                     return result.ToOk();
                 })
             .WithName("AddQuestion")
@@ -150,38 +126,7 @@ public static class QuizEndpoints
         quizzesGroup.MapPut("{quizId:guid}/questions/{questionId:guid}",
                 async (ISender sender, Guid quizId, Guid questionId, UpdateQuestionRequest request) =>
                 {
-                    UpdateQuestionCommand command = request switch
-                    {
-                        UpdateMcqRequest mcq => new UpdateMcqCommand(
-                            quizId,
-                            questionId,
-                            mcq.QuestionText,
-                            mcq.DisplayOrder,
-                            mcq.Marks,
-                            mcq.CorrectChoiceId,
-                            mcq.Choices.Select(c => new CreateChoiceCommand(
-                                    c.Id,
-                                    c.Text,
-                                    c.DisplayOrder))
-                                .ToList()),
-                        UpdateTfRequest tf => new UpdateTfCommand(
-                            quizId,
-                            questionId,
-                            tf.QuestionText,
-                            tf.DisplayOrder,
-                            tf.Marks,
-                            tf.CorrectChoice),
-                        UpdateEssayRequest essay => new UpdateEssayCommand(
-                            quizId,
-                            questionId,
-                            essay.QuestionText,
-                            essay.DisplayOrder,
-                            essay.Marks,
-                            essay.AnswerReference),
-                        _ => throw new InvalidOperationException("Unknown question type")
-                    };
-
-                    var result = await sender.Send(command);
+                    var result = await sender.Send(request.ToCommand(quizId, questionId));
                     return result.ToNoContent();
                 })
             .WithName("UpdateQuestion")

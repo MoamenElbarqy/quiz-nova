@@ -5,7 +5,6 @@ namespace QuizNova.Api.DTOs.Requests;
 public sealed record CreateQuizRequest(
     string Title,
     Guid CourseId,
-    Guid InstructorId,
     DateTimeOffset StartsAtUtc,
     DateTimeOffset EndsAtUtc,
     IReadOnlyCollection<CreateQuizQuestionRequest> Questions);

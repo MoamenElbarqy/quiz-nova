@@ -10,9 +10,7 @@ using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesPerformance;
 using QuizNova.Application.Features.Quizzes.Commands.AddQuestion;
-using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.Features.Quizzes.Commands.DeleteQuestion;
-using QuizNova.Application.Features.Quizzes.Commands.UpdateQuestion;
 using QuizNova.Application.Features.Quizzes.Commands.UpdateQuizCourseId;
 using QuizNova.Application.Features.Quizzes.Commands.UpdateQuizMetadata;
 using QuizNova.Application.Features.Quizzes.DTOs;
@@ -41,7 +39,8 @@ public sealed class QuizController(ISender sender) : ApiController
     [ProducesResponseType(typeof(PaginatedList<QuizDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<PaginatedList<QuizDto>>> GetAllQuizzes([FromQuery] GetAllQuizzesQuery query, CancellationToken ct)
+    public async Task<ActionResult<PaginatedList<QuizDto>>> GetAllQuizzes([FromQuery] GetAllQuizzesQuery query,
+        CancellationToken ct)
     {
         var result = await sender.Send(query, ct);
 
@@ -59,7 +58,8 @@ public sealed class QuizController(ISender sender) : ApiController
     [ProducesResponseType(typeof(QuizzesCountDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<QuizzesCountDto>> GetInstructorQuizzesCount([FromQuery] Guid instructorId, CancellationToken ct)
+    public async Task<ActionResult<QuizzesCountDto>> GetInstructorQuizzesCount([FromQuery] Guid instructorId,
+        CancellationToken ct)
     {
         var result = await sender.Send(new GetInstructorQuizzesCountQuery(instructorId), ct);
 
@@ -143,29 +143,7 @@ public sealed class QuizController(ISender sender) : ApiController
         [FromBody] CreateQuizQuestionRequest request,
         CancellationToken ct)
     {
-        CreateQuestionCommand questionCommand = request switch
-        {
-            CreateMcqRequest mcq => new CreateMcqCommand(
-                mcq.QuestionText,
-                mcq.Marks,
-                mcq.CorrectChoiceId,
-                mcq.Choices.Select(c => new CreateChoiceCommand(
-                        c.Id,
-                        c.Text,
-                        c.DisplayOrder))
-                    .ToList()),
-            CreateTfRequest tfq => new CreateTfCommand(
-                tfq.QuestionText,
-                tfq.Marks,
-                tfq.CorrectChoice),
-            CreateEssayRequest essay => new CreateEssayCommand(
-                essay.QuestionText,
-                essay.Marks,
-                essay.AnswerReference),
-            _ => throw new InvalidOperationException("Unknown question type")
-        };
-
-        var result = await sender.Send(new AddQuestionCommand(quizId, questionCommand), ct);
+        var result = await sender.Send(new AddQuestionCommand(quizId, request.ToCommand()));
 
         return result.Match(
             Ok,
@@ -187,6 +165,7 @@ public sealed class QuizController(ISender sender) : ApiController
         [FromBody] UpdateQuestionRequest request,
         CancellationToken ct)
     {
+        var result = await sender.Send(request.ToCommand(quizId, questionId));
         UpdateQuestionCommand command = request switch
         {
             UpdateMcqRequest mcq => new UpdateMcqCommand(
