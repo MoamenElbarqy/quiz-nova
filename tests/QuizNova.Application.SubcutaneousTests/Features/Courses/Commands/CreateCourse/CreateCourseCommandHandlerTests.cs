@@ -11,6 +11,9 @@ using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Identity;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.UserPersonalInformation;
+using QuizNova.Tests.Common.Security;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Courses.Commands.CreateCourse;
 
@@ -22,6 +25,7 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
     {
         // Arrange
         var mediator = factory.CreateMediator();
+        EnsureAdminContext();
         var command = new CreateCourseCommand(
             Name: "Valid Course Name",
             InstructorId: null,
@@ -110,6 +114,8 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
     public async Task Handle_WithNamePaddedWithSpacesAndLessThanThreePureChars_ShouldReturnValidationError()
     {
         // Arrange
+        EnsureAdminContext();
+
         // " AB " has raw length 4 — passes FluentValidation MinimumLength(3)
         // but domain trims it to "AB" (2 pure chars) and rejects it
         var mediator = factory.CreateMediator();
@@ -131,6 +137,7 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
     public async Task Handle_WithNameExactlyThreeChars_ShouldCreateCourseSuccessfully()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
         var command = new CreateCourseCommand(
             Name: "ABC",
@@ -157,6 +164,7 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
     public async Task Handle_WithNameExactlyThirtyChars_ShouldCreateCourseSuccessfully()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
         var longName = new string('A', 30);
         var command = new CreateCourseCommand(
@@ -259,6 +267,7 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
     public async Task Handle_WithMinimumPassingMarksEqualToMaximumMarks_ShouldCreateCourseSuccessfully()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
         var command = new CreateCourseCommand(
             Name: "Perfect Score Course",
@@ -286,6 +295,7 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
     public async Task Handle_WithNonExistentInstructor_ShouldReturnNotFoundError()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
         var nonExistentInstructorId = Guid.NewGuid();
         var command = new CreateCourseCommand(
@@ -306,6 +316,7 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
     public async Task Handle_WithValidInstructor_ShouldCreateCourseWithInstructor()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
 
         // 1. Create an instructor first
@@ -340,5 +351,21 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
         var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.Id);
         courseInDb.Should().NotBeNull();
         courseInDb.InstructorId.Should().Be(instructorId);
+    }
+
+    private void EnsureAdminContext()
+    {
+        var adminId = Guid.Parse(TestUsers.Admin.User.Id);
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        if (!dbContext.Admins.Any(a => a.Id == adminId))
+        {
+            var personalInfo = PersonalInformation.Create("Admin User", "admin@quiznova.local", "01000000000").Value;
+            var admin = Admin.Create(adminId, personalInfo).Value;
+            dbContext.Admins.Add(admin);
+            dbContext.SaveChangesAsync().GetAwaiter().GetResult();
+        }
+
+        TestCurrentUser.Set(TestUsers.Admin.User);
     }
 }

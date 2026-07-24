@@ -158,12 +158,13 @@ public class GetAllCoursesQueryHandlerTests(CustomWebApplicationFactory factory)
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
             dbContext.Students.Add(student);
             dbContext.Instructors.Add(instructor);
             dbContext.Courses.AddRange(courseActive, courseEmpty);
             dbContext.Enrollments.Add(enrollment);
-            dbContext.Quizzes.Add(quiz);
             await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Quizzes.InsertOneAsync(quiz);
         }
 
         var queryActive = new GetAllCoursesQuery(EnrolledStudentsCount: 1, QuizzesCount: 1);

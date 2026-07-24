@@ -1,11 +1,17 @@
 using FluentAssertions;
 
+using Microsoft.Extensions.DependencyInjection;
+
+using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Courses.Queries.GetInstructorCourses;
 using QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
 using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Entities.Identity;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.UserPersonalInformation;
+using QuizNova.Tests.Common.Security;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Courses.Queries.GetInstructorCourses;
 
@@ -46,6 +52,7 @@ public class GetInstructorCoursesQueryHandlerTests(CustomWebApplicationFactory f
     public async Task Handle_WithValidInstructorIdWithCourses_ShouldReturnCourses()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
 
         // Create an instructor
@@ -73,5 +80,21 @@ public class GetInstructorCoursesQueryHandlerTests(CustomWebApplicationFactory f
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeEmpty();
         result.Value.Should().Contain(c => c.CourseName == "Instructor Course Query Test");
+    }
+
+    private void EnsureAdminContext()
+    {
+        var adminId = Guid.Parse(TestUsers.Admin.User.Id);
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        if (!dbContext.Admins.Any(a => a.Id == adminId))
+        {
+            var personalInfo = PersonalInformation.Create("Admin User", "admin@quiznova.local", "01000000000").Value;
+            var admin = Admin.Create(adminId, personalInfo).Value;
+            dbContext.Admins.Add(admin);
+            dbContext.SaveChangesAsync().GetAwaiter().GetResult();
+        }
+
+        TestCurrentUser.Set(TestUsers.Admin.User);
     }
 }

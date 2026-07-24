@@ -1,11 +1,17 @@
 using FluentAssertions;
 
+using Microsoft.Extensions.DependencyInjection;
+
+using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesPerformance;
 using QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
 using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Entities.Identity;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.UserPersonalInformation;
+using QuizNova.Tests.Common.Security;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Courses.Queries.GetInstructorCoursesPerformance;
 
@@ -58,6 +64,9 @@ public class GetInstructorCoursesPerformanceQueryHandlerTests(CustomWebApplicati
         instructorResult.IsSuccess.Should().BeTrue();
         var instructorId = instructorResult.Value.Id;
 
+        // Set admin context for CreateCourseCommand
+        EnsureAdminContext();
+
         // Create a course assigned to this instructor
         var courseResult = await mediator.Send(new CreateCourseCommand(
             Name: "Performance Query Course Test",
@@ -76,5 +85,21 @@ public class GetInstructorCoursesPerformanceQueryHandlerTests(CustomWebApplicati
         coursePerf.Should().NotBeNull();
         coursePerf.NumberOfStudents.Should().Be(0);
         coursePerf.AvgScore.Should().Be(0.0);
+    }
+
+    private void EnsureAdminContext()
+    {
+        var adminId = Guid.Parse(TestUsers.Admin.User.Id);
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        if (!dbContext.Admins.Any(a => a.Id == adminId))
+        {
+            var personalInfo = PersonalInformation.Create("Admin User", "admin@quiznova.local", "01000000000").Value;
+            var admin = Admin.Create(adminId, personalInfo).Value;
+            dbContext.Admins.Add(admin);
+            dbContext.SaveChangesAsync().GetAwaiter().GetResult();
+        }
+
+        TestCurrentUser.Set(TestUsers.Admin.User);
     }
 }

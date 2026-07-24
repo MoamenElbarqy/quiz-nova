@@ -12,6 +12,9 @@ using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Identity;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.UserPersonalInformation;
+using QuizNova.Tests.Common.Security;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Enrollments.Commands.EnrollStudentInCourse;
 
@@ -22,6 +25,7 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
     public async Task Handle_WithValidData_ShouldEnrollStudentSuccessfully()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
 
         // 1. Create a student
@@ -107,6 +111,7 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
     public async Task Handle_WithNonExistentStudent_ShouldReturnNotFoundError()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
 
         // 1. Create a real course
@@ -133,6 +138,7 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
     public async Task Handle_WithCompletedCourse_ShouldReturnError()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
 
         // 1. Create a student
@@ -177,6 +183,7 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
     public async Task Handle_WithAlreadyEnrolledStudent_ShouldReturnError()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
 
         // 1. Create a student
@@ -208,5 +215,21 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
         firstEnroll.IsSuccess.Should().BeTrue();
         secondEnroll.IsError.Should().BeTrue();
         secondEnroll.TopError.Code.Should().Be(CourseErrors.StudentAlreadyEnrolled(Guid.Empty).Code);
+    }
+
+    private void EnsureAdminContext()
+    {
+        var adminId = Guid.Parse(TestUsers.Admin.User.Id);
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        if (!dbContext.Admins.Any(a => a.Id == adminId))
+        {
+            var personalInfo = PersonalInformation.Create("Admin User", "admin@quiznova.local", "01000000000").Value;
+            var admin = Admin.Create(adminId, personalInfo).Value;
+            dbContext.Admins.Add(admin);
+            dbContext.SaveChangesAsync().GetAwaiter().GetResult();
+        }
+
+        TestCurrentUser.Set(TestUsers.Admin.User);
     }
 }

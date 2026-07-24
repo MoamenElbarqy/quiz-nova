@@ -8,6 +8,9 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Courses.Commands.DeleteCourseById;
 using QuizNova.Application.SubcutaneousTests.Common;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.UserPersonalInformation;
+using QuizNova.Tests.Common.Security;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Courses.Commands.DeleteCourseById;
 
@@ -48,6 +51,7 @@ public class DeleteCourseByIdCommandHandlerTests(CustomWebApplicationFactory fac
     public async Task Handle_WithExistingCourse_ShouldDeleteSuccessfully()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
 
         // 1. Create a course first
@@ -76,6 +80,7 @@ public class DeleteCourseByIdCommandHandlerTests(CustomWebApplicationFactory fac
     public async Task Handle_WithAlreadyDeletedCourse_ShouldReturnNotFoundErrorOnSecondDelete()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
 
         // 1. Create a course first
@@ -103,5 +108,21 @@ public class DeleteCourseByIdCommandHandlerTests(CustomWebApplicationFactory fac
         var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
         var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
         courseInDb.Should().BeNull();
+    }
+
+    private void EnsureAdminContext()
+    {
+        var adminId = Guid.Parse(TestUsers.Admin.User.Id);
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        if (!dbContext.Admins.Any(a => a.Id == adminId))
+        {
+            var personalInfo = PersonalInformation.Create("Admin User", "admin@quiznova.local", "01000000000").Value;
+            var admin = Admin.Create(adminId, personalInfo).Value;
+            dbContext.Admins.Add(admin);
+            dbContext.SaveChangesAsync().GetAwaiter().GetResult();
+        }
+
+        TestCurrentUser.Set(TestUsers.Admin.User);
     }
 }

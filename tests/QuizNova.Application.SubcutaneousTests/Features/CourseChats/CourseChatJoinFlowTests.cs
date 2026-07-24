@@ -12,6 +12,9 @@ using QuizNova.Domain.Entities.CourseChats;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Courses.Events;
 using QuizNova.Domain.Entities.Enrollments.Events;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.UserPersonalInformation;
+using QuizNova.Tests.Common.Security;
 using QuizNova.Tests.Common.Users.Students;
 using QuizNova.Tests.Common.Users.UserPersonalInformation;
 
@@ -25,6 +28,8 @@ public class CourseChatJoinFlowTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         var mediator = factory.CreateMediator();
+
+        EnsureAdminContext();
 
         Guid instructorId;
         using (var scope = factory.Services.CreateScope())
@@ -176,5 +181,21 @@ public class CourseChatJoinFlowTests(CustomWebApplicationFactory factory)
             chatRoom.Should().NotBeNull();
             chatRoom.Students.Should().NotContain(s => s.Id == studentId);
         }
+    }
+
+    private void EnsureAdminContext()
+    {
+        var adminId = Guid.Parse(TestUsers.Admin.User.Id);
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        if (!dbContext.Admins.Any(a => a.Id == adminId))
+        {
+            var personalInfo = PersonalInformation.Create("Admin User", "admin@quiznova.local", "01000000000").Value;
+            var admin = Admin.Create(adminId, personalInfo).Value;
+            dbContext.Admins.Add(admin);
+            dbContext.SaveChangesAsync().GetAwaiter().GetResult();
+        }
+
+        TestCurrentUser.Set(TestUsers.Admin.User);
     }
 }

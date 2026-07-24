@@ -91,10 +91,11 @@ public class GetAllInstructorsQueryHandlerTests(CustomWebApplicationFactory fact
         using (var scope = factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
             dbContext.Instructors.AddRange(instructorEmpty, instructorActive);
             dbContext.Courses.Add(course);
-            dbContext.Quizzes.Add(quiz);
             await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Quizzes.InsertOneAsync(quiz);
         }
 
         var queryEmpty = new GetAllInstructorsQuery(PageNumber: 1, PageSize: 10, SearchTerm: null, CoursesCount: 0,
