@@ -10,11 +10,7 @@ using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Enrollments;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers.EssayAnswer;
 using QuizNova.Domain.Entities.Quizzes;
-using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
-using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Users;
 using QuizNova.Domain.Entities.Users.Admins;
@@ -29,20 +25,6 @@ public class AppDbContext(
     : IdentityDbContext<AppUser>(options), IAppDbContext
 {
     public DbSet<Course> Courses => Set<Course>();
-
-    public DbSet<QuizAttempt> QuizAttempts => Set<QuizAttempt>();
-
-    public DbSet<Quiz> Quizzes => Set<Quiz>();
-
-    public DbSet<Question> Questions => Set<Question>();
-
-    public DbSet<QuestionAnswer> QuestionAnswers => Set<QuestionAnswer>();
-
-    public DbSet<ManuallyGradedAnswers> ManuallyGradedAnswers => Set<ManuallyGradedAnswers>();
-
-    public DbSet<EssayAnswer> EssayAnswers => Set<EssayAnswer>();
-
-    public DbSet<Choice> Choices => Set<Choice>();
 
     public DbSet<UserRefreshToken> UserRefreshTokens => Set<UserRefreshToken>();
 
@@ -67,46 +49,17 @@ public class AppDbContext(
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         await DispatchDomainEventsAsync(ct);
-
-        var addedMcqEntries = ChangeTracker.Entries<Mcq>()
-            .Where(e => e.State == EntityState.Added)
-            .ToList();
-
-        if (addedMcqEntries.Count == 0)
-        {
-            return await base.SaveChangesAsync(ct);
-        }
-
-        var mcqInfos = addedMcqEntries.Select(entry => new
-        {
-            Entry = entry,
-            entry.Entity.CorrectChoiceId,
-            CorrectChoice = entry.Reference(q => q.CorrectChoice).CurrentValue,
-        }).ToList();
-
-        foreach (var info in mcqInfos)
-        {
-            info.Entry.Property(q => q.CorrectChoiceId).CurrentValue = null;
-            info.Entry.Reference(q => q.CorrectChoice).CurrentValue = null;
-        }
-
-        var result = await base.SaveChangesAsync(ct);
-
-        foreach (var info in mcqInfos)
-        {
-            info.Entry.Property(q => q.CorrectChoiceId).CurrentValue = info.CorrectChoiceId;
-            info.Entry.Reference(q => q.CorrectChoice).CurrentValue = info.CorrectChoice;
-            info.Entry.State = EntityState.Modified;
-        }
-
-        await base.SaveChangesAsync(ct);
-
-        return result;
+        return await base.SaveChangesAsync(ct);
     }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Ignore<Quiz>();
+        builder.Ignore<QuizAttempt>();
+        builder.Ignore<Question>();
+        builder.Ignore<QuestionAnswer>();
 
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }

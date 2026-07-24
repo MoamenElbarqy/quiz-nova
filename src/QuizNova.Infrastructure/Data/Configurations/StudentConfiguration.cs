@@ -14,9 +14,5 @@ public sealed class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.Navigation(s => s.Enrollments)
             .HasField("_enrollments")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
-
-        builder.Navigation(s => s.QuizAttempts)
-            .HasField("_quizAttempts")
-            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

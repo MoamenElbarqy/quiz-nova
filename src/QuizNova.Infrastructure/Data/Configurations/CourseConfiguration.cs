@@ -21,10 +21,6 @@ public sealed class CourseConfiguration : IEntityTypeConfiguration<Course>
             .HasDefaultValue(CourseStatus.Active)
             .IsRequired();
 
-        builder.Navigation(c => c.Quizzes)
-            .HasField("_quizzes")
-            .UsePropertyAccessMode(PropertyAccessMode.Field);
-
         builder.Navigation(c => c.Enrollments)
             .HasField("_enrollments")
             .UsePropertyAccessMode(PropertyAccessMode.Field);

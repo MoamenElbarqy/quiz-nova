@@ -14,9 +14,5 @@ public sealed class InstructorConfiguration : IEntityTypeConfiguration<Instructo
         builder.Navigation(i => i.Courses)
             .HasField("_courses")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
-
-        builder.Navigation(i => i.Quizzes)
-            .HasField("_quizzes")
-            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }
