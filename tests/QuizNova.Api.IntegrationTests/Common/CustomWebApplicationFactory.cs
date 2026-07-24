@@ -2,6 +2,7 @@ using System.Data.Common;
 
 using Microsoft.AspNetCore.Mvc.Testing;
 
+using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
 
 using Xunit;
@@ -17,21 +18,26 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
         .WithPassword("test_password")
         .Build();
 
-    // for thread safty due we run the xunit in parallel mode so multiple tests start
-    // initializing the factory at the same time, so we need one container with multiple databases.
+    private static readonly MongoDbContainer MongoContainer = new MongoDbBuilder()
+        .WithImage("mongo:7.0")
+        .Build();
+
+    // for thread safety because we run xUnit in parallel mode
     private static readonly Lazy<Task> StartLazy = new(async () =>
     {
-        await DbContainer.StartAsync();
+        await Task.WhenAll(DbContainer.StartAsync(), MongoContainer.StartAsync());
     });
 
     private string? _connectionString;
+    private string? _mongoDatabaseName;
 
     public async Task InitializeAsync()
     {
         await StartLazy.Value;
 
-        // seprate database for each test run
+        // separate database for each test run
         var dbName = $"quiznova_test_{Guid.NewGuid():N}";
+        _mongoDatabaseName = $"quiznova_mongo_test_{Guid.NewGuid():N}";
 
         var baseConnectionString = DbContainer.GetConnectionString();
         var connBuilder = new DbConnectionStringBuilder
@@ -58,7 +64,11 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseEnvironment("Testing");
+
         builder.UseSetting("ConnectionStrings:DefaultConnection", _connectionString);
+        builder.UseSetting("MongoDbSettings:ConnectionString", MongoContainer.GetConnectionString());
+        builder.UseSetting("MongoDbSettings:DatabaseName", _mongoDatabaseName);
         builder.UseSetting("AutoMigrateDb", "true");
         builder.UseSetting("DisableRateLimiting", "true");
         builder.UseSetting("JwtSettings:Secret", "QuizNova-Development-Secret-Key-Change-This-2026-Super-Long-Key");

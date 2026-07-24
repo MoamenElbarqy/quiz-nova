@@ -12,6 +12,7 @@ using QuizNova.Api;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Tests.Common.Security;
 
+using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
 
 namespace QuizNova.Application.SubcutaneousTests.Common;
@@ -33,16 +34,20 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
         .WithCommand("-c", "max_connections=500")
         .Build();
 
-    // for thread safty due we run the xunit in parallel mode so multiple tests start
-    // initializing the factory at the same time, so we need one container with multiple databases.
+    private static readonly MongoDbContainer MongoContainer = new MongoDbBuilder()
+        .WithImage("mongo:7.0")
+        .Build();
+
+    // for thread safety because we run xUnit in parallel mode
     private static readonly Lazy<Task> StartLazy = new(async () =>
     {
-        await DbContainer.StartAsync();
+        await Task.WhenAll(DbContainer.StartAsync(), MongoContainer.StartAsync());
     });
 
     private readonly FakeTimeProvider _fakeTimeProvider = new(DateTimeOffset.UtcNow);
 
     private string? _connectionString;
+    private string? _mongoDatabaseName;
 
     public FakeTimeProvider GetFakeTimeProvider() => _fakeTimeProvider;
 
@@ -50,8 +55,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
     {
         await StartLazy.Value;
 
-        // seprate database for each test run
+        // separate database for each test run
         var dbName = $"quiznova_test_{Guid.NewGuid():N}";
+        _mongoDatabaseName = $"quiznova_mongo_test_{Guid.NewGuid():N}";
 
         var baseConnectionString = DbContainer.GetConnectionString();
         var connBuilder = new DbConnectionStringBuilder
@@ -85,6 +91,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseEnvironment("Testing");
+
         builder.ConfigureAppConfiguration((_, configBuilder) =>
         {
             foreach (var source in configBuilder.Sources.OfType<FileConfigurationSource>())
@@ -114,6 +122,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
         });
 
         builder.UseSetting("ConnectionStrings:DefaultConnection", _connectionString);
+        builder.UseSetting("MongoDbSettings:ConnectionString", MongoContainer.GetConnectionString());
+        builder.UseSetting("MongoDbSettings:DatabaseName", _mongoDatabaseName);
         builder.UseSetting("AutoMigrateDb", "true");
         builder.UseSetting("DisableRateLimiting", "true");
         builder.UseSetting("JwtSettings:Secret", "QuizNova-Development-Secret-Key-Change-This-2026-Super-Long-Key");
