@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 
 using QuizNova.Api;
 using QuizNova.Api.Hubs;
+using QuizNova.Api.Infrastructure;
 using QuizNova.Infrastructure.Data;
 using QuizNova.Infrastructure.Settings;
 
@@ -22,6 +23,10 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddApi(builder.Configuration);
+
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>()
+    .AddCheck<MongoHealthCheck>("mongodb");
 
 var app = builder.Build();
 
@@ -74,6 +79,18 @@ else
 {
     app.UseHsts();
 }
+
+app.MapHealthChecks("/healthz", new() { AllowCachingResponses = false });
+app.MapHealthChecks("/healthz/ready", new()
+{
+    Predicate = reg => reg.Tags.Contains("ready"),
+    AllowCachingResponses = false,
+});
+app.MapHealthChecks("/healthz/startup", new()
+{
+    Predicate = reg => reg.Tags.Contains("ready"),
+    AllowCachingResponses = false,
+});
 
 app.MapControllers();
 
