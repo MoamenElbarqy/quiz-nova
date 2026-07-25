@@ -7,8 +7,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+
 using Microsoft.IdentityModel.Tokens;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Infrastructure.BackgroundJobs;
 using QuizNova.Infrastructure.Caching;
@@ -51,12 +53,14 @@ public static class DependencyInjection
     private static IServiceCollection ConfigureCaching(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = GetPostgresConnectionString(configuration);
+        var cacheSettings = configuration.GetSection(CacheSettings.SectionName).Get<CacheSettings>()
+            ?? throw new InvalidOperationException("CacheSettings section is not configured.");
 
         services.AddDistributedPostgreSqlCache(options =>
         {
             options.ConnectionString = connectionString;
-            options.SchemaName = "public";
-            options.TableName = "Cache";
+            options.SchemaName = cacheSettings.DistributedCacheSchemaName;
+            options.TableName = cacheSettings.DistributedCacheTableName;
             options.CreateInfrastructure = true;
         });
 
@@ -82,16 +86,19 @@ public static class DependencyInjection
 
         services.AddSingleton<IMongoDbContext, MongoDbContext>();
 
-        services.AddIdentityCore<AppUser>(options =>
+        services.AddOptions<IdentityOptions>()
+            .Configure<IOptions<IdentitySettings>>((options, identitySettings) =>
             {
-                options.Password.RequireDigit = true;
-                options.Password.RequireLowercase = true;
-                options.Password.RequireNonAlphanumeric = true;
-                options.Password.RequireUppercase = true;
-                options.Password.RequiredLength = 8;
+                options.Password.RequireDigit = identitySettings.Value.RequireDigit;
+                options.Password.RequireLowercase = identitySettings.Value.RequireLowercase;
+                options.Password.RequireNonAlphanumeric = identitySettings.Value.RequireNonAlphanumeric;
+                options.Password.RequireUppercase = identitySettings.Value.RequireUppercase;
+                options.Password.RequiredLength = identitySettings.Value.RequiredLength;
 
-                options.User.RequireUniqueEmail = true;
-            })
+                options.User.RequireUniqueEmail = identitySettings.Value.RequireUniqueEmail;
+            });
+
+        services.AddIdentityCore<AppUser>()
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<AppDbContext>();
 
@@ -101,16 +108,39 @@ public static class DependencyInjection
     private static IServiceCollection ConfigureSettings(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOptions<CorsSettings>()
-            .Bind(configuration.GetSection(CorsSettings.SectionName));
+            .Bind(configuration.GetSection(CorsSettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         services.AddOptions<PostgresSettings>()
-            .Bind(configuration.GetSection(PostgresSettings.SectionName));
+            .Bind(configuration.GetSection(PostgresSettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         services.AddOptions<JwtSettings>()
-            .Bind(configuration.GetSection(JwtSettings.SectionName));
+            .Bind(configuration.GetSection(JwtSettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         services.AddOptions<MongoDbSettings>()
-            .Bind(configuration.GetSection(MongoDbSettings.SectionName));
+            .Bind(configuration.GetSection(MongoDbSettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddOptions<RateLimiterSettings>()
+            .Bind(configuration.GetSection(RateLimiterSettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddOptions<CacheSettings>()
+            .Bind(configuration.GetSection(CacheSettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddOptions<IdentitySettings>()
+            .Bind(configuration.GetSection(IdentitySettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         return services;
     }
@@ -118,12 +148,11 @@ public static class DependencyInjection
     private static string GetPostgresConnectionString(IConfiguration configuration)
     {
         var postgresSettings = configuration.GetSection(PostgresSettings.SectionName).Get<PostgresSettings>();
-        var connectionString = postgresSettings?.DefaultConnection
-            ?? configuration.GetConnectionString("DefaultConnection");
+        var connectionString = postgresSettings?.DefaultConnection;
 
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw new InvalidOperationException("The connection string 'DefaultConnection' in 'ConnectionStrings' is not configured.");
+            throw new InvalidOperationException("The connection string 'DefaultConnection' in 'PostgresSettings' is not configured.");
         }
 
         return connectionString;

@@ -59,11 +59,11 @@ public class OutboxProcessorJob(
 
     private async Task RunListenerLoopAsync(CancellationToken ct)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        var connectionString = configuration.GetSection("PostgresSettings")["DefaultConnection"];
 
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw new InvalidOperationException("The connection string 'DefaultConnection' is not configured.");
+            throw new InvalidOperationException("The connection string 'DefaultConnection' in 'PostgresSettings' is not configured.");
         }
 
         await using var conn = new NpgsqlConnection(connectionString);
