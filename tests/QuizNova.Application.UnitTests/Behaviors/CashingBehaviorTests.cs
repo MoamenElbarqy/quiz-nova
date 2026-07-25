@@ -1,9 +1,11 @@
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 using NSubstitute;
 
 using QuizNova.Application.Common.Behaviours;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
 
@@ -15,6 +17,15 @@ public class CachingBehaviorTests
 {
     private readonly HybridCache _cache = Substitute.For<HybridCache>();
 
+    private readonly IOptions<CacheSettings> _cacheSettings =
+        Options.Create(new CacheSettings
+        {
+            OutputCacheDurationSeconds = 30,
+            QueryCacheDurationMinutes = 5,
+            DistributedCacheSchemaName = "public",
+            DistributedCacheTableName = "cache",
+        });
+
     private readonly ILogger<CachingBehavior<CachedQuery, Result<string>>> _logger =
         Substitute.For<ILogger<CachingBehavior<CachedQuery, Result<string>>>>();
 
@@ -22,7 +33,7 @@ public class CachingBehaviorTests
 
     public CachingBehaviorTests()
     {
-        _sut = new CachingBehavior<CachedQuery, Result<string>>(_cache, _logger);
+        _sut = new CachingBehavior<CachedQuery, Result<string>>(_cache, _cacheSettings, _logger);
     }
 
     [Fact]
@@ -30,7 +41,7 @@ public class CachingBehaviorTests
     {
         // Arrange
         var uncachedRequest = new NonCachedQuery();
-        var behavior = new CachingBehavior<NonCachedQuery, string>(_cache,
+        var behavior = new CachingBehavior<NonCachedQuery, string>(_cache, _cacheSettings,
             Substitute.For<ILogger<CachingBehavior<NonCachedQuery, string>>>());
 
         // Act
@@ -76,7 +87,7 @@ public class CachingBehaviorTests
         Assert.True(typed.IsSuccess);
         Assert.Equal("test-value", typed.Value);
 
-        Assert.Equal(request.Expiration, actualOptions!.Expiration);
+        Assert.Equal(TimeSpan.FromMinutes(_cacheSettings.Value.QueryCacheDurationMinutes), actualOptions!.Expiration);
         Assert.Equal(request.Tags, actualTags);
     }
 
@@ -108,7 +119,6 @@ public class CachingBehaviorTests
     public class CachedQuery : ICachedQuery
     {
         public string CacheKey => "test-key";
-        public TimeSpan Expiration => TimeSpan.FromMinutes(5);
         public string[] Tags => ["unit-test"];
     }
 }

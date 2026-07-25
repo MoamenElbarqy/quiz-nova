@@ -121,14 +121,14 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
             services.AddSingleton<TimeProvider>(_fakeTimeProvider);
         });
 
-        builder.UseSetting("ConnectionStrings:DefaultConnection", _connectionString);
+        builder.UseSetting("PostgresSettings:DefaultConnection", _connectionString);
         builder.UseSetting("MongoDbSettings:ConnectionString", MongoContainer.GetConnectionString());
         builder.UseSetting("MongoDbSettings:DatabaseName", _mongoDatabaseName);
-        builder.UseSetting("AutoMigrateDb", "true");
-        builder.UseSetting("DisableRateLimiting", "true");
         builder.UseSetting("JwtSettings:Secret", "QuizNova-Development-Secret-Key-Change-This-2026-Super-Long-Key");
         builder.UseSetting("JwtSettings:Issuer", "QuizNova.Api");
         builder.UseSetting("JwtSettings:Audiences:0", "QuizNova.Client");
+        builder.UseSetting("JwtSettings:ExpiryMinutes", "7");
+        builder.UseSetting("JwtSettings:RefreshTokenExpirationDays", "7");
     }
 
     private HttpClient CreateManualClient()
