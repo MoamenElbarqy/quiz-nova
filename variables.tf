@@ -22,6 +22,11 @@ variable "github_token" {
   sensitive   = true
 }
 
+variable "grafana_loki_instance_id" {
+  description = "Grafana Loki Instance ID for credentials.login"
+  type        = string
+}
+
 variable "grafana_loki_uri" {
   description = "The Grafana Loki ingest endpoint URI"
   type        = string
@@ -37,13 +42,11 @@ variable "grafana_otlp_auth_header" {
   description = "Base64 encoded Instance ID : API Key / Password for Grafana OTLP OTel traces"
   type        = string
   sensitive   = true
-  default     = ""
 }
 
 variable "mongodb_connection_string" {
   type        = string
   description = "MongoDB Atlas Connection String"
   sensitive   = true
-  default     = ""
 }
 

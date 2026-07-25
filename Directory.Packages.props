@@ -22,6 +22,10 @@
   <ItemGroup>
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
   </ItemGroup>
+  <!-- Health Checks -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.9" />
+  </ItemGroup>
   <!-- Application -->
   <ItemGroup>
     <PackageVersion Include="MediatR" Version="14.0.0" />

@@ -22,3 +22,5 @@ provider "github" {
   token = var.github_token
   owner = "MoamenElbarqy"
 }
+
+data "azurerm_client_config" "current" {}
