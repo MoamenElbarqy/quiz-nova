@@ -28,9 +28,9 @@ public class AuthController(ISender sender) : ApiController
     [EndpointName("Login")]
     [AllowAnonymous]
     [EnableRateLimiting("Auth")]
-    public async Task<ActionResult<AuthDto>> Login(LoginRequest request)
+    public async Task<ActionResult<AuthDto>> Login(LoginRequest request, CancellationToken ct)
     {
-        var loginResult = await sender.Send(new LoginCommand(request.Email, request.Password, request.Role));
+        var loginResult = await sender.Send(new LoginCommand(request.Email, request.Password, request.Role), ct);
 
         return loginResult.Match(
             authResponse =>
@@ -48,7 +48,7 @@ public class AuthController(ISender sender) : ApiController
     [EndpointDescription("Validates the refresh token from the secure cookie and returns a rotated token pair.")]
     [EndpointName("RefreshToken")]
     [AllowAnonymous]
-    public async Task<ActionResult<TokenDto>> RefreshToken(RefreshTokenRequest request)
+    public async Task<ActionResult<TokenDto>> RefreshToken(RefreshTokenRequest request, CancellationToken ct)
     {
         var refreshToken = Request.Cookies[RefreshTokenCookieName];
         if (string.IsNullOrWhiteSpace(refreshToken))
@@ -56,7 +56,7 @@ public class AuthController(ISender sender) : ApiController
             return Problem([ApplicationErrors.MissingRefreshToken]);
         }
 
-        var refreshResult = await sender.Send(new RefreshTokenCommand(refreshToken, request.ExpiredAccessToken));
+        var refreshResult = await sender.Send(new RefreshTokenCommand(refreshToken, request.ExpiredAccessToken), ct);
 
         return refreshResult.Match(
             token =>

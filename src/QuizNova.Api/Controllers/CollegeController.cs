@@ -24,9 +24,9 @@ public sealed class CollegeController(ISender sender) : ApiController
     [OutputCache(Tags = ["colleges"])]
     [ProducesResponseType(typeof(CollegeSummaryDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetSummary()
+    public async Task<IActionResult> GetSummary(CancellationToken ct)
     {
-        var result = await sender.Send(new GetCollegeSummaryQuery());
+        var result = await sender.Send(new GetCollegeSummaryQuery(), ct);
 
         return result.Match(
             Ok,

@@ -32,9 +32,9 @@ public sealed class CourseController(ISender sender) : ApiController
     [Authorize(Roles = nameof(UserRole.Admin))]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<PaginatedList<CourseDto>>> GetCourses([FromQuery] GetAllCoursesQuery query)
+    public async Task<ActionResult<PaginatedList<CourseDto>>> GetCourses([FromQuery] GetAllCoursesQuery query, CancellationToken ct)
     {
-        var result = await sender.Send(query);
+        var result = await sender.Send(query, ct);
         return result.Match(Ok, Problem);
     }
 
@@ -45,9 +45,9 @@ public sealed class CourseController(ISender sender) : ApiController
     [EndpointSummary("Retrieves instructor courses.")]
     [EndpointDescription("Returns all courses for a specific instructor.")]
     [EndpointName("GetInstructorCourses")]
-    public async Task<ActionResult<List<CourseDto>>> GetInstructorCourses(Guid instructorId)
+    public async Task<ActionResult<List<CourseDto>>> GetInstructorCourses(Guid instructorId, CancellationToken ct)
     {
-        var result = await sender.Send(new GetInstructorCoursesQuery(instructorId));
+        var result = await sender.Send(new GetInstructorCoursesQuery(instructorId), ct);
         return result.Match(Ok, Problem);
     }
 
@@ -58,9 +58,9 @@ public sealed class CourseController(ISender sender) : ApiController
     [EndpointSummary("Retrieves instructor course counts.")]
     [EndpointDescription("Returns instructor course counts based on the instructor ID.")]
     [EndpointName("GetInstructorCoursesCount")]
-    public async Task<ActionResult<CoursesCountDto>> GetInstructorCoursesCount(Guid instructorId)
+    public async Task<ActionResult<CoursesCountDto>> GetInstructorCoursesCount(Guid instructorId, CancellationToken ct)
     {
-        var result = await sender.Send(new GetInstructorCoursesCountQuery(instructorId));
+        var result = await sender.Send(new GetInstructorCoursesCountQuery(instructorId), ct);
         return result.Match(Ok, Problem);
     }
 
@@ -71,9 +71,9 @@ public sealed class CourseController(ISender sender) : ApiController
     [EndpointSummary("Retrieves a course by its unique identifier.")]
     [EndpointDescription("Fetches the details of a specific course using its ID.")]
     [EndpointName("GetCourseById")]
-    public async Task<ActionResult<CourseDto>> GetCourseById(Guid id)
+    public async Task<ActionResult<CourseDto>> GetCourseById(Guid id, CancellationToken ct)
     {
-        var result = await sender.Send(new GetCourseByIdQuery(id));
+        var result = await sender.Send(new GetCourseByIdQuery(id), ct);
         return result.Match(Ok, Problem);
     }
 
@@ -84,11 +84,11 @@ public sealed class CourseController(ISender sender) : ApiController
     [EndpointSummary("Creates a course.")]
     [EndpointDescription("Creates a course with an optional instructor assignment.")]
     [EndpointName("CreateCourse")]
-    public async Task<ActionResult<CourseDto>> CreateCourse([FromBody] CreateCourseRequest request)
+    public async Task<ActionResult<CourseDto>> CreateCourse([FromBody] CreateCourseRequest request, CancellationToken ct)
     {
         var command = request.ToCommand();
 
-        var result = await sender.Send(command);
+        var result = await sender.Send(command, ct);
         return result.Match(Ok, Problem);
     }
 
@@ -102,9 +102,10 @@ public sealed class CourseController(ISender sender) : ApiController
     [EndpointName("UpdateCourseInstructor")]
     public async Task<ActionResult<CourseDto>> UpdateCourseInstructor(
         Guid courseId,
-        [FromBody] UpdateCourseInstructorRequest request)
+        [FromBody] UpdateCourseInstructorRequest request,
+        CancellationToken ct)
     {
-        var result = await sender.Send(new UpdateCourseInstructorCommand(courseId, request.InstructorId));
+        var result = await sender.Send(new UpdateCourseInstructorCommand(courseId, request.InstructorId), ct);
         return result.Match(Ok, Problem);
     }
 
@@ -117,9 +118,9 @@ public sealed class CourseController(ISender sender) : ApiController
     [EndpointSummary("Deletes a course by its unique identifier.")]
     [EndpointDescription("Removes a course from the database using its ID.")]
     [EndpointName("DeleteCourseById")]
-    public async Task<ActionResult> DeleteCourseById(Guid id)
+    public async Task<ActionResult> DeleteCourseById(Guid id, CancellationToken ct)
     {
-        var result = await sender.Send(new DeleteCourseByIdCommand(id));
+        var result = await sender.Send(new DeleteCourseByIdCommand(id), ct);
         return result.Match(_ => NoContent(), Problem);
     }
 }

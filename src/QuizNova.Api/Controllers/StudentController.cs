@@ -29,9 +29,9 @@ public sealed class StudentController(ISender sender) : ApiController
     [OutputCache(Tags = ["students"])]
     [HttpGet]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PaginatedList<StudentDto>>> GetAllStudents([FromQuery] GetAllStudentsQuery query)
+    public async Task<ActionResult<PaginatedList<StudentDto>>> GetAllStudents([FromQuery] GetAllStudentsQuery query, CancellationToken ct)
     {
-        var result = await sender.Send(query);
+        var result = await sender.Send(query, ct);
 
         return result.Match(
             Ok,
@@ -45,9 +45,9 @@ public sealed class StudentController(ISender sender) : ApiController
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<StudentDto>> GetStudentById([FromRoute] Guid id)
+    public async Task<ActionResult<StudentDto>> GetStudentById([FromRoute] Guid id, CancellationToken ct)
     {
-        var result = await sender.Send(new GetStudentByIdQuery(id));
+        var result = await sender.Send(new GetStudentByIdQuery(id), ct);
 
         return result.Match(
             Ok,
@@ -60,11 +60,11 @@ public sealed class StudentController(ISender sender) : ApiController
     [HttpPost]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<StudentDto>> CreateStudent([FromBody] CreateStudentRequest request)
+    public async Task<ActionResult<StudentDto>> CreateStudent([FromBody] CreateStudentRequest request, CancellationToken ct)
     {
         var command = request.ToCommand();
 
-        var result = await sender.Send(command);
+        var result = await sender.Send(command, ct);
 
         return result.Match(
             Ok,
@@ -78,11 +78,11 @@ public sealed class StudentController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<StudentDto>> UpdateStudent([FromRoute] Guid id, [FromBody] UpdateStudentRequest request)
+    public async Task<ActionResult<StudentDto>> UpdateStudent([FromRoute] Guid id, [FromBody] UpdateStudentRequest request, CancellationToken ct)
     {
         var command = request.ToCommand(id);
 
-        var result = await sender.Send(command);
+        var result = await sender.Send(command, ct);
 
         return result.Match(
             Ok,
@@ -96,9 +96,9 @@ public sealed class StudentController(ISender sender) : ApiController
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteStudent([FromRoute] Guid id)
+    public async Task<IActionResult> DeleteStudent([FromRoute] Guid id, CancellationToken ct)
     {
-        var result = await sender.Send(new DeleteStudentCommand(id));
+        var result = await sender.Send(new DeleteStudentCommand(id), ct);
 
         return result.Match(
             _ => NoContent(),

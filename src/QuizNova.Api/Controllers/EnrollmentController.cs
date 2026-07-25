@@ -32,9 +32,10 @@ public sealed class EnrollmentController(ISender sender) : ApiController
     [EndpointDescription("Creates a course enrollment for the specified student.")]
     [EndpointName("EnrollStudentInCourse")]
     public async Task<ActionResult> EnrollStudentInCourse(Guid studentId,
-        [FromBody] EnrollStudentInCourseRequest request)
+        [FromBody] EnrollStudentInCourseRequest request,
+        CancellationToken ct)
     {
-        var result = await sender.Send(new EnrollStudentInCourseCommand(request.CourseId, studentId));
+        var result = await sender.Send(new EnrollStudentInCourseCommand(request.CourseId, studentId), ct);
         return result.Match(_ => NoContent(), Problem);
     }
 
@@ -47,9 +48,9 @@ public sealed class EnrollmentController(ISender sender) : ApiController
     [EndpointSummary("Removes a student from a course.")]
     [EndpointDescription("Deletes a course enrollment for the specified student.")]
     [EndpointName("RemoveStudentFromCourse")]
-    public async Task<ActionResult> RemoveStudentFromCourse(Guid enrollmentId, Guid studentId)
+    public async Task<ActionResult> RemoveStudentFromCourse(Guid enrollmentId, Guid studentId, CancellationToken ct)
     {
-        var result = await sender.Send(new RemoveStudentFromCourseCommand(enrollmentId, studentId));
+        var result = await sender.Send(new RemoveStudentFromCourseCommand(enrollmentId, studentId), ct);
         return result.Match(_ => NoContent(), Problem);
     }
 
@@ -60,9 +61,9 @@ public sealed class EnrollmentController(ISender sender) : ApiController
     [EndpointSummary("Retrieves student enrollments.")]
     [EndpointDescription("Returns the enrollments for a specific student.")]
     [EndpointName("GetStudentEnrollments")]
-    public async Task<ActionResult<List<EnrollmentDto>>> GetStudentEnrollments(Guid studentId)
+    public async Task<ActionResult<List<EnrollmentDto>>> GetStudentEnrollments(Guid studentId, CancellationToken ct)
     {
-        var result = await sender.Send(new GetStudentEnrollmentsByIdQuery(studentId));
+        var result = await sender.Send(new GetStudentEnrollmentsByIdQuery(studentId), ct);
         return result.Match(Ok, Problem);
     }
 
@@ -73,9 +74,9 @@ public sealed class EnrollmentController(ISender sender) : ApiController
     [EndpointSummary("Retrieves student enrollment counts.")]
     [EndpointDescription("Returns student enrollment count based on the student ID.")]
     [EndpointName("GetStudentEnrollmentsCount")]
-    public async Task<ActionResult<EnrollmentCountDto>> GetStudentEnrollmentsCount(Guid studentId)
+    public async Task<ActionResult<EnrollmentCountDto>> GetStudentEnrollmentsCount(Guid studentId, CancellationToken ct)
     {
-        var result = await sender.Send(new GetStudentEnrollmentsCountQuery(studentId));
+        var result = await sender.Send(new GetStudentEnrollmentsCountQuery(studentId), ct);
         return result.Match(Ok, Problem);
     }
 
@@ -87,9 +88,9 @@ public sealed class EnrollmentController(ISender sender) : ApiController
     [EndpointSummary("Retrieves enrollment counts for all courses.")]
     [EndpointDescription("Returns a list of all courses with their enrollment count, sorted descending. Admin only.")]
     [EndpointName("GetAllCoursesEnrollmentCount")]
-    public async Task<ActionResult<List<CourseEnrollmentCountDto>>> GetAllCoursesEnrollmentCount()
+    public async Task<ActionResult<List<CourseEnrollmentCountDto>>> GetAllCoursesEnrollmentCount(CancellationToken ct)
     {
-        var result = await sender.Send(new GetAllCoursesEnrollmentCountQuery());
+        var result = await sender.Send(new GetAllCoursesEnrollmentCountQuery(), ct);
         return result.Match(Ok, Problem);
     }
 }

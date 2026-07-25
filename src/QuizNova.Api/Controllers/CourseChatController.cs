@@ -24,9 +24,9 @@ public sealed class CourseChatController(ISender sender) : ApiController
     [EndpointSummary("Retrieves the chatroom data for a course.")]
     [EndpointDescription("Returns the chatroom status, student IDs, and message history for a specific course.")]
     [EndpointName("GetChatRoomData")]
-    public async Task<ActionResult<CourseChatRoomDto>> GetChatRoomData(Guid courseId)
+    public async Task<ActionResult<CourseChatRoomDto>> GetChatRoomData(Guid courseId, CancellationToken ct)
     {
-        var result = await sender.Send(new GetCourseChatRoomByCourseIdQuery(courseId));
+        var result = await sender.Send(new GetCourseChatRoomByCourseIdQuery(courseId), ct);
         return result.Match(Ok, Problem);
     }
 }

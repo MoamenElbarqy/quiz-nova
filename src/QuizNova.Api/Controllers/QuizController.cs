@@ -41,9 +41,9 @@ public sealed class QuizController(ISender sender) : ApiController
     [ProducesResponseType(typeof(PaginatedList<QuizDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<PaginatedList<QuizDto>>> GetAllQuizzes([FromQuery] GetAllQuizzesQuery query)
+    public async Task<ActionResult<PaginatedList<QuizDto>>> GetAllQuizzes([FromQuery] GetAllQuizzesQuery query, CancellationToken ct)
     {
-        var result = await sender.Send(query);
+        var result = await sender.Send(query, ct);
 
         return result.Match(
             Ok,
@@ -59,9 +59,9 @@ public sealed class QuizController(ISender sender) : ApiController
     [ProducesResponseType(typeof(QuizzesCountDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<QuizzesCountDto>> GetInstructorQuizzesCount([FromQuery] Guid instructorId)
+    public async Task<ActionResult<QuizzesCountDto>> GetInstructorQuizzesCount([FromQuery] Guid instructorId, CancellationToken ct)
     {
-        var result = await sender.Send(new GetInstructorQuizzesCountQuery(instructorId));
+        var result = await sender.Send(new GetInstructorQuizzesCountQuery(instructorId), ct);
 
         return result.Match(
             Ok,
@@ -76,9 +76,9 @@ public sealed class QuizController(ISender sender) : ApiController
     [ProducesResponseType(typeof(QuizDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<QuizDto>> GetQuizById([FromRoute] Guid quizId)
+    public async Task<ActionResult<QuizDto>> GetQuizById([FromRoute] Guid quizId, CancellationToken ct)
     {
-        var result = await sender.Send(new GetQuizByIdQuery(quizId));
+        var result = await sender.Send(new GetQuizByIdQuery(quizId), ct);
 
         return result.Match(
             Ok,
@@ -93,11 +93,11 @@ public sealed class QuizController(ISender sender) : ApiController
     [ProducesResponseType(typeof(QuizDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<QuizDto>> CreateQuiz([FromBody] CreateQuizRequest request)
+    public async Task<ActionResult<QuizDto>> CreateQuiz([FromBody] CreateQuizRequest request, CancellationToken ct)
     {
         var command = request.ToCommand();
 
-        var createQuizResult = await sender.Send(command);
+        var createQuizResult = await sender.Send(command, ct);
 
         return createQuizResult.Match(
             Ok,
@@ -115,13 +115,14 @@ public sealed class QuizController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult> UpdateQuizMetadata(
         [FromRoute] Guid quizId,
-        [FromBody] UpdateQuizMetadataRequest request)
+        [FromBody] UpdateQuizMetadataRequest request,
+        CancellationToken ct)
     {
         var result = await sender.Send(new UpdateQuizMetadataCommand(
             quizId,
             request.Title,
             request.StartsAtUtc,
-            request.EndsAtUtc));
+            request.EndsAtUtc), ct);
 
         return result.Match(
             _ => NoContent(),
@@ -139,7 +140,8 @@ public sealed class QuizController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<QuestionDto>> AddQuestion(
         [FromRoute] Guid quizId,
-        [FromBody] CreateQuizQuestionRequest request)
+        [FromBody] CreateQuizQuestionRequest request,
+        CancellationToken ct)
     {
         CreateQuestionCommand questionCommand = request switch
         {
@@ -163,7 +165,7 @@ public sealed class QuizController(ISender sender) : ApiController
             _ => throw new InvalidOperationException("Unknown question type")
         };
 
-        var result = await sender.Send(new AddQuestionCommand(quizId, questionCommand));
+        var result = await sender.Send(new AddQuestionCommand(quizId, questionCommand), ct);
 
         return result.Match(
             Ok,
@@ -182,7 +184,8 @@ public sealed class QuizController(ISender sender) : ApiController
     public async Task<ActionResult> UpdateQuestion(
         [FromRoute] Guid quizId,
         [FromRoute] Guid questionId,
-        [FromBody] UpdateQuestionRequest request)
+        [FromBody] UpdateQuestionRequest request,
+        CancellationToken ct)
     {
         UpdateQuestionCommand command = request switch
         {
@@ -215,7 +218,7 @@ public sealed class QuizController(ISender sender) : ApiController
             _ => throw new InvalidOperationException("Unknown question type")
         };
 
-        var result = await sender.Send(command);
+        var result = await sender.Send(command, ct);
 
         return result.Match(
             _ => NoContent(),
@@ -234,9 +237,10 @@ public sealed class QuizController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult> UpdateQuizCourseId(
         [FromRoute] Guid quizId,
-        [FromBody] UpdateQuizCourseIdRequest request)
+        [FromBody] UpdateQuizCourseIdRequest request,
+        CancellationToken ct)
     {
-        var result = await sender.Send(new UpdateQuizCourseIdCommand(quizId, request.CourseId));
+        var result = await sender.Send(new UpdateQuizCourseIdCommand(quizId, request.CourseId), ct);
 
         return result.Match(
             _ => NoContent(),
@@ -254,9 +258,10 @@ public sealed class QuizController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult> DeleteQuestion(
         [FromRoute] Guid quizId,
-        [FromRoute] Guid questionId)
+        [FromRoute] Guid questionId,
+        CancellationToken ct)
     {
-        var result = await sender.Send(new DeleteQuestionCommand(quizId, questionId));
+        var result = await sender.Send(new DeleteQuestionCommand(quizId, questionId), ct);
 
         return result.Match(
             _ => NoContent(),
@@ -273,9 +278,9 @@ public sealed class QuizController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<StudentQuizzesDto>> GetStudentQuizzes([FromRoute] Guid id)
+    public async Task<ActionResult<StudentQuizzesDto>> GetStudentQuizzes([FromRoute] Guid id, CancellationToken ct)
     {
-        var result = await sender.Send(new GetStudentQuizzesQuery(id));
+        var result = await sender.Send(new GetStudentQuizzesQuery(id), ct);
 
         return result.Match(
             Ok,
@@ -292,9 +297,9 @@ public sealed class QuizController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<List<QuizDto>>> GetInstructorQuizzes([FromRoute] Guid id)
+    public async Task<ActionResult<List<QuizDto>>> GetInstructorQuizzes([FromRoute] Guid id, CancellationToken ct)
     {
-        var result = await sender.Send(new GetInstructorQuizzesQuery(id));
+        var result = await sender.Send(new GetInstructorQuizzesQuery(id), ct);
 
         return result.Match(
             Ok,
@@ -312,9 +317,10 @@ public sealed class QuizController(ISender sender) : ApiController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<List<CoursePerformanceDto>>> GetInstructorCoursesPerformance(
-        [FromRoute] Guid instructorId)
+        [FromRoute] Guid instructorId,
+        CancellationToken ct)
     {
-        var result = await sender.Send(new GetInstructorCoursesPerformanceQuery(instructorId));
+        var result = await sender.Send(new GetInstructorCoursesPerformanceQuery(instructorId), ct);
 
         return result.Match(
             Ok,

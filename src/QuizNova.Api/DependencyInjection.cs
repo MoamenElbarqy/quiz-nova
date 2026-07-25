@@ -40,7 +40,7 @@ public static class DependencyInjection
         services.AddCustomVersioning();
         services.AddApiDocumentation();
         services.AddAppOpenTelemetry();
-
+        services.AddGracefulShutdown();
         services.AddOutputCache(options =>
         {
             options.AddBasePolicy(builder =>
@@ -96,6 +96,15 @@ public static class DependencyInjection
         services.AddSignalR();
         services.AddCustomResponseCompression();
         services.AddIdentityInfrastructure();
+        return services;
+    }
+
+    private static IServiceCollection AddGracefulShutdown(this IServiceCollection services)
+    {
+        services.Configure<HostOptions>(options =>
+        {
+            options.ShutdownTimeout = TimeSpan.FromSeconds(30);
+        });
         return services;
     }
 

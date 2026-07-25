@@ -29,9 +29,9 @@ public sealed class AdminController(ISender sender) : ApiController
     [ProducesResponseType(typeof(PaginatedList<AdminDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetAllAdmins([FromQuery] GetAllAdminsQuery query)
+    public async Task<IActionResult> GetAllAdmins([FromQuery] GetAllAdminsQuery query, CancellationToken ct)
     {
-        var result = await sender.Send(query);
+        var result = await sender.Send(query, ct);
 
         return result.Match(
             Ok,
@@ -47,9 +47,9 @@ public sealed class AdminController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetAdminById([FromRoute] Guid id)
+    public async Task<IActionResult> GetAdminById([FromRoute] Guid id, CancellationToken ct)
     {
-        var result = await sender.Send(new GetAdminByIdQuery(id));
+        var result = await sender.Send(new GetAdminByIdQuery(id), ct);
 
         return result.Match(
             Ok,
@@ -64,11 +64,11 @@ public sealed class AdminController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminRequest request)
+    public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminRequest request, CancellationToken ct)
     {
         var command = request.ToCommand();
 
-        var result = await sender.Send(command);
+        var result = await sender.Send(command, ct);
 
         return result.Match(
             Ok,

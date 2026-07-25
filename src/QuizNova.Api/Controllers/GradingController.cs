@@ -26,9 +26,9 @@ public sealed class GradingController(ISender sender) : ApiController
     [HttpGet("manually-graded-answers")]
     [ProducesResponseType(typeof(PaginatedList<PendingManualAnswersDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GetPendingManualAnswers([FromQuery] GetPendingManualAnswersQuery query)
+    public async Task<IActionResult> GetPendingManualAnswers([FromQuery] GetPendingManualAnswersQuery query, CancellationToken ct)
     {
-        var result = await sender.Send(query);
+        var result = await sender.Send(query, ct);
 
         return result.Match(
             Ok,
@@ -45,12 +45,13 @@ public sealed class GradingController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> GradeQuestion(
         [FromRoute] Guid answerId,
-        [FromBody] GradeQuestionRequest request)
+        [FromBody] GradeQuestionRequest request,
+        CancellationToken ct)
     {
         var result = await sender.Send(new GradeQuestionCommand(
             answerId,
             request.Score,
-            request.Feedback));
+            request.Feedback), ct);
 
         return result.Match(
             _ => NoContent(),

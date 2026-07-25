@@ -35,9 +35,10 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<QuizAttemptDto>> GetQuizAttemptById(
         [FromRoute] Guid studentId,
-        [FromRoute] Guid id)
+        [FromRoute] Guid id,
+        CancellationToken ct)
     {
-        var result = await sender.Send(new GetQuizAttemptByIdQuery(id));
+        var result = await sender.Send(new GetQuizAttemptByIdQuery(id), ct);
 
         return result.Match(
             Ok,
@@ -54,9 +55,9 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<QuizAttemptDto>> GetQuizAttemptByIdForGrading([FromRoute] Guid id)
+    public async Task<ActionResult<QuizAttemptDto>> GetQuizAttemptByIdForGrading([FromRoute] Guid id, CancellationToken ct)
     {
-        var result = await sender.Send(new GetQuizAttemptByIdQuery(id));
+        var result = await sender.Send(new GetQuizAttemptByIdQuery(id), ct);
 
         return result.Match(
             Ok,
@@ -73,9 +74,10 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<QuizAttemptDto>> StartQuizAttempt(
-        [FromBody] StartQuizAttemptRequest request)
+        [FromBody] StartQuizAttemptRequest request,
+        CancellationToken ct)
     {
-        var result = await sender.Send(new StartQuizAttemptCommand(request.QuizId));
+        var result = await sender.Send(new StartQuizAttemptCommand(request.QuizId), ct);
 
         return result.Match(
             Ok,
@@ -92,11 +94,12 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> SubmitQuestionAnswer(
         [FromRoute] Guid id,
-        [FromBody] SubmitQuestionAnswerRequest request)
+        [FromBody] SubmitQuestionAnswerRequest request,
+        CancellationToken ct)
     {
         var command = request.ToCommand(id);
 
-        var result = await sender.Send(command);
+        var result = await sender.Send(command, ct);
 
         return result.Match(
             _ => Ok(),
@@ -113,9 +116,10 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<QuizAttemptDto>> CompleteQuizAttempt(
         [FromRoute] Guid id,
-        [FromBody] CompleteQuizAttemptRequest request)
+        [FromBody] CompleteQuizAttemptRequest request,
+        CancellationToken ct)
     {
-        var result = await sender.Send(new CompleteQuizAttemptCommand(id, request.SubmittedAt));
+        var result = await sender.Send(new CompleteQuizAttemptCommand(id, request.SubmittedAt), ct);
 
         return result.Match(
             Ok,
@@ -131,9 +135,9 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [ProducesResponseType(typeof(IReadOnlyList<QuizAttemptDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IReadOnlyList<QuizAttemptDto>>> GetStudentQuizAttempts([FromRoute] Guid studentId)
+    public async Task<ActionResult<IReadOnlyList<QuizAttemptDto>>> GetStudentQuizAttempts([FromRoute] Guid studentId, CancellationToken ct)
     {
-        var result = await sender.Send(new GetStudentQuizAttemptsQuery(studentId));
+        var result = await sender.Send(new GetStudentQuizAttemptsQuery(studentId), ct);
 
         return result.Match(
             Ok,
@@ -149,9 +153,9 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [ProducesResponseType(typeof(QuizAttemptsCountDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<QuizAttemptsCountDto>> GetStudentQuizAttemptsCount([FromRoute] Guid studentId)
+    public async Task<ActionResult<QuizAttemptsCountDto>> GetStudentQuizAttemptsCount([FromRoute] Guid studentId, CancellationToken ct)
     {
-        var result = await sender.Send(new GetStudentQuizAttemptsCountQuery(studentId));
+        var result = await sender.Send(new GetStudentQuizAttemptsCountQuery(studentId), ct);
 
         return result.Match(
             Ok,
@@ -167,9 +171,9 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [ProducesResponseType(typeof(PaginatedList<QuizAttemptDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<PaginatedList<QuizAttemptDto>>> GetAllQuizzesAttempts([FromQuery] GetAllQuizzesAttemptsQuery query)
+    public async Task<ActionResult<PaginatedList<QuizAttemptDto>>> GetAllQuizzesAttempts([FromQuery] GetAllQuizzesAttemptsQuery query, CancellationToken ct)
     {
-        var result = await sender.Send(query);
+        var result = await sender.Send(query, ct);
 
         return result.Match(
             Ok,

@@ -25,6 +25,7 @@ services:
       dockerfile: src/QuizNova.Api/Dockerfile
     container_name: quiznova-api
     restart: unless-stopped
+    stop_grace_period: 35s
     depends_on:
       db:
         condition: service_healthy

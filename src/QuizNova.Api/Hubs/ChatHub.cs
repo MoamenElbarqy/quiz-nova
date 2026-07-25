@@ -21,6 +21,7 @@ public class ChatHub(IAppDbContext dbContext, IUser currentUser, IMediator media
 {
     public async Task<Result<Success>> JoinRoom(Guid roomId)
     {
+        var ct = Context.ConnectionAborted;
         var userIdString = currentUser.Id;
         if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
         {
@@ -29,7 +30,7 @@ public class ChatHub(IAppDbContext dbContext, IUser currentUser, IMediator media
 
         var room = await dbContext.CourseChatRooms
             .Include(r => r.Students)
-            .FirstOrDefaultAsync(r => r.Id == roomId);
+            .FirstOrDefaultAsync(r => r.Id == roomId, ct);
 
         if (room == null)
         {
@@ -39,12 +40,12 @@ public class ChatHub(IAppDbContext dbContext, IUser currentUser, IMediator media
         if (!room.CanJoin(userId))
         {
             var isCourseInstructor = await dbContext.Courses
-                .AnyAsync(c => c.Id == room.CourseId && c.InstructorId == userId);
+                .AnyAsync(c => c.Id == room.CourseId && c.InstructorId == userId, ct);
 
             if (!isCourseInstructor)
             {
                 var isEnrolled = await dbContext.Enrollments
-                    .AnyAsync(e => e.CourseId == room.CourseId && e.StudentId == userId);
+                    .AnyAsync(e => e.CourseId == room.CourseId && e.StudentId == userId, ct);
 
                 if (!isEnrolled)
                 {
@@ -53,7 +54,7 @@ public class ChatHub(IAppDbContext dbContext, IUser currentUser, IMediator media
             }
         }
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString());
+        await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString(), ct);
 
         return Result.Success;
     }
@@ -65,12 +66,13 @@ public class ChatHub(IAppDbContext dbContext, IUser currentUser, IMediator media
 
     public async Task<Result<MessageDto>> SendMessage(Guid roomId, SendMessageRequest request)
     {
+        var ct = Context.ConnectionAborted;
         var command = new SendMessageCommand(roomId, request.ReplyOnId, request.Content);
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(command, ct);
 
         if (result.IsSuccess)
         {
-            await Clients.Group(roomId.ToString()).SendAsync("ReceiveMessage", result.Value);
+            await Clients.Group(roomId.ToString()).SendAsync("ReceiveMessage", result.Value, ct);
         }
 
         return result;
@@ -78,12 +80,13 @@ public class ChatHub(IAppDbContext dbContext, IUser currentUser, IMediator media
 
     public async Task<Result<ReactDto>> ReactToMessage(Guid roomId, ReactOnAMessageRequest request)
     {
+        var ct = Context.ConnectionAborted;
         var command = new ReactToMessageCommand(roomId, request.MessageId, request.Emoji);
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(command, ct);
 
         if (result.IsSuccess)
         {
-            await Clients.Group(roomId.ToString()).SendAsync("ReceiveReaction", result.Value);
+            await Clients.Group(roomId.ToString()).SendAsync("ReceiveReaction", result.Value, ct);
         }
 
         return result;
@@ -91,12 +94,13 @@ public class ChatHub(IAppDbContext dbContext, IUser currentUser, IMediator media
 
     public async Task<Result<Success>> RemoveReaction(Guid roomId, Guid messageId, Guid reactionId)
     {
+        var ct = Context.ConnectionAborted;
         var command = new RemoveReactionCommand(roomId, messageId, reactionId);
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(command, ct);
 
         if (result.IsSuccess)
         {
-            await Clients.Group(roomId.ToString()).SendAsync("ReceiveReactionRemoved", reactionId);
+            await Clients.Group(roomId.ToString()).SendAsync("ReceiveReactionRemoved", reactionId, ct);
         }
 
         return result;

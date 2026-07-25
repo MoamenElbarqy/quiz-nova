@@ -29,9 +29,9 @@ public sealed class InstructorController(ISender sender) : ApiController
     [HttpGet]
     [OutputCache(Tags = ["instructors"])]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PaginatedList<InstructorDto>>> GetAllInstructors([FromQuery] GetAllInstructorsQuery query)
+    public async Task<ActionResult<PaginatedList<InstructorDto>>> GetAllInstructors([FromQuery] GetAllInstructorsQuery query, CancellationToken ct)
     {
-        var result = await sender.Send(query);
+        var result = await sender.Send(query, ct);
 
         return result.Match(
             Ok,
@@ -45,9 +45,9 @@ public sealed class InstructorController(ISender sender) : ApiController
     [OutputCache(Tags = ["instructors"])]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<InstructorDto>> GetInstructorById([FromRoute] Guid id)
+    public async Task<ActionResult<InstructorDto>> GetInstructorById([FromRoute] Guid id, CancellationToken ct)
     {
-        var result = await sender.Send(new GetInstructorByIdQuery(id));
+        var result = await sender.Send(new GetInstructorByIdQuery(id), ct);
 
         return result.Match(
             Ok,
@@ -60,11 +60,11 @@ public sealed class InstructorController(ISender sender) : ApiController
     [HttpPost]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<InstructorDto>> CreateInstructor([FromBody] CreateInstructorRequest request)
+    public async Task<ActionResult<InstructorDto>> CreateInstructor([FromBody] CreateInstructorRequest request, CancellationToken ct)
     {
         var command = request.ToCommand();
 
-        var result = await sender.Send(command);
+        var result = await sender.Send(command, ct);
 
         return result.Match(
             Ok,
@@ -80,11 +80,12 @@ public sealed class InstructorController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<InstructorDto>> UpdateInstructor(
         [FromRoute] Guid id,
-        [FromBody] UpdateInstructorRequest request)
+        [FromBody] UpdateInstructorRequest request,
+        CancellationToken ct)
     {
         var command = request.ToCommand(id);
 
-        var result = await sender.Send(command);
+        var result = await sender.Send(command, ct);
 
         return result.Match(
             Ok,
@@ -98,9 +99,9 @@ public sealed class InstructorController(ISender sender) : ApiController
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteInstructor([FromRoute] Guid id)
+    public async Task<IActionResult> DeleteInstructor([FromRoute] Guid id, CancellationToken ct)
     {
-        var result = await sender.Send(new DeleteInstructorCommand(id));
+        var result = await sender.Send(new DeleteInstructorCommand(id), ct);
 
         return result.Match(
             _ => NoContent(),
