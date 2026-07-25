@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
@@ -37,7 +38,7 @@ public sealed class DeleteCourseByIdCommandHandler(
 
         dbContext.Courses.Remove(course);
         await dbContext.SaveChangesAsync(ct);
-        await cacheInvalidator.InvalidateAsync(["courses"], ct);
+        await cacheInvalidator.InvalidateAsync([CacheTags.Courses], ct);
 
         logger.LogInformation("Successfully deleted course {CourseId}", request.CourseId);
 

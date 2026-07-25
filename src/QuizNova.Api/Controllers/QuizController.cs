@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.OutputCaching;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Mappers;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesPerformance;
@@ -33,7 +34,7 @@ public sealed class QuizController(ISender sender) : ApiController
     [EndpointSummary("Retrieves quizzes.")]
     [EndpointDescription("Returns a paginated and filterable list of quizzes.")]
     [EndpointName("GetAllQuizzes")]
-    [OutputCache(Tags = ["quizzes"])]
+    [OutputCache(Tags = [CacheTags.Quizzes])]
     [HttpGet]
     [Authorize(Roles = nameof(UserRole.Admin))]
     [ProducesResponseType(typeof(PaginatedList<QuizDto>), StatusCodes.Status200OK)]
@@ -52,7 +53,7 @@ public sealed class QuizController(ISender sender) : ApiController
     [EndpointSummary("Retrieves instructor quiz count.")]
     [EndpointDescription("Returns the number of quizzes created by the specified instructor.")]
     [EndpointName("GetInstructorQuizzesCount")]
-    [OutputCache(Tags = ["quizzes"])]
+    [OutputCache(Tags = [CacheTags.Quizzes])]
     [HttpGet("count")]
     [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Instructor)}")]
     [ProducesResponseType(typeof(QuizzesCountDto), StatusCodes.Status200OK)]
@@ -71,7 +72,7 @@ public sealed class QuizController(ISender sender) : ApiController
     [EndpointSummary("Retrieves a quiz by id.")]
     [EndpointDescription("Fetches a single quiz using the provided quiz identifier.")]
     [EndpointName("GetQuizById")]
-    [OutputCache(Tags = ["quizzes"])]
+    [OutputCache(Tags = [CacheTags.Quizzes])]
     [HttpGet("{quizId:guid}")]
     [ProducesResponseType(typeof(QuizDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -250,7 +251,7 @@ public sealed class QuizController(ISender sender) : ApiController
     [EndpointSummary("Retrieves quizzes assigned to a student.")]
     [EndpointDescription("Returns quizzes associatined with the specified student identifier.")]
     [EndpointName("GetStudentQuizzes")]
-    [OutputCache(Tags = ["students", "quizzes"], VaryByQueryKeys = ["t"])]
+    [OutputCache(Tags = [CacheTags.Students, CacheTags.Quizzes], VaryByQueryKeys = ["t"])]
     [HttpGet("/students/{id:guid}/quizzes")]
     [Authorize(Roles = nameof(UserRole.Student))]
     [ProducesResponseType(typeof(StudentQuizzesDto), StatusCodes.Status200OK)]
@@ -269,7 +270,7 @@ public sealed class QuizController(ISender sender) : ApiController
     [EndpointSummary("Retrieves quizzes created by an instructor.")]
     [EndpointDescription("Returns quizzes associated with the specified instructor identifier.")]
     [EndpointName("GetInstructorQuizzes")]
-    [OutputCache(Tags = ["instructors", "quizzes"])]
+    [OutputCache(Tags = [CacheTags.Instructors, CacheTags.Quizzes])]
     [HttpGet("/instructors/{id:guid}/quizzes")]
     [Authorize(Roles = nameof(UserRole.Instructor))]
     [ProducesResponseType(typeof(List<QuizDto>), StatusCodes.Status200OK)]
@@ -288,7 +289,7 @@ public sealed class QuizController(ISender sender) : ApiController
     [EndpointSummary("Retrieves instructor courses performance.")]
     [EndpointDescription("Returns performance metrics for all courses of a specific instructor.")]
     [EndpointName("GetInstructorCoursesPerformance")]
-    [OutputCache(Tags = ["courses", "quizzes", "instructors", "performance"])]
+    [OutputCache(Tags = [CacheTags.Courses, CacheTags.Quizzes, CacheTags.Instructors, CacheTags.Performance])]
     [HttpGet("/instructors/{instructorId:guid}/courses/performance")]
     [Authorize(Roles = nameof(UserRole.Instructor))]
     [ProducesResponseType(typeof(List<CoursePerformanceDto>), StatusCodes.Status200OK)]

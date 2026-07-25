@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
@@ -37,7 +38,7 @@ public sealed class DeleteInstructorCommandHandler(
 
         dbContext.Instructors.Remove(instructor);
         await dbContext.SaveChangesAsync(ct);
-        await cacheInvalidator.InvalidateAsync(["instructors"], ct);
+        await cacheInvalidator.InvalidateAsync([CacheTags.Instructors], ct);
 
         logger.LogInformation("Successfully deleted instructor {InstructorId}", request.Id);
 

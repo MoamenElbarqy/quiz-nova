@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.QuizAttempts.DTOs;
@@ -108,7 +109,7 @@ public sealed class StartQuizAttemptCommandHandler(
 
         await mongoContext.QuizAttempts.InsertOneAsync(attempt, cancellationToken: ct);
 
-        await cacheInvalidator.InvalidateAsync(["quiz_attempts", "quizzes"], ct);
+        await cacheInvalidator.InvalidateAsync([CacheTags.QuizAttempts, CacheTags.Quizzes], ct);
 
         logger.LogInformation(
             "Successfully started quiz attempt {QuizAttemptId} for student {StudentId}",

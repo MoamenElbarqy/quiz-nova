@@ -1,3 +1,4 @@
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Enrollments.DTOs;
 using QuizNova.Domain.Common.Results;
@@ -9,7 +10,6 @@ public sealed record GetAllCoursesEnrollmentCountQuery()
 {
     public string CacheKey => "courses:enrollment-counts";
 
-    public string[] Tags => ["courses", "enrollments"];
+    public string[] Tags => [CacheTags.Courses, CacheTags.Enrollments];
 
-    public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 }

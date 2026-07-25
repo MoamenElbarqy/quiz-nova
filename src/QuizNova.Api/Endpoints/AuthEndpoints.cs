@@ -1,10 +1,14 @@
 using MediatR;
 
+using Microsoft.Extensions.Options;
+
 using QuizNova.Api.DTOs.Requests;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Features.Auth.Commands.Login;
 using QuizNova.Application.Features.Auth.Commands.RefreshToken;
 using QuizNova.Application.Features.Auth.DTOs;
+using QuizNova.Infrastructure.Settings;
 
 namespace QuizNova.Api.Endpoints;
 
@@ -34,7 +38,7 @@ public static class AuthEndpoints
         .WithName("Login")
         .WithSummary("Authenticates a user and issues access tokens.")
         .WithDescription("Validates the provided email and password, then returns an access token response and sets a secure refresh token cookie.")
-        .RequireRateLimiting("Auth")
+        .RequireRateLimiting(RateLimiterPolicies.Auth)
         .Produces<AuthDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
@@ -59,7 +63,7 @@ public static class AuthEndpoints
         .WithName("RefreshToken")
         .WithSummary("Refreshes an expired access token.")
         .WithDescription("Validates the refresh token from the secure cookie and returns a rotated token pair.")
-        .RequireRateLimiting("Global")
+        .RequireRateLimiting(RateLimiterPolicies.Global)
         .Produces<TokenDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status401Unauthorized);
 
@@ -73,14 +77,17 @@ public static class AuthEndpoints
             throw new InvalidOperationException("Refresh token is required to set authentication cookie.");
         }
 
+        var jwtSettings = context.RequestServices.GetRequiredService<IOptions<JwtSettings>>();
+        var expirationDays = jwtSettings.Value.RefreshTokenExpirationDays;
+
         context.Response.Cookies.Append(RefreshTokenCookieName, refreshToken, new CookieOptions
         {
             HttpOnly = true,
             Secure = context.Request.IsHttps,
             SameSite = SameSiteMode.None,
-            Expires = DateTime.UtcNow.AddDays(7),
+            Expires = DateTime.UtcNow.AddDays(expirationDays),
             Path = "/",
-            MaxAge = TimeSpan.FromDays(7),
+            MaxAge = TimeSpan.FromDays(expirationDays),
         });
     }
 }

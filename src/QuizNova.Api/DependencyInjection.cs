@@ -6,6 +6,7 @@ using Asp.Versioning;
 
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Options;
@@ -19,6 +20,7 @@ using OpenTelemetry.Trace;
 using QuizNova.Api.Infrastructure;
 using QuizNova.Api.OpenApi.Transformers;
 using QuizNova.Api.services;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Infrastructure.Settings;
 
@@ -41,52 +43,59 @@ public static class DependencyInjection
         services.AddApiDocumentation();
         services.AddAppOpenTelemetry();
         services.AddGracefulShutdown();
-        services.AddOutputCache(options =>
-        {
-            options.AddBasePolicy(builder =>
-                builder.Expire(TimeSpan.FromSeconds(30)));
-        });
 
-        services.AddRateLimiter(options =>
-        {
-            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-
-            if (configuration.GetValue<bool>("DisableRateLimiting"))
+        services.AddOutputCache();
+        services.AddOptions<OutputCacheOptions>()
+            .Configure<IOptions<CacheSettings>>((options, cacheSettings) =>
             {
-                options.AddPolicy("Global", _ => RateLimitPartition.GetNoLimiter("global"));
-                options.AddPolicy("SubmitQuiz", _ => RateLimitPartition.GetNoLimiter("submitquiz"));
-                options.AddPolicy("Auth", _ => RateLimitPartition.GetNoLimiter("auth"));
-                return;
-            }
-
-            options.AddConcurrencyLimiter("Global", limiter =>
-            {
-                limiter.PermitLimit = 50;
-                limiter.QueueLimit = 100;
-                limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                options.AddBasePolicy(builder =>
+                    builder.Expire(TimeSpan.FromSeconds(cacheSettings.Value.OutputCacheDurationSeconds)));
             });
 
-            options.AddTokenBucketLimiter("SubmitQuiz", limiter =>
+        services.AddRateLimiter();
+        services.AddOptions<RateLimiterOptions>()
+            .Configure<IOptions<RateLimiterSettings>>((options, rateLimiterSettings) =>
             {
-                limiter.TokenLimit = 200;
-                limiter.ReplenishmentPeriod = TimeSpan.FromSeconds(1);
-                limiter.TokensPerPeriod = 50;
-                limiter.QueueLimit = 1000;
-                limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                limiter.AutoReplenishment = true;
-            });
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-            options.AddPolicy("Auth", ctx =>
-                RateLimitPartition.GetSlidingWindowLimiter(
-                    ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    _ => new SlidingWindowRateLimiterOptions
-                    {
-                        Window = TimeSpan.FromMinutes(1),
-                        PermitLimit = 5,
-                        SegmentsPerWindow = 6,
-                        QueueLimit = 0,
-                    }));
-        });
+                var settings = rateLimiterSettings.Value;
+
+                if (settings.DisableRateLimiting)
+                {
+                    options.AddPolicy(RateLimiterPolicies.Global, _ => RateLimitPartition.GetNoLimiter("global"));
+                    options.AddPolicy(RateLimiterPolicies.SubmitQuiz, _ => RateLimitPartition.GetNoLimiter("submitquiz"));
+                    options.AddPolicy(RateLimiterPolicies.Auth, _ => RateLimitPartition.GetNoLimiter("auth"));
+                    return;
+                }
+
+                options.AddConcurrencyLimiter(RateLimiterPolicies.Global, limiter =>
+                {
+                    limiter.PermitLimit = settings.GlobalConcurrencyPermitLimit;
+                    limiter.QueueLimit = settings.GlobalConcurrencyQueueLimit;
+                    limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                });
+
+                options.AddTokenBucketLimiter(RateLimiterPolicies.SubmitQuiz, limiter =>
+                {
+                    limiter.TokenLimit = settings.SubmitQuizTokenLimit;
+                    limiter.ReplenishmentPeriod = TimeSpan.FromSeconds(settings.SubmitQuizReplenishmentPeriodSeconds);
+                    limiter.TokensPerPeriod = settings.SubmitQuizTokensPerPeriod;
+                    limiter.QueueLimit = settings.SubmitQuizQueueLimit;
+                    limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    limiter.AutoReplenishment = true;
+                });
+
+                options.AddPolicy(RateLimiterPolicies.Auth, ctx =>
+                    RateLimitPartition.GetSlidingWindowLimiter(
+                        ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        _ => new SlidingWindowRateLimiterOptions
+                        {
+                            Window = TimeSpan.FromMinutes(settings.AuthWindowMinutes),
+                            PermitLimit = settings.AuthPermitLimit,
+                            SegmentsPerWindow = settings.AuthSegmentsPerWindow,
+                            QueueLimit = 0,
+                        }));
+            });
 
         services.AddConfiguredCors();
         services.AddExceptionHandling();

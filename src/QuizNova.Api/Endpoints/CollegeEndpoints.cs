@@ -2,6 +2,7 @@ using MediatR;
 
 using Microsoft.AspNetCore.Authorization;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Features.Colleges.DTOs;
 using QuizNova.Application.Features.Colleges.Queries.GetCollegeSummary;
 using QuizNova.Domain.Entities.Identity;
@@ -14,7 +15,7 @@ public static class CollegeEndpoints
     {
         var group = app.MapGroup("colleges")
             .RequireAuthorization(new AuthorizeAttribute { Roles = nameof(UserRole.Admin) })
-            .RequireRateLimiting("Global")
+            .RequireRateLimiting(RateLimiterPolicies.Global)
             .WithTags("colleges")
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
@@ -27,7 +28,7 @@ public static class CollegeEndpoints
         .WithName("GetCollegeSummary")
         .WithSummary("Retrieves college summary metrics.")
         .WithDescription("Returns aggregate college information intended for administrative dashboards.")
-        .CacheOutput(policy => policy.Tag("colleges"))
+        .CacheOutput(policy => policy.Tag(CacheTags.Colleges))
         .Produces<CollegeSummaryDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status403Forbidden);
 

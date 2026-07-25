@@ -2,6 +2,7 @@ using MediatR;
 
 using Microsoft.Extensions.Logging;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
@@ -52,7 +53,7 @@ public sealed class DeleteQuestionCommandHandler(
         }
 
         await mongoContext.Quizzes.ReplaceOneAsync(q => q.Id == quiz.Id, quiz, cancellationToken: ct);
-        await cacheInvalidator.InvalidateAsync(["quizzes"], ct);
+        await cacheInvalidator.InvalidateAsync([CacheTags.Quizzes], ct);
 
         logger.LogInformation(
             "Successfully deleted question {QuestionId} from quiz {QuizId}",

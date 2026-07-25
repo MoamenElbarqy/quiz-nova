@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
@@ -73,7 +74,7 @@ public sealed class AddQuestionCommandHandler(
         }
 
         await mongoContext.Quizzes.ReplaceOneAsync(q => q.Id == quiz.Id, quiz, cancellationToken: ct);
-        await cacheInvalidator.InvalidateAsync(["quizzes"], ct);
+        await cacheInvalidator.InvalidateAsync([CacheTags.Quizzes], ct);
 
         logger.LogInformation(
             "Successfully added question {QuestionId} to quiz {QuizId}",

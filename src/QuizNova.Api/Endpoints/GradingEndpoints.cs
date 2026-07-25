@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 
 using QuizNova.Api.DTOs.Requests;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.QuizAttempts.Commands.GradeQuestion;
 using QuizNova.Application.Features.QuizAttempts.DTOs;
@@ -17,7 +18,7 @@ public static class GradingEndpoints
     {
         var group = app.MapGroup("quiz-attempts")
             .RequireAuthorization(new AuthorizeAttribute { Roles = nameof(UserRole.Instructor) })
-            .RequireRateLimiting("Global")
+            .RequireRateLimiting(RateLimiterPolicies.Global)
             .WithTags("grading")
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)

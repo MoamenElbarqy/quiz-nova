@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.OutputCaching;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Mappers;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Students.Commands.DeleteStudent;
 using QuizNova.Application.Features.Students.DTOs;
@@ -26,7 +27,7 @@ public sealed class StudentController(ISender sender) : ApiController
     [EndpointSummary("Retrieves all students.")]
     [EndpointDescription("Returns a paginated and filterable list of student users.")]
     [EndpointName("GetAllStudents")]
-    [OutputCache(Tags = ["students"])]
+    [OutputCache(Tags = [CacheTags.Students])]
     [HttpGet]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedList<StudentDto>>> GetAllStudents([FromQuery] GetAllStudentsQuery query, CancellationToken ct)
@@ -41,7 +42,7 @@ public sealed class StudentController(ISender sender) : ApiController
     [EndpointSummary("Retrieves a student by id.")]
     [EndpointDescription("Fetches a single student using the provided student identifier.")]
     [EndpointName("GetStudentById")]
-    [OutputCache(Tags = ["students"])]
+    [OutputCache(Tags = [CacheTags.Students])]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

@@ -3,19 +3,22 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
 
 using QuizNova.Api.DTOs.Requests;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Features.Auth.Commands.Login;
 using QuizNova.Application.Features.Auth.Commands.RefreshToken;
 using QuizNova.Application.Features.Auth.DTOs;
+using QuizNova.Infrastructure.Settings;
 
 namespace QuizNova.Api.Controllers;
 
 [Route("auth")]
 [ApiController]
 [AllowAnonymous]
-public class AuthController(ISender sender) : ApiController
+public class AuthController(ISender sender, IOptions<JwtSettings> jwtSettings) : ApiController
 {
     private const string RefreshTokenCookieName = "refreshToken";
 
@@ -27,7 +30,7 @@ public class AuthController(ISender sender) : ApiController
         "Validates the provided email and password, then returns an access token response and sets a secure refresh token cookie.")]
     [EndpointName("Login")]
     [AllowAnonymous]
-    [EnableRateLimiting("Auth")]
+    [EnableRateLimiting(RateLimiterPolicies.Auth)]
     public async Task<ActionResult<AuthDto>> Login(LoginRequest request, CancellationToken ct)
     {
         var loginResult = await sender.Send(new LoginCommand(request.Email, request.Password, request.Role), ct);
@@ -81,9 +84,9 @@ public class AuthController(ISender sender) : ApiController
             HttpOnly = true,
             Secure = isHttps,
             SameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax,
-            Expires = DateTime.UtcNow.AddDays(7),
+            Expires = DateTime.UtcNow.AddDays(jwtSettings.Value.RefreshTokenExpirationDays),
             Path = "/",
-            MaxAge = TimeSpan.FromDays(7),
+            MaxAge = TimeSpan.FromDays(jwtSettings.Value.RefreshTokenExpirationDays),
         });
     }
 }

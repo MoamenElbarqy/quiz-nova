@@ -1,3 +1,4 @@
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Admins.DTOs;
 using QuizNova.Domain.Common.Results;
@@ -9,7 +10,6 @@ public sealed record GetAdminByIdQuery(Guid Id)
 {
     public string CacheKey => $"admins:{Id}";
 
-    public string[] Tags => ["admins"];
+    public string[] Tags => [CacheTags.Admins];
 
-    public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 }

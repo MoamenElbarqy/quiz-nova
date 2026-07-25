@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Mappers;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Admins.DTOs;
 using QuizNova.Application.Features.Admins.Queries.GetAdminById;
@@ -18,7 +19,7 @@ public static class AdminEndpoints
     {
         var group = app.MapGroup("admins")
             .RequireAuthorization(new AuthorizeAttribute { Roles = nameof(UserRole.Admin) })
-            .RequireRateLimiting("Global")
+            .RequireRateLimiting(RateLimiterPolicies.Global)
             .WithTags("admins")
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
@@ -32,7 +33,7 @@ public static class AdminEndpoints
         .WithName("GetAllAdmins")
         .WithSummary("Retrieves all admins.")
         .WithDescription("Returns a paginated and filterable list of admin users.")
-        .CacheOutput(policy => policy.Tag("admins"))
+        .CacheOutput(policy => policy.Tag(CacheTags.Admins))
         .Produces<PaginatedList<AdminDto>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest);
 
@@ -44,7 +45,7 @@ public static class AdminEndpoints
         .WithName("GetAdminById")
         .WithSummary("Retrieves an admin by id.")
         .WithDescription("Fetches a single admin using the provided admin identifier.")
-        .CacheOutput(policy => policy.Tag("admins"))
+        .CacheOutput(policy => policy.Tag(CacheTags.Admins))
         .Produces<AdminDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);

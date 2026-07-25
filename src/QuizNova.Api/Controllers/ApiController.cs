@@ -2,12 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.RateLimiting;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Domain.Common.Results;
 
 namespace QuizNova.Api.Controllers;
 
 [ApiController]
-[EnableRateLimiting("Global")]
+[EnableRateLimiting(RateLimiterPolicies.Global)]
 public class ApiController : ControllerBase
 {
     protected ActionResult Problem(List<Error> errors)

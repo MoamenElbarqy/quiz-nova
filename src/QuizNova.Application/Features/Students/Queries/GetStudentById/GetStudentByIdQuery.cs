@@ -1,3 +1,4 @@
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Students.DTOs;
 using QuizNova.Domain.Common.Results;
@@ -9,7 +10,6 @@ public sealed record GetStudentByIdQuery(Guid Id)
 {
     public string CacheKey => $"students:{Id}";
 
-    public string[] Tags => ["students"];
+    public string[] Tags => [CacheTags.Students];
 
-    public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 }

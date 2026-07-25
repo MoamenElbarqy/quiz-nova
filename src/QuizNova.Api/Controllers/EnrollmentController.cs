@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 
 using QuizNova.Api.DTOs.Requests;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
 using QuizNova.Application.Features.Enrollments.Commands.RemoveStudentFromCourse;
 using QuizNova.Application.Features.Enrollments.DTOs;
@@ -55,7 +56,7 @@ public sealed class EnrollmentController(ISender sender) : ApiController
     }
 
     [HttpGet("students/{studentId:guid}/enrollments")]
-    [OutputCache(Tags = ["enrollments"])]
+    [OutputCache(Tags = [CacheTags.Enrollments])]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Retrieves student enrollments.")]
@@ -68,7 +69,7 @@ public sealed class EnrollmentController(ISender sender) : ApiController
     }
 
     [HttpGet("students/{studentId:guid}/enrollments/count")]
-    [OutputCache(Tags = ["enrollments"])]
+    [OutputCache(Tags = [CacheTags.Enrollments])]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Retrieves student enrollment counts.")]
@@ -81,7 +82,7 @@ public sealed class EnrollmentController(ISender sender) : ApiController
     }
 
     [HttpGet("courses/enrollments/count")]
-    [OutputCache(Tags = ["courses", "enrollments"])]
+    [OutputCache(Tags = [CacheTags.Courses, CacheTags.Enrollments])]
     [Authorize(Roles = nameof(UserRole.Admin))]
     [ProducesResponseType(typeof(List<CourseEnrollmentCountDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

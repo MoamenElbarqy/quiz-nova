@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.OutputCaching;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Mappers;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Admins.DTOs;
 using QuizNova.Application.Features.Admins.Queries.GetAdminById;
@@ -25,7 +26,7 @@ public sealed class AdminController(ISender sender) : ApiController
     [EndpointDescription("Returns a paginated and filterable list of admin users.")]
     [EndpointName("GetAllAdmins")]
     [HttpGet]
-    [OutputCache(Tags = ["admins"])]
+    [OutputCache(Tags = [CacheTags.Admins])]
     [ProducesResponseType(typeof(PaginatedList<AdminDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
@@ -42,7 +43,7 @@ public sealed class AdminController(ISender sender) : ApiController
     [EndpointDescription("Fetches a single admin using the provided admin identifier.")]
     [EndpointName("GetAdminById")]
     [HttpGet("{id:guid}")]
-    [OutputCache(Tags = ["admins"])]
+    [OutputCache(Tags = [CacheTags.Admins])]
     [ProducesResponseType(typeof(AdminDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]

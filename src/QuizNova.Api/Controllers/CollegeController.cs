@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Features.Colleges.DTOs;
 using QuizNova.Application.Features.Colleges.Queries.GetCollegeSummary;
 using QuizNova.Domain.Entities.Identity;
@@ -21,7 +22,7 @@ public sealed class CollegeController(ISender sender) : ApiController
     [EndpointSummary("Retrieves college summary metrics.")]
     [EndpointDescription("Returns aggregate college information intended for administrative dashboards.")]
     [EndpointName("GetCollegeSummary")]
-    [OutputCache(Tags = ["colleges"])]
+    [OutputCache(Tags = [CacheTags.Colleges])]
     [ProducesResponseType(typeof(CollegeSummaryDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetSummary(CancellationToken ct)

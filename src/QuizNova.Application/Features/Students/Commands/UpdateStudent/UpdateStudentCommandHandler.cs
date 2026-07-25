@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Students.DTOs;
@@ -73,7 +74,7 @@ public sealed class UpdateStudentCommandHandler(
 
         dbContext.Students.Update(student);
         await dbContext.SaveChangesAsync(ct);
-        await cacheInvalidator.InvalidateAsync(["students"], ct);
+        await cacheInvalidator.InvalidateAsync([CacheTags.Students], ct);
 
         logger.LogInformation("Successfully updated student {StudentId}", request.Id);
 

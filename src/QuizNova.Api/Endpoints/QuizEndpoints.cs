@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Mappers;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesPerformance;
@@ -28,7 +29,7 @@ public static class QuizEndpoints
     {
         var quizzesGroup = app.MapGroup("quizzes")
             .RequireAuthorization()
-            .RequireRateLimiting("Global")
+            .RequireRateLimiting(RateLimiterPolicies.Global)
             .WithTags("quizzes")
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
@@ -41,7 +42,7 @@ public static class QuizEndpoints
             .WithName("GetAllQuizzes")
             .WithSummary("Retrieves quizzes.")
             .WithDescription("Returns a paginated and filterable list of quizzes.")
-            .CacheOutput(policy => policy.Tag("quizzes"))
+            .CacheOutput(policy => policy.Tag(CacheTags.Quizzes))
             .RequireAuthorization(new AuthorizeAttribute { Roles = nameof(UserRole.Admin) })
             .Produces<PaginatedList<QuizDto>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
@@ -55,7 +56,7 @@ public static class QuizEndpoints
             .WithName("GetInstructorQuizzesCount")
             .WithSummary("Retrieves instructor quiz count.")
             .WithDescription("Returns the number of quizzes created by the specified instructor.")
-            .CacheOutput(policy => policy.Tag("quizzes"))
+            .CacheOutput(policy => policy.Tag(CacheTags.Quizzes))
             .RequireAuthorization(new AuthorizeAttribute
             { Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Instructor)}" })
             .Produces<QuizzesCountDto>(StatusCodes.Status200OK)
@@ -70,7 +71,7 @@ public static class QuizEndpoints
             .WithName("GetQuizById")
             .WithSummary("Retrieves a quiz by id.")
             .WithDescription("Fetches a single quiz using the provided quiz identifier.")
-            .CacheOutput(policy => policy.Tag("quizzes"))
+            .CacheOutput(policy => policy.Tag(CacheTags.Quizzes))
             .Produces<QuizDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
@@ -177,9 +178,9 @@ public static class QuizEndpoints
             .WithName("GetStudentQuizzes")
             .WithSummary("Retrieves quizzes assigned to a student.")
             .WithDescription("Returns quizzes associatined with the specified student identifier.")
-            .CacheOutput(policy => policy.Tag("students").Tag("quizzes").SetVaryByQuery("t"))
+            .CacheOutput(policy => policy.Tag(CacheTags.Students).Tag(CacheTags.Quizzes).SetVaryByQuery("t"))
             .RequireAuthorization(new AuthorizeAttribute { Roles = nameof(UserRole.Student) })
-            .RequireRateLimiting("Global")
+            .RequireRateLimiting(RateLimiterPolicies.Global)
             .WithTags("quizzes")
             .Produces<StudentQuizzesDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
@@ -196,9 +197,9 @@ public static class QuizEndpoints
             .WithName("GetInstructorQuizzes")
             .WithSummary("Retrieves quizzes created by an instructor.")
             .WithDescription("Returns quizzes associated with the specified instructor identifier.")
-            .CacheOutput(policy => policy.Tag("instructors").Tag("quizzes"))
+            .CacheOutput(policy => policy.Tag(CacheTags.Instructors).Tag(CacheTags.Quizzes))
             .RequireAuthorization(new AuthorizeAttribute { Roles = nameof(UserRole.Instructor) })
-            .RequireRateLimiting("Global")
+            .RequireRateLimiting(RateLimiterPolicies.Global)
             .WithTags("quizzes")
             .Produces<List<QuizDto>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
@@ -215,9 +216,9 @@ public static class QuizEndpoints
             .WithName("GetInstructorCoursesPerformance")
             .WithSummary("Retrieves instructor courses performance.")
             .WithDescription("Returns performance metrics for all courses of a specific instructor.")
-            .CacheOutput(policy => policy.Tag("courses").Tag("quizzes").Tag("instructors").Tag("performance"))
+            .CacheOutput(policy => policy.Tag(CacheTags.Courses).Tag(CacheTags.Quizzes).Tag(CacheTags.Instructors).Tag(CacheTags.Performance))
             .RequireAuthorization(new AuthorizeAttribute { Roles = nameof(UserRole.Instructor) })
-            .RequireRateLimiting("Global")
+            .RequireRateLimiting(RateLimiterPolicies.Global)
             .WithTags("quizzes")
             .Produces<List<CoursePerformanceDto>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)

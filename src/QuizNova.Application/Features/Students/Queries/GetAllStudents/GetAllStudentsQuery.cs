@@ -1,3 +1,4 @@
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Students.DTOs;
@@ -15,7 +16,6 @@ public sealed record GetAllStudentsQuery(string? SearchTerm = null,
 {
     public string CacheKey => $"students:all:{PageNumber}:{PageSize}:{SearchTerm}:{EnrolledCoursesCount}:{CourseId}:{IsEnrolledInCourse}";
 
-    public string[] Tags => ["students"];
+    public string[] Tags => [CacheTags.Students];
 
-    public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 }

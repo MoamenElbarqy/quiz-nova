@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 
 using QuizNova.Api.DTOs.Requests;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
 using QuizNova.Application.Features.Enrollments.Commands.RemoveStudentFromCourse;
 using QuizNova.Application.Features.Enrollments.DTOs;
@@ -25,9 +26,9 @@ public static class EnrollmentEndpoints
             .WithName("GetAllCoursesEnrollmentCount")
             .WithSummary("Retrieves enrollment counts for all courses.")
             .WithDescription("Returns a list of all courses with their enrollment count, sorted descending. Admin only.")
-            .CacheOutput(policy => policy.Tag("courses").Tag("enrollments"))
+            .CacheOutput(policy => policy.Tag(CacheTags.Courses).Tag(CacheTags.Enrollments))
             .RequireAuthorization(new AuthorizeAttribute { Roles = nameof(UserRole.Admin) })
-            .RequireRateLimiting("Global")
+            .RequireRateLimiting(RateLimiterPolicies.Global)
             .WithTags("enrollments")
             .Produces<List<CourseEnrollmentCountDto>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
@@ -36,7 +37,7 @@ public static class EnrollmentEndpoints
 
         var group = app.MapGroup("students")
             .RequireAuthorization()
-            .RequireRateLimiting("Global")
+            .RequireRateLimiting(RateLimiterPolicies.Global)
             .WithTags("enrollments")
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
@@ -77,7 +78,7 @@ public static class EnrollmentEndpoints
         .WithName("GetStudentEnrollments")
         .WithSummary("Retrieves student enrollments.")
         .WithDescription("Returns the enrollments for a specific student.")
-        .CacheOutput(policy => policy.Tag("enrollments"))
+        .CacheOutput(policy => policy.Tag(CacheTags.Enrollments))
         .Produces<List<EnrollmentDto>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
@@ -90,7 +91,7 @@ public static class EnrollmentEndpoints
         .WithName("GetStudentEnrollmentsCount")
         .WithSummary("Retrieves student enrollment counts.")
         .WithDescription("Returns student enrollment count based on the student ID.")
-        .CacheOutput(policy => policy.Tag("enrollments"))
+        .CacheOutput(policy => policy.Tag(CacheTags.Enrollments))
         .Produces<EnrollmentCountDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);

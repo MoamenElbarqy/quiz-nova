@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.OutputCaching;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Mappers;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Instructors.Commands.DeleteInstructor;
 using QuizNova.Application.Features.Instructors.DTOs;
@@ -27,7 +28,7 @@ public sealed class InstructorController(ISender sender) : ApiController
     [EndpointDescription("Returns a paginated and filterable list of instructor users.")]
     [EndpointName("GetAllInstructors")]
     [HttpGet]
-    [OutputCache(Tags = ["instructors"])]
+    [OutputCache(Tags = [CacheTags.Instructors])]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedList<InstructorDto>>> GetAllInstructors([FromQuery] GetAllInstructorsQuery query, CancellationToken ct)
     {
@@ -42,7 +43,7 @@ public sealed class InstructorController(ISender sender) : ApiController
     [EndpointDescription("Fetches a single instructor using the provided instructor identifier.")]
     [EndpointName("GetInstructorById")]
     [HttpGet("{id:guid}")]
-    [OutputCache(Tags = ["instructors"])]
+    [OutputCache(Tags = [CacheTags.Instructors])]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<InstructorDto>> GetInstructorById([FromRoute] Guid id, CancellationToken ct)

@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
@@ -49,7 +50,7 @@ public sealed class EnrollStudentInCourseCommandHandler(
 
         await dbContext.Enrollments.AddAsync(enrollmentResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
-        await cacheInvalidator.InvalidateAsync(["courses", "students"], ct);
+        await cacheInvalidator.InvalidateAsync([CacheTags.Courses, CacheTags.Students], ct);
 
         logger.LogInformation("Successfully enrolled student {StudentId} in course {CourseId}", request.StudentId,
             request.CourseId);

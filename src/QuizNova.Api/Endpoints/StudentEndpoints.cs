@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Mappers;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Students.Commands.DeleteStudent;
 using QuizNova.Application.Features.Students.DTOs;
@@ -19,7 +20,7 @@ public static class StudentEndpoints
     {
         var group = app.MapGroup("students")
             .RequireAuthorization(new AuthorizeAttribute { Roles = nameof(UserRole.Admin) })
-            .RequireRateLimiting("Global")
+            .RequireRateLimiting(RateLimiterPolicies.Global)
             .WithTags("students")
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
@@ -33,7 +34,7 @@ public static class StudentEndpoints
         .WithName("GetAllStudents")
         .WithSummary("Retrieves all students.")
         .WithDescription("Returns a paginated and filterable list of student users.")
-        .CacheOutput(policy => policy.Tag("students"))
+        .CacheOutput(policy => policy.Tag(CacheTags.Students))
         .Produces<PaginatedList<StudentDto>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest);
 
@@ -45,7 +46,7 @@ public static class StudentEndpoints
         .WithName("GetStudentById")
         .WithSummary("Retrieves a student by id.")
         .WithDescription("Fetches a single student using the provided student identifier.")
-        .CacheOutput(policy => policy.Tag("students"))
+        .CacheOutput(policy => policy.Tag(CacheTags.Students))
         .Produces<StudentDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);

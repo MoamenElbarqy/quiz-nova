@@ -2,6 +2,7 @@ using MediatR;
 
 using Microsoft.Extensions.Logging;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
@@ -70,7 +71,7 @@ public sealed class GradeQuestionManuallyCommandHandler(
         }
 
         await mongoContext.QuizAttempts.ReplaceOneAsync(a => a.Id == attempt.Id, attempt, cancellationToken: ct);
-        await cacheInvalidator.InvalidateAsync(["quiz_attempts"], ct);
+        await cacheInvalidator.InvalidateAsync([CacheTags.QuizAttempts], ct);
 
         logger.LogInformation(
             "Successfully graded answer {AnswerId} with score {Score}",

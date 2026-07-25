@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Instructors.DTOs;
@@ -70,7 +71,7 @@ public sealed class UpdateInstructorCommandHandler(
         }
 
         await dbContext.SaveChangesAsync(ct);
-        await cacheInvalidator.InvalidateAsync(["instructors"], ct);
+        await cacheInvalidator.InvalidateAsync([CacheTags.Instructors], ct);
 
         var quizzesCount = (int)await mongoContext.Quizzes.CountDocumentsAsync(q => q.InstructorId == request.Id, cancellationToken: ct);
 

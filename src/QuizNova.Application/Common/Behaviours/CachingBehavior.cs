@@ -2,7 +2,9 @@ using MediatR;
 
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results.Abstractions;
 
@@ -10,10 +12,13 @@ namespace QuizNova.Application.Common.Behaviours;
 
 public class CachingBehavior<TRequest, TResponse>(
     HybridCache cache,
+    IOptions<CacheSettings> cacheSettings,
     ILogger<CachingBehavior<TRequest, TResponse>> logger)
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
+    private readonly TimeSpan _queryCacheDuration = TimeSpan.FromMinutes(cacheSettings.Value.QueryCacheDurationMinutes);
+
     public async Task<TResponse> Handle(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
@@ -54,7 +59,7 @@ public class CachingBehavior<TRequest, TResponse>(
                 result,
                 new HybridCacheEntryOptions
                 {
-                    Expiration = cachedRequest.Expiration,
+                    Expiration = _queryCacheDuration,
                 },
                 cachedRequest.Tags,
                 ct);

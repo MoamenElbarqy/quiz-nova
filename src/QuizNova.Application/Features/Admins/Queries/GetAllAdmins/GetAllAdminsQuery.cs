@@ -1,3 +1,4 @@
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Admins.DTOs;
@@ -12,7 +13,6 @@ public sealed record GetAllAdminsQuery(string? SearchTerm = null,
 {
     public string CacheKey => $"admins:all:{SearchTerm}:{PageNumber}:{PageSize}";
 
-    public string[] Tags => ["admins"];
+    public string[] Tags => [CacheTags.Admins];
 
-    public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 }

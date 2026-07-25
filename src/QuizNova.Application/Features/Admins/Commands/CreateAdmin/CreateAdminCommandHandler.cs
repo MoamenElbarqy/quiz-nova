@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Admins.DTOs;
@@ -93,7 +94,7 @@ public sealed class CreateAdminCommandHandler(
 
         await dbContext.Admins.AddAsync(createAdminResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
-        await cacheInvalidator.InvalidateAsync(["admins"], ct);
+        await cacheInvalidator.InvalidateAsync([CacheTags.Admins], ct);
 
         logger.LogInformation("Successfully created admin {AdminId} with email {Email}", createAdminResult.Value.Id,
             request.PersonalInformation.Email);

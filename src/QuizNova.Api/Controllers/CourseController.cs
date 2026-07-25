@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.OutputCaching;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Mappers;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Courses.Commands.DeleteCourseById;
 using QuizNova.Application.Features.Courses.Commands.UpdateCourseInstructor;
@@ -28,7 +29,7 @@ public sealed class CourseController(ISender sender) : ApiController
     [EndpointDescription("Returns a paginated and filterable list of courses.")]
     [EndpointName("GetCourses")]
     [HttpGet("courses")]
-    [OutputCache(Tags = ["courses"])]
+    [OutputCache(Tags = [CacheTags.Courses])]
     [Authorize(Roles = nameof(UserRole.Admin))]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -39,7 +40,7 @@ public sealed class CourseController(ISender sender) : ApiController
     }
 
     [HttpGet("instructor/{instructorId:guid}/courses")]
-    [OutputCache(Tags = ["courses"])]
+    [OutputCache(Tags = [CacheTags.Courses])]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Retrieves instructor courses.")]
@@ -52,7 +53,7 @@ public sealed class CourseController(ISender sender) : ApiController
     }
 
     [HttpGet("instructor/{instructorId:guid}/courses/count")]
-    [OutputCache(Tags = ["courses"])]
+    [OutputCache(Tags = [CacheTags.Courses])]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Retrieves instructor course counts.")]
@@ -65,7 +66,7 @@ public sealed class CourseController(ISender sender) : ApiController
     }
 
     [HttpGet("courses/{id:guid}")]
-    [OutputCache(Tags = ["courses"])]
+    [OutputCache(Tags = [CacheTags.Courses])]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Retrieves a course by its unique identifier.")]

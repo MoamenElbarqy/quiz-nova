@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Mappers;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Courses.Commands.DeleteCourseById;
 using QuizNova.Application.Features.Courses.Commands.UpdateCourseInstructor;
@@ -22,14 +23,14 @@ public static class CourseEndpoints
     {
         var coursesGroup = app.MapGroup("courses")
             .RequireAuthorization()
-            .RequireRateLimiting("Global")
+            .RequireRateLimiting(RateLimiterPolicies.Global)
             .WithTags("courses")
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         var instructorGroup = app.MapGroup("instructor")
             .RequireAuthorization()
-            .RequireRateLimiting("Global")
+            .RequireRateLimiting(RateLimiterPolicies.Global)
             .WithTags("courses")
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
@@ -42,7 +43,7 @@ public static class CourseEndpoints
         .WithName("GetCourses")
         .WithSummary("Retrieves courses.")
         .WithDescription("Returns a paginated and filterable list of courses.")
-        .CacheOutput(policy => policy.Tag("courses"))
+        .CacheOutput(policy => policy.Tag(CacheTags.Courses))
         .RequireAuthorization(new AuthorizeAttribute { Roles = nameof(UserRole.Admin) })
         .Produces<PaginatedList<CourseDto>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
@@ -56,7 +57,7 @@ public static class CourseEndpoints
         .WithName("GetCourseById")
         .WithSummary("Retrieves a course by its unique identifier.")
         .WithDescription("Fetches the details of a specific course using its ID.")
-        .CacheOutput(policy => policy.Tag("courses"))
+        .CacheOutput(policy => policy.Tag(CacheTags.Courses))
         .Produces<CourseDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
@@ -111,7 +112,7 @@ public static class CourseEndpoints
         .WithName("GetInstructorCourses")
         .WithSummary("Retrieves instructor courses.")
         .WithDescription("Returns all courses for a specific instructor.")
-        .CacheOutput(policy => policy.Tag("courses"))
+        .CacheOutput(policy => policy.Tag(CacheTags.Courses))
         .Produces<List<CourseDto>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
@@ -124,7 +125,7 @@ public static class CourseEndpoints
         .WithName("GetInstructorCoursesCount")
         .WithSummary("Retrieves instructor course counts.")
         .WithDescription("Returns instructor course counts based on the instructor ID.")
-        .CacheOutput(policy => policy.Tag("courses"))
+        .CacheOutput(policy => policy.Tag(CacheTags.Courses))
         .Produces<CoursesCountDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);

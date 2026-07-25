@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.RateLimiting;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.Mappers;
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.QuizAttempts.Commands.CompleteQuizAttempt;
 using QuizNova.Application.Features.QuizAttempts.Commands.StartQuizAttempt;
@@ -29,7 +30,7 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [EndpointDescription("Fetches a single quiz attempt using the provided attempt identifier.")]
     [EndpointName("GetQuizAttemptById")]
     [HttpGet("students/{studentId:guid}/quiz-attempts/{id:guid}")]
-    [OutputCache(Tags = ["quiz-attempts"])]
+    [OutputCache(Tags = [CacheTags.QuizAttempts])]
     [ProducesResponseType(typeof(QuizAttemptDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -49,7 +50,7 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [EndpointDescription("Fetches a single quiz attempt using the provided attempt identifier.")]
     [EndpointName("GetQuizAttemptByIdForGrading")]
     [HttpGet("quiz-attempts/{id:guid}")]
-    [OutputCache(Tags = ["quiz-attempts"])]
+    [OutputCache(Tags = [CacheTags.QuizAttempts])]
     [Authorize(Roles = $"{nameof(UserRole.Student)},{nameof(UserRole.Instructor)}")]
     [ProducesResponseType(typeof(QuizAttemptDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -69,7 +70,7 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [EndpointName("StartQuizAttempt")]
     [HttpPost("quizattempts")]
     [Authorize(Roles = nameof(UserRole.Student))]
-    [EnableRateLimiting("SubmitQuiz")]
+    [EnableRateLimiting(RateLimiterPolicies.SubmitQuiz)]
     [ProducesResponseType(typeof(QuizAttemptDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -129,7 +130,7 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [EndpointSummary("Retrieves a student's quiz attempts.")]
     [EndpointDescription("Returns all quiz attempts associated with the specified student.")]
     [EndpointName("GetStudentQuizAttempts")]
-    [OutputCache(Tags = ["quiz-attempts"])]
+    [OutputCache(Tags = [CacheTags.QuizAttempts])]
     [HttpGet("students/{studentId:guid}/quiz-attempts")]
     [Authorize(Roles = nameof(UserRole.Student))]
     [ProducesResponseType(typeof(IReadOnlyList<QuizAttemptDto>), StatusCodes.Status200OK)]
@@ -147,7 +148,7 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [EndpointSummary("Retrieves a student's quiz attempt count.")]
     [EndpointDescription("Returns the total number of quiz attempts for the specified student.")]
     [EndpointName("GetStudentQuizAttemptsCount")]
-    [OutputCache(Tags = ["quiz-attempts"])]
+    [OutputCache(Tags = [CacheTags.QuizAttempts])]
     [HttpGet("students/{studentId:guid}/quiz-attempts/count")]
     [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Student)}")]
     [ProducesResponseType(typeof(QuizAttemptsCountDto), StatusCodes.Status200OK)]
@@ -165,7 +166,7 @@ public sealed class QuizAttemptController(ISender sender) : ApiController
     [EndpointSummary("Retrieves all quiz attempts.")]
     [EndpointDescription("Returns a filtered list of quiz attempts across students.")]
     [EndpointName("GetAllQuizzesAttempts")]
-    [OutputCache(Tags = ["quiz-attempts"])]
+    [OutputCache(Tags = [CacheTags.QuizAttempts])]
     [HttpGet("quiz-attempts")]
     [Authorize(Roles = nameof(UserRole.Admin))]
     [ProducesResponseType(typeof(PaginatedList<QuizAttemptDto>), StatusCodes.Status200OK)]

@@ -1,3 +1,4 @@
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Instructors.DTOs;
 using QuizNova.Domain.Common.Results;
@@ -9,7 +10,6 @@ public sealed record GetInstructorByIdQuery(Guid Id)
 {
     public string CacheKey => $"instructors:{Id}";
 
-    public string[] Tags => ["instructors"];
+    public string[] Tags => [CacheTags.Instructors];
 
-    public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 }

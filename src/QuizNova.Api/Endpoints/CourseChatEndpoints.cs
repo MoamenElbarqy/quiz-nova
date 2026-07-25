@@ -2,6 +2,7 @@ using MediatR;
 
 using Microsoft.AspNetCore.Authorization;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Features.CourseChats.DTOs;
 using QuizNova.Application.Features.CourseChats.Queries.GetCourseChatRoomByCourseId;
 using QuizNova.Domain.Entities.Identity;
@@ -21,7 +22,7 @@ public static class CourseChatEndpoints
         .WithSummary("Retrieves the chatroom data for a course.")
         .WithDescription("Returns the chatroom status, student IDs, and message history for a specific course.")
         .RequireAuthorization(new AuthorizeAttribute { Roles = $"{nameof(UserRole.Student)},{nameof(UserRole.Instructor)}" })
-        .RequireRateLimiting("Global")
+        .RequireRateLimiting(RateLimiterPolicies.Global)
         .WithTags("course-chats")
         .Produces<CourseChatRoomDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status401Unauthorized)

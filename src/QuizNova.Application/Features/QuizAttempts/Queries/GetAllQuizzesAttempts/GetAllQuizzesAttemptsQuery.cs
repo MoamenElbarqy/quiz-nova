@@ -1,3 +1,4 @@
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.QuizAttempts.DTOs;
@@ -14,7 +15,6 @@ public sealed record GetAllQuizzesAttemptsQuery(
 {
     public string CacheKey => $"quiz_attempts:all:{SearchTerm}:{CorrectAnswers}:{PageNumber}:{PageSize}";
 
-    public string[] Tags => ["quiz_attempts"];
+    public string[] Tags => [CacheTags.QuizAttempts];
 
-    public TimeSpan Expiration => TimeSpan.FromMinutes(5);
 }

@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
@@ -54,7 +55,7 @@ public sealed class UpdateQuizCourseIdCommandHandler(
         }
 
         await mongoContext.Quizzes.ReplaceOneAsync(q => q.Id == quiz.Id, quiz, cancellationToken: ct);
-        await cacheInvalidator.InvalidateAsync(["quizzes", "courses"], ct);
+        await cacheInvalidator.InvalidateAsync([CacheTags.Quizzes, CacheTags.Courses], ct);
 
         logger.LogInformation(
             "Successfully updated course ID for quiz {QuizId} to {NewCourseId}",

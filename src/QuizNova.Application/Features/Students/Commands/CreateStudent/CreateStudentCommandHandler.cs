@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Students.DTOs;
@@ -91,7 +92,7 @@ public sealed class CreateStudentCommandHandler(
 
         await dbContext.Students.AddAsync(createStudentResult.Value, ct);
         await dbContext.SaveChangesAsync(ct);
-        await cacheInvalidator.InvalidateAsync(["students"], ct);
+        await cacheInvalidator.InvalidateAsync([CacheTags.Students], ct);
 
         logger.LogInformation("Successfully created student {StudentId} with email {Email}",
             createStudentResult.Value.Id, request.PersonalInformation.Email);

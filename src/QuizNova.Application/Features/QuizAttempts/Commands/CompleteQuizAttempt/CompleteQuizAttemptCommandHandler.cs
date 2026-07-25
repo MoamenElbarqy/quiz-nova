@@ -2,6 +2,7 @@ using MediatR;
 
 using Microsoft.Extensions.Logging;
 
+using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Common.MongoDb;
@@ -59,7 +60,7 @@ public sealed class CompleteQuizAttemptCommandHandler(
         }
 
         await mongoContext.QuizAttempts.ReplaceOneAsync(a => a.Id == attempt.Id, attempt, cancellationToken: ct);
-        await cacheInvalidator.InvalidateAsync(["quiz_attempts", "quizzes"], ct);
+        await cacheInvalidator.InvalidateAsync([CacheTags.QuizAttempts, CacheTags.Quizzes], ct);
 
         logger.LogInformation(
             "Successfully completed quiz attempt {AttemptId}. Score: {Score}",
