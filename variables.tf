@@ -50,3 +50,11 @@ variable "mongodb_connection_string" {
   sensitive   = true
 }
 
+variable "allowed_origins" {
+  type = list(string)
+  default = [
+    "https://moamenelbarqy.github.io",
+    "https://quiznova.dev",
+    "https://www.quiznova.dev"
+  ]
+}

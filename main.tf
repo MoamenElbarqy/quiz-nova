@@ -128,17 +128,12 @@ resource "azurerm_container_app" "backend_app" {
       cpu    = "0.5"
       memory = "1Gi"
 
-      env {
-        name  = "CorsSettings__AllowedOrigins__0"
-        value = "https://moamenelbarqy.github.io"
-      }
-      env {
-        name  = "CorsSettings__AllowedOrigins__1"
-        value = "https://quiznova.dev"
-      }
-      env {
-        name  = "CorsSettings__AllowedOrigins__2"
-        value = "https://www.quiznova.dev"
+      dynamic "env" {
+        for_each = var.allowed_origins
+        content {
+          name  = "CorsSettings__AllowedOrigins__${env.key}"
+          value = env.value
+        }
       }
       env {
         name  = "JwtSettings__Issuer"
@@ -285,6 +280,15 @@ resource "azurerm_container_app" "backend_app" {
       template[0].container[0].image
     ]
   }
+
+  depends_on = [
+    azurerm_key_vault_access_policy.aca,
+    azurerm_key_vault_secret.db_connection,
+    azurerm_key_vault_secret.jwt_secret,
+    azurerm_key_vault_secret.mongodb_connection,
+    azurerm_key_vault_secret.grafana_loki_password,
+    azurerm_key_vault_secret.grafana_otlp_auth
+  ]
 }
 
 
