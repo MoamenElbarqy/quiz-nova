@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Interfaces;
@@ -8,12 +7,12 @@ using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Instructors.DTOs;
 using QuizNova.Application.Features.Instructors.Mappers;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users;
 using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Application.Features.Instructors.Queries.GetAllInstructors;
 
 public sealed class GetAllInstructorsQueryHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     ILogger<GetAllInstructorsQueryHandler> logger)
     : IRequestHandler<GetAllInstructorsQuery, Result<PaginatedList<InstructorDto>>>
@@ -22,84 +21,98 @@ public sealed class GetAllInstructorsQueryHandler(
     {
         logger.LogInformation("Retrieving all instructors");
 
-        var query = dbContext.Instructors
-            .AsNoTracking()
-            .Include(i => i.Courses)
-            .AsQueryable();
+        var filter = Builders<User>.Filter.Where(u => u is Instructor);
+        filter = ApplySearchTerm(filter, request);
 
-        query = ApplySearchTerm(query, request);
-        query = ApplyFiltering(query, request, dbContext);
-        query = ApplySorting(query);
+        var allInstructorIds = (await mongoContext.Users
+            .Find(filter)
+            .Project(u => u.Id)
+            .ToListAsync(ct)).ToHashSet();
 
-        var totalCount = await query.CountAsync(ct);
-
-        var instructorsList = await query
-            .Skip((request.PageNumber - 1) * request.PageSize)
-            .Take(request.PageSize)
+        var courseCounts = await mongoContext.Courses
+            .Aggregate()
+            .Match(c => c.InstructorId != null && allInstructorIds.Contains(c.InstructorId!.Value))
+            .Group(c => c.InstructorId!.Value, g => new { InstructorId = g.Key, Count = g.Count() })
             .ToListAsync(ct);
 
-        var instructorIds = instructorsList.Select(i => i.Id).ToList();
+        var courseCountDict = courseCounts.ToDictionary(x => x.InstructorId, x => x.Count);
 
         var quizCounts = await mongoContext.Quizzes
             .Aggregate()
-            .Match(q => instructorIds.Contains(q.InstructorId))
+            .Match(q => allInstructorIds.Contains(q.InstructorId))
             .Group(q => q.InstructorId, g => new { InstructorId = g.Key, Count = g.Count() })
             .ToListAsync(ct);
 
-        var quizCountDict = quizCounts.ToDictionary(g => g.InstructorId, g => g.Count);
+        var quizCountDict = quizCounts.ToDictionary(x => x.InstructorId, x => x.Count);
 
-        var instructors = instructorsList
+        var filteredIds = ApplyCountFilters(allInstructorIds, courseCountDict, quizCountDict, request);
+
+        filter &= Builders<User>.Filter.In(u => u.Id, filteredIds);
+
+        var totalCount = filteredIds.Count;
+
+        var instructors = await mongoContext.Users
+            .Find(filter)
+            .SortBy(u => u.PersonalInformation.Name)
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Limit(request.PageSize)
+            .ToListAsync(ct);
+
+        var instructorDtos = instructors
+            .Cast<Instructor>()
             .Select(instructor => instructor.ToInstructorDto(
-                instructor.Courses.Count(),
+                courseCountDict.GetValueOrDefault(instructor.Id, 0),
                 quizCountDict.GetValueOrDefault(instructor.Id, 0)))
             .ToList();
 
         var response = new PaginatedList<InstructorDto>(
-            instructors,
+            instructorDtos,
             totalCount,
             request.PageNumber,
             request.PageSize);
 
         logger.LogInformation(
             "Successfully retrieved {Count} instructors for page {PageNumber}",
-            instructors.Count,
+            instructorDtos.Count,
             request.PageNumber);
 
         return response;
     }
 
-    private static IQueryable<Instructor> ApplyFiltering(
-        IQueryable<Instructor> query,
-        GetAllInstructorsQuery request,
-        IAppDbContext dbContext)
+    private static HashSet<Guid> ApplyCountFilters(
+        HashSet<Guid> instructorIds,
+        Dictionary<Guid, int> courseCountDict,
+        Dictionary<Guid, int> quizCountDict,
+        GetAllInstructorsQuery request)
     {
         if (request.CoursesCount.HasValue)
         {
-            query = query.Where(instructor =>
-                dbContext.Courses.Count(course => course.InstructorId == instructor.Id) ==
-                request.CoursesCount.Value);
+            instructorIds = instructorIds
+                .Where(id => courseCountDict.GetValueOrDefault(id, 0) == request.CoursesCount.Value)
+                .ToHashSet();
         }
 
-        return query;
+        if (request.QuizzesCount.HasValue)
+        {
+            instructorIds = instructorIds
+                .Where(id => quizCountDict.GetValueOrDefault(id, 0) == request.QuizzesCount.Value)
+                .ToHashSet();
+        }
+
+        return instructorIds;
     }
 
-    private static IQueryable<Instructor> ApplySearchTerm(
-        IQueryable<Instructor> query,
+    private static FilterDefinition<User> ApplySearchTerm(
+        FilterDefinition<User> filter,
         GetAllInstructorsQuery request)
     {
         if (string.IsNullOrWhiteSpace(request.SearchTerm))
         {
-            return query;
+            return filter;
         }
 
-        return query.Where(instructor =>
+        return filter & Builders<User>.Filter.Where(instructor =>
             instructor.PersonalInformation.Name.Contains(request.SearchTerm) ||
             instructor.PersonalInformation.Email.Contains(request.SearchTerm));
-    }
-
-    private static IOrderedQueryable<Instructor> ApplySorting(
-        IQueryable<Instructor> query)
-    {
-        return query.OrderBy(instructor => instructor.PersonalInformation.Name);
     }
 }

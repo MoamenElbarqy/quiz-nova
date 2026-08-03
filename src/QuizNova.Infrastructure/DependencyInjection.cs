@@ -10,6 +10,8 @@ using Microsoft.Extensions.Options;
 
 using Microsoft.IdentityModel.Tokens;
 
+using Npgsql;
+
 using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Infrastructure.BackgroundJobs;
@@ -148,14 +150,21 @@ public static class DependencyInjection
     private static string GetPostgresConnectionString(IConfiguration configuration)
     {
         var postgresSettings = configuration.GetSection(PostgresSettings.SectionName).Get<PostgresSettings>();
-        var connectionString = postgresSettings?.DefaultConnection;
 
-        if (string.IsNullOrWhiteSpace(connectionString))
+        if (postgresSettings is null || string.IsNullOrWhiteSpace(postgresSettings.DefaultConnection))
         {
             throw new InvalidOperationException("The connection string 'DefaultConnection' in 'PostgresSettings' is not configured.");
         }
 
-        return connectionString;
+        var connectionString = postgresSettings.DefaultConnection;
+        var builder = new NpgsqlConnectionStringBuilder(connectionString)
+        {
+            MaxPoolSize = postgresSettings.MaximumPoolSize,
+            MinPoolSize = postgresSettings.MinimumPoolSize,
+            Timeout = postgresSettings.ConnectionTimeoutSeconds,
+        };
+
+        return builder.ConnectionString;
     }
 
     private static IServiceCollection AddJwtAuthentication(

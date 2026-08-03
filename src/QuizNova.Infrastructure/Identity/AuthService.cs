@@ -5,32 +5,30 @@ using System.Text;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+
+using MongoDB.Driver;
 
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Auth.DTOs;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Infrastructure.Data;
+using QuizNova.Domain.Entities.Identity;
 using QuizNova.Infrastructure.Settings;
 
 namespace QuizNova.Infrastructure.Identity;
 
 public sealed class AuthService(
     UserManager<AppUser> userManager,
-    AppDbContext dbContext,
+    IMongoDbContext mongoContext,
     IOptions<JwtSettings> jwtOptions,
     TimeProvider timeProvider,
     IHttpContextAccessor httpContextAccessor,
     ILogger<AuthService> logger)
     : IAuthService
 {
-    private const int DefaultAccessTokenExpiryInMinutes = 7;
-    private const int DefaultRefreshTokenExpiryInDays = 7;
-
     private readonly JwtSettings _jwtSettings = jwtOptions.Value;
 
     public async Task<Result<AuthDto>> LoginAsync(
@@ -174,11 +172,11 @@ public sealed class AuthService(
             return string.Empty;
         }
 
-        var name = await dbContext.Users
-            .AsNoTracking()
-            .Where(u => u.Id == parsedGuid)
-            .Select(u => u.PersonalInformation.Name)
+        var user = await mongoContext.Users
+            .Find(u => u.Id == parsedGuid)
             .FirstOrDefaultAsync();
+
+        var name = user?.PersonalInformation.Name;
 
         if (!string.IsNullOrWhiteSpace(name))
         {
@@ -215,10 +213,8 @@ public sealed class AuthService(
             return ApplicationErrors.TokenGenerationFailed;
         }
 
-        var accessTokenExpiryInMinutes = _jwtSettings.ExpiryMinutes > 0
-            ? _jwtSettings.ExpiryMinutes
-            : DefaultAccessTokenExpiryInMinutes;
-        var refreshTokenExpiryInDays = DefaultRefreshTokenExpiryInDays;
+        var accessTokenExpiryInMinutes = _jwtSettings.ExpiryMinutes;
+        var refreshTokenExpiryInDays = _jwtSettings.RefreshTokenExpirationDays;
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -245,8 +241,7 @@ public sealed class AuthService(
             ExpiresOnUtc = refreshTokenExpiresOnUtc,
         };
 
-        await dbContext.UserRefreshTokens.AddAsync(userRefreshToken, ct);
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.UserRefreshTokens.InsertOneAsync(userRefreshToken, cancellationToken: ct);
 
         return new TokenDto
         {
@@ -266,8 +261,9 @@ public sealed class AuthService(
             return ApplicationErrors.InvalidRefreshToken;
         }
 
-        var storedRefreshToken = await dbContext.UserRefreshTokens
-            .FirstOrDefaultAsync(rt => rt.Token == refreshToken && rt.UserId == userId, ct);
+        var storedRefreshToken = await mongoContext.UserRefreshTokens
+            .Find(rt => rt.Token == refreshToken && rt.UserId == userId)
+            .FirstOrDefaultAsync(ct);
 
         if (storedRefreshToken is null)
         {
@@ -280,7 +276,9 @@ public sealed class AuthService(
         }
 
         storedRefreshToken.RevokedOnUtc = timeProvider.GetUtcNow();
-        await dbContext.SaveChangesAsync(ct);
+        var filter = Builders<UserRefreshToken>.Filter.Eq(t => t.Id, storedRefreshToken.Id);
+        var update = Builders<UserRefreshToken>.Update.Set(t => t.RevokedOnUtc, storedRefreshToken.RevokedOnUtc);
+        await mongoContext.UserRefreshTokens.UpdateOneAsync(filter, update, cancellationToken: ct);
 
         return Result.Success;
     }

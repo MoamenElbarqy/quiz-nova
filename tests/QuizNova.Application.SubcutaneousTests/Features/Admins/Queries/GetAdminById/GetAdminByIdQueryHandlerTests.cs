@@ -59,9 +59,9 @@ public class GetAdminByIdQueryHandlerTests(CustomWebApplicationFactory factory)
         // 2. Save to DB
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            dbContext.Admins.Add(admin);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            await mongoContext.Users.InsertOneAsync(admin);
+
         }
 
         var query = new GetAdminByIdQuery(admin.Id);

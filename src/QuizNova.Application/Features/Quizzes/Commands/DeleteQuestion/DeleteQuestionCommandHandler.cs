@@ -33,6 +33,16 @@ public sealed class DeleteQuestionCommandHandler(
             return ApplicationErrors.QuizNotFound(request.QuizId);
         }
 
+        var course = await mongoContext.Courses
+            .Find(c => c.Id == quiz.CourseId)
+            .FirstOrDefaultAsync(ct);
+
+        if (course is null)
+        {
+            logger.LogWarning("Course {CourseId} not found for quiz {QuizId}", quiz.CourseId, request.QuizId);
+            return ApplicationErrors.QuizCourseNotFound(quiz.CourseId);
+        }
+
         var question = quiz.Questions.FirstOrDefault(q => q.Id == request.QuestionId);
 
         if (question is null)
@@ -41,7 +51,7 @@ public sealed class DeleteQuestionCommandHandler(
             return QuizErrors.QuestionNotFound;
         }
 
-        var deleteResult = quiz.DeleteQuestion(question);
+        var deleteResult = quiz.DeleteQuestion(question, course);
 
         if (deleteResult.IsError)
         {
@@ -53,6 +63,7 @@ public sealed class DeleteQuestionCommandHandler(
         }
 
         await mongoContext.Quizzes.ReplaceOneAsync(q => q.Id == quiz.Id, quiz, cancellationToken: ct);
+        await mongoContext.Courses.ReplaceOneAsync(c => c.Id == course.Id, course, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync([CacheTags.Quizzes], ct);
 
         logger.LogInformation(

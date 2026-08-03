@@ -1,17 +1,16 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesPerformance;
 
 public sealed class GetInstructorCoursesPerformanceQueryHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     ILogger<GetInstructorCoursesPerformanceQueryHandler> logger)
     : IRequestHandler<GetInstructorCoursesPerformanceQuery, Result<List<CoursePerformanceDto>>>
@@ -23,23 +22,20 @@ public sealed class GetInstructorCoursesPerformanceQueryHandler(
         logger.LogInformation("Retrieving course performance for instructor with ID: {InstructorId}",
             request.InstructorId);
 
-        var instructorExists = await dbContext.Instructors.AnyAsync(i => i.Id == request.InstructorId, ct);
-        if (!instructorExists)
+        var instructor = await mongoContext.Users
+            .Find(u => u.Id == request.InstructorId && u is Instructor)
+            .FirstOrDefaultAsync(ct) as Instructor;
+
+        if (instructor is null)
         {
             logger.LogWarning("Retrieval failed: Instructor with ID {InstructorId} not found", request.InstructorId);
             return ApplicationErrors.InstructorNotFound(request.InstructorId);
         }
 
-        var courses = await dbContext.Courses
-            .Where(c => c.InstructorId == request.InstructorId)
-            .Select(c => new
-            {
-                c.Id,
-                c.Name,
-                InstructorName = c.Instructor != null ? c.Instructor.PersonalInformation.Name : string.Empty,
-                StudentsCount = c.Enrollments.Count(),
-            })
-            .AsNoTracking()
+        var instructorName = instructor.PersonalInformation.Name;
+
+        var courses = await mongoContext.Courses
+            .Find(c => c.InstructorId == request.InstructorId)
             .ToListAsync(ct);
 
         var courseIds = courses.Select(c => c.Id).ToList();
@@ -48,20 +44,11 @@ public sealed class GetInstructorCoursesPerformanceQueryHandler(
             .Find(q => courseIds.Contains(q.CourseId))
             .ToListAsync(ct);
 
-        var quizMap = quizzes.ToDictionary(q => q.Id);
-        var quizIds = quizMap.Keys.ToList();
+        var quizIds = quizzes.Select(q => q.Id).ToList();
 
         var attempts = await mongoContext.QuizAttempts
             .Find(qa => quizIds.Contains(qa.QuizId))
             .ToListAsync(ct);
-
-        foreach (var attempt in attempts)
-        {
-            if (quizMap.TryGetValue(attempt.QuizId, out var quiz))
-            {
-                attempt.AttachQuizQuestions(quiz.Questions);
-            }
-        }
 
         var performanceList = courses.Select(course =>
         {
@@ -75,8 +62,8 @@ public sealed class GetInstructorCoursesPerformanceQueryHandler(
             return new CoursePerformanceDto(
                 course.Id,
                 course.Name,
-                course.InstructorName,
-                course.StudentsCount,
+                instructorName,
+                course.EnrollmentsCount,
                 avgScore);
         }).ToList();
 

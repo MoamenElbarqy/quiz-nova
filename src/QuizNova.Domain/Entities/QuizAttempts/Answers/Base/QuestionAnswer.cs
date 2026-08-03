@@ -17,13 +17,6 @@ public abstract class QuestionAnswer : Entity
 
     public Student? Student { get; init; }
 
-    public Question? Question { get; private set; }
-
-    internal void AttachQuestion(Question question)
-    {
-        Question = question;
-    }
-
     protected QuestionAnswer()
     {
     }

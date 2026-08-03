@@ -1,15 +1,15 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Entities.Courses.Events;
+using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Application.Features.CourseChats.EventHandlers;
 
 public sealed class AddStudentToCourseChatRoomOnStudentEnrolledHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<AddStudentToCourseChatRoomOnStudentEnrolledHandler> logger)
     : INotificationHandler<StudentEnrolledEvent>
 {
@@ -17,18 +17,19 @@ public sealed class AddStudentToCourseChatRoomOnStudentEnrolledHandler(
     {
         logger.LogInformation("Adding student {StudentId} to chatroom of course {CourseId}", notification.StudentId, notification.CourseId);
 
-        var student = await dbContext.Students
-            .FirstOrDefaultAsync(u => u.Id == notification.StudentId, ct);
+        var studentExists = await mongoContext.Users
+            .Find(u => u.Id == notification.StudentId && u is Student)
+            .AnyAsync(ct);
 
-        if (student is null)
+        if (!studentExists)
         {
             logger.LogWarning("Could not add student to chatroom: student {StudentId} not found.", notification.StudentId);
             return;
         }
 
-        var chatRoom = await dbContext.CourseChatRooms
-            .Include(r => r.Students)
-            .FirstOrDefaultAsync(r => r.CourseId == notification.CourseId, ct);
+        var chatRoom = await mongoContext.CourseChatRooms
+            .Find(r => r.CourseId == notification.CourseId)
+            .FirstOrDefaultAsync(ct);
 
         if (chatRoom is null)
         {
@@ -36,8 +37,9 @@ public sealed class AddStudentToCourseChatRoomOnStudentEnrolledHandler(
             return;
         }
 
-        chatRoom.AddStudent(student);
-        await dbContext.SaveChangesAsync(ct);
+        chatRoom.AddStudent(notification.StudentId);
+
+        await mongoContext.CourseChatRooms.ReplaceOneAsync(r => r.Id == chatRoom.Id, chatRoom, cancellationToken: ct);
 
         logger.LogInformation("Successfully added student {StudentId} to chatroom {RoomId}", notification.StudentId, chatRoom.Id);
     }

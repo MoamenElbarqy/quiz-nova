@@ -4,10 +4,13 @@ using FluentAssertions;
 
 using Microsoft.EntityFrameworkCore;
 
+using MongoDB.Driver;
+
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.IntegrationTests.Common;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Enrollments.DTOs;
+using QuizNova.Domain.Entities.Identity;
 using QuizNova.Tests.Common.Security;
 
 using Xunit;
@@ -56,13 +59,14 @@ public class EnrollmentControllerTests(CustomWebApplicationFactory factory) : IC
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var student = await dbContext.Students.OrderBy(s => s.PersonalInformation.Email).LastAsync();
-        var course = await dbContext.Courses.FirstAsync();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var student = await mongoContext.Users.Find(u => u.UserRole == UserRole.Student).SortByDescending(s => s.PersonalInformation.Email).FirstAsync();
+        var course = await mongoContext.Courses.Find(_ => true).FirstAsync();
 
         // Remove student from course first in case they are already enrolled to ensure clean state
-        var existingEnrollment = await dbContext.Enrollments
-            .FirstOrDefaultAsync(e => e.StudentId == student.Id && e.CourseId == course.Id);
+        var existingEnrollment = await mongoContext.Enrollments
+            .Find(e => e.StudentId == student.Id && e.CourseId == course.Id)
+            .FirstOrDefaultAsync();
         if (existingEnrollment is not null)
         {
             await client.DeleteAsync($"/students/{student.Id}/enrollments/{existingEnrollment.Id}");
@@ -115,16 +119,17 @@ public class EnrollmentControllerTests(CustomWebApplicationFactory factory) : IC
         await client.AuthenticateAsync(TestUsers.Admin.User.Email!, TestUsers.Admin.Password, "Admin");
 
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var student = await dbContext.Students.OrderBy(s => s.PersonalInformation.Email).LastAsync();
-        var course = await dbContext.Courses.FirstAsync();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var student = await mongoContext.Users.Find(u => u.UserRole == UserRole.Student).SortByDescending(s => s.PersonalInformation.Email).FirstAsync();
+        var course = await mongoContext.Courses.Find(_ => true).FirstAsync();
 
         // Ensure enrollment exists
         var request = new EnrollStudentInCourseRequest(course.Id);
         await client.PostAsJsonAsync($"/students/{student.Id}/enrollments", request);
 
-        var enrollment = await dbContext.Enrollments
-            .FirstAsync(e => e.StudentId == student.Id && e.CourseId == course.Id);
+        var enrollment = await mongoContext.Enrollments
+            .Find(e => e.StudentId == student.Id && e.CourseId == course.Id)
+            .FirstAsync();
 
         // Act
         var response = await client.DeleteAsync($"/students/{student.Id}/enrollments/{enrollment.Id}");
@@ -176,9 +181,9 @@ public class EnrollmentControllerTests(CustomWebApplicationFactory factory) : IC
 
         // Enroll first if not enrolled to make sure there's at least 1 enrollment to return
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
         var studentExistsInCourse =
-            await dbContext.Enrollments.AnyAsync(e => e.StudentId == studentId && e.CourseId == courseId);
+            await mongoContext.Enrollments.Find(e => e.StudentId == studentId && e.CourseId == courseId).AnyAsync();
         if (!studentExistsInCourse)
         {
             var adminClient = factory.CreateAppHttpClient();
@@ -223,13 +228,13 @@ public class EnrollmentControllerTests(CustomWebApplicationFactory factory) : IC
     private async Task<(Guid courseId, Guid instructorId, Guid studentId)> GetSeededIdsAsync()
     {
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
 
-        var course = await dbContext.Courses.FirstOrDefaultAsync()
+        var course = await mongoContext.Courses.Find(_ => true).FirstOrDefaultAsync()
                      ?? throw new InvalidOperationException("No courses found in database.");
-        var instructor = await dbContext.Instructors.FirstOrDefaultAsync()
+        var instructor = await mongoContext.Users.Find(u => u.UserRole == UserRole.Instructor).FirstOrDefaultAsync()
                          ?? throw new InvalidOperationException("No instructors found in database.");
-        var student = await dbContext.Students.FirstOrDefaultAsync()
+        var student = await mongoContext.Users.Find(u => u.UserRole == UserRole.Student).FirstOrDefaultAsync()
                       ?? throw new InvalidOperationException("No students found in database.");
 
         return (course.Id, instructor.Id, student.Id);

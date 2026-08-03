@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Caching;
@@ -9,12 +8,13 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Students.DTOs;
 using QuizNova.Application.Features.Students.Mappers;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users.Student;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Application.Features.Students.Commands.UpdateStudent;
 
 public sealed class UpdateStudentCommandHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<UpdateStudentCommandHandler> logger,
     ICacheInvalidator cacheInvalidator)
     : IRequestHandler<UpdateStudentCommand, Result<StudentDto>>
@@ -23,9 +23,9 @@ public sealed class UpdateStudentCommandHandler(
     {
         logger.LogInformation("Updating student with ID: {StudentId}", request.Id);
 
-        var student = await dbContext.Students
-            .Include(s => s.Enrollments)
-            .FirstOrDefaultAsync(entity => entity.Id == request.Id, ct);
+        var student = await mongoContext.Users
+            .Find(u => u.Id == request.Id && u is Student)
+            .FirstOrDefaultAsync(ct) as Student;
 
         if (student is null)
         {
@@ -33,15 +33,17 @@ public sealed class UpdateStudentCommandHandler(
             return ApplicationErrors.StudentNotFound(request.Id);
         }
 
-        if (await dbContext.Users.AnyAsync(
-                user => user.Id != request.Id && user.PersonalInformation.Email == request.PersonalInformation.Email, ct))
+        if (await mongoContext.Users.CountDocumentsAsync(
+                u => u.Id != request.Id && u.PersonalInformation.Email == request.PersonalInformation.Email,
+                cancellationToken: ct) > 0)
         {
             logger.LogWarning("Student update failed: Email {Email} already exists for another user", request.PersonalInformation.Email);
             return ApplicationErrors.UserEmailAlreadyExists(request.PersonalInformation.Email);
         }
 
-        if (await dbContext.Users.AnyAsync(
-                user => user.Id != request.Id && user.PersonalInformation.PhoneNumber == request.PersonalInformation.PhoneNumber, ct))
+        if (await mongoContext.Users.CountDocumentsAsync(
+                u => u.Id != request.Id && u.PersonalInformation.PhoneNumber == request.PersonalInformation.PhoneNumber,
+                cancellationToken: ct) > 0)
         {
             logger.LogWarning(
                 "Student update failed: Phone number {PhoneNumber} already exists for another user",
@@ -72,12 +74,14 @@ public sealed class UpdateStudentCommandHandler(
             return updateStudentResult.TopError;
         }
 
-        dbContext.Students.Update(student);
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.Users.ReplaceOneAsync(u => u.Id == student.Id, student, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync([CacheTags.Students], ct);
+
+        var enrollmentCount = (int)await mongoContext.Enrollments
+            .CountDocumentsAsync(e => e.StudentId == request.Id, cancellationToken: ct);
 
         logger.LogInformation("Successfully updated student {StudentId}", request.Id);
 
-        return student.ToStudentDto(student.Enrollments.Count());
+        return student.ToStudentDto(enrollmentCount);
     }
 }

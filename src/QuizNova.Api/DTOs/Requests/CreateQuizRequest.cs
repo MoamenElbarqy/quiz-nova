@@ -20,7 +20,6 @@ public abstract record CreateQuizQuestionRequest(
 public sealed record CreateMcqRequest(
     string QuestionText,
     int Marks,
-    int NumberOfChoices,
     Guid CorrectChoiceId,
     IReadOnlyCollection<CreateChoiceRequest> Choices)
     : CreateQuizQuestionRequest(QuestionText, Marks);

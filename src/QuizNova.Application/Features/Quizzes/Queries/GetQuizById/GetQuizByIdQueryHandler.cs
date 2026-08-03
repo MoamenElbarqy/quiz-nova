@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
@@ -12,7 +11,6 @@ using QuizNova.Domain.Common.Results;
 namespace QuizNova.Application.Features.Quizzes.Queries.GetQuizById;
 
 public sealed class GetQuizByIdQueryHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     ILogger<GetQuizByIdQueryHandler> logger)
     : IRequestHandler<GetQuizByIdQuery, Result<QuizDto>>
@@ -33,17 +31,6 @@ public sealed class GetQuizByIdQueryHandler(
 
         logger.LogInformation("Successfully retrieved details for quiz {QuizId}", request.QuizId);
 
-        var courseName = await dbContext.Courses
-            .Where(course => course.Id == quiz.CourseId)
-            .Select(course => course.Name)
-            .FirstOrDefaultAsync(ct) ?? string.Empty;
-
-        var instructorName = await dbContext.Instructors
-            .Where(instructor => instructor.Id == quiz.InstructorId)
-            .Select(instructor => instructor.PersonalInformation.Name)
-            .FirstOrDefaultAsync(ct) ?? string.Empty;
-
-        return quiz.ToQuizDto(courseName, instructorName);
+        return quiz.ToQuizDto();
     }
 }
-

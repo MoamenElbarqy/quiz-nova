@@ -1,4 +1,4 @@
-namespace QuizNova.Infrastructure.Identity;
+namespace QuizNova.Domain.Entities.Identity;
 
 public class UserRefreshToken
 {
@@ -15,6 +15,4 @@ public class UserRefreshToken
     public bool IsExpired => DateTimeOffset.UtcNow >= ExpiresOnUtc;
 
     public bool IsActive => RevokedOnUtc == null && !IsExpired;
-
-    public AppUser User { get; init; }
 }

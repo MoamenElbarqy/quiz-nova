@@ -144,7 +144,7 @@ public sealed class QuizController(ISender sender) : ApiController
         [FromBody] CreateQuizQuestionRequest request,
         CancellationToken ct)
     {
-        var result = await sender.Send(new AddQuestionCommand(quizId, request.ToCommand()));
+        var result = await sender.Send(new AddQuestionCommand(quizId, request.ToCommand()), ct);
 
         return result.Match(
             Ok,
@@ -166,39 +166,7 @@ public sealed class QuizController(ISender sender) : ApiController
         [FromBody] UpdateQuestionRequest request,
         CancellationToken ct)
     {
-        var result = await sender.Send(request.ToCommand(quizId, questionId));
-        UpdateQuestionCommand command = request switch
-        {
-            UpdateMcqRequest mcq => new UpdateMcqCommand(
-                quizId,
-                questionId,
-                mcq.QuestionText,
-                mcq.DisplayOrder,
-                mcq.Marks,
-                mcq.CorrectChoiceId,
-                mcq.Choices.Select(c => new CreateChoiceCommand(
-                        c.Id,
-                        c.Text,
-                        c.DisplayOrder))
-                    .ToList()),
-            UpdateTfRequest tf => new UpdateTfCommand(
-                quizId,
-                questionId,
-                tf.QuestionText,
-                tf.DisplayOrder,
-                tf.Marks,
-                tf.CorrectChoice),
-            UpdateEssayRequest essay => new UpdateEssayCommand(
-                quizId,
-                questionId,
-                essay.QuestionText,
-                essay.DisplayOrder,
-                essay.Marks,
-                essay.AnswerReference),
-            _ => throw new InvalidOperationException("Unknown question type")
-        };
-
-        var result = await sender.Send(command, ct);
+        var result = await sender.Send(request.ToCommand(quizId, questionId), ct);
 
         return result.Match(
             _ => NoContent(),

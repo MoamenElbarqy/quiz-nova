@@ -50,13 +50,13 @@ public class QuizAttemptMapperTests
         Assert.Equal(quizAttempt.Id, dto.QuizAttemptId);
         Assert.Equal(quizAttempt.QuizId, dto.QuizId);
         Assert.Equal(quizAttempt.StartedAt, dto.StartedAt);
-        Assert.Equal(quizAttempt.SubmittedAt, dto.SubmittedAt);
+        Assert.Equal(quizAttempt.SubmittedAt ?? default, dto.SubmittedAt);
 
         Assert.Equal(string.Empty, dto.QuizTitle);
         Assert.Equal(0, dto.TotalQuestions);
         Assert.Equal(3, dto.AnsweredQuestions);
         Assert.Equal(2, dto.CorrectAnswers);
-        Assert.Equal(0, dto.Score);
+        Assert.Equal(quizAttempt.Score, dto.Score);
         Assert.Empty(dto.Questions);
 
         Assert.NotNull(dto.Answers);

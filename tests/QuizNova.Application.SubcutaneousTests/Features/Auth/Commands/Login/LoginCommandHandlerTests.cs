@@ -3,10 +3,12 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Errors;
+using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Auth.Commands.Login;
 using QuizNova.Application.SubcutaneousTests.Common;
-using QuizNova.Infrastructure.Data;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Auth.Commands.Login;
 
@@ -169,9 +171,10 @@ public class LoginCommandHandlerTests(CustomWebApplicationFactory factory)
 
         // Verify DB state: refresh token exists and is active
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var storedToken = await dbContext.UserRefreshTokens
-            .FirstOrDefaultAsync(rt => rt.Token == result.Value.Token.RefreshToken);
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var storedToken = await mongoContext.UserRefreshTokens
+            .Find(rt => rt.Token == result.Value.Token.RefreshToken)
+            .FirstOrDefaultAsync();
         storedToken.Should().NotBeNull();
         storedToken.RevokedOnUtc.Should().BeNull("because the token should still be active");
     }
@@ -186,8 +189,8 @@ public class LoginCommandHandlerTests(CustomWebApplicationFactory factory)
         int tokenCountBefore;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            tokenCountBefore = await dbContext.UserRefreshTokens.CountAsync();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            tokenCountBefore = (int)await mongoContext.UserRefreshTokens.CountDocumentsAsync(_ => true);
         }
 
         var command = new LoginCommand("ahmed.nasser@quiznova.local", "WrongPass123!", "Instructor");
@@ -201,8 +204,8 @@ public class LoginCommandHandlerTests(CustomWebApplicationFactory factory)
 
         // Verify DB state: no new refresh tokens were created
         using var scopeAfter = factory.Services.CreateScope();
-        var dbContextAfter = scopeAfter.ServiceProvider.GetRequiredService<AppDbContext>();
-        var tokenCountAfter = await dbContextAfter.UserRefreshTokens.CountAsync();
+        var dbContextAfter = scopeAfter.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var tokenCountAfter = (int)await dbContextAfter.UserRefreshTokens.CountDocumentsAsync(_ => true);
         tokenCountAfter.Should().Be(tokenCountBefore);
     }
 

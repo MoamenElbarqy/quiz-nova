@@ -3,10 +3,13 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
 using QuizNova.Application.Features.Enrollments.Queries.GetStudentEnrollmentsById;
 using QuizNova.Application.SubcutaneousTests.Common;
+using QuizNova.Domain.Entities.Identity;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Enrollments.Queries.GetStudentEnrollmentsById;
 
@@ -54,11 +57,11 @@ public class GetStudentEnrollmentsByIdQueryHandlerTests(CustomWebApplicationFact
         Guid courseId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            var student = await dbContext.Students.FirstAsync();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            var student = await mongoContext.Users.Find(u => u.UserRole == UserRole.Student).FirstAsync();
             studentId = student.Id;
 
-            var course = await dbContext.Courses.FirstAsync();
+            var course = await mongoContext.Courses.Find(_ => true).FirstAsync();
             courseId = course.Id;
         }
 

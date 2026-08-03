@@ -1,29 +1,48 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
+using QuizNova.Application.Common.Events;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Courses;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
 
 public sealed class EnrollStudentInCourseCommandHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
+    IDomainEventTracker eventTracker,
     ILogger<EnrollStudentInCourseCommandHandler> logger,
-    ICacheInvalidator cacheInvalidator)
+    ICacheInvalidator cacheInvalidator,
+    IUser currentUser)
     : IRequestHandler<EnrollStudentInCourseCommand, Result<Created>>
 {
     public async Task<Result<Created>> Handle(EnrollStudentInCourseCommand request, CancellationToken ct)
     {
+        if (string.IsNullOrEmpty(currentUser.Id) || !Guid.TryParse(currentUser.Id, out var currentUserId))
+        {
+            return ApplicationErrors.UserIdClaimInvalid;
+        }
+
+        var isExecutingUserAdmin = await mongoContext.Users
+            .Find(u => u.Id == currentUserId && u is Admin)
+            .AnyAsync(ct);
+
+        if (!isExecutingUserAdmin)
+        {
+            return ApplicationErrors.AdminNotFound(currentUserId);
+        }
+
         logger.LogInformation("Enrolling student {StudentId} in course {CourseId}", request.StudentId,
             request.CourseId);
 
-        var course = await dbContext.Courses
-            .Include(c => c.Enrollments)
-            .FirstOrDefaultAsync(c => c.Id == request.CourseId, ct);
+        var course = await mongoContext.Courses
+            .Find(c => c.Id == request.CourseId)
+            .FirstOrDefaultAsync(ct);
 
         if (course is null)
         {
@@ -31,13 +50,24 @@ public sealed class EnrollStudentInCourseCommandHandler(
             return ApplicationErrors.CourseNotFound(request.CourseId);
         }
 
-        var student = await dbContext.Students
-            .FirstOrDefaultAsync(s => s.Id == request.StudentId, ct);
+        var student = await mongoContext.Users
+            .Find(u => u.Id == request.StudentId && u is Student)
+            .FirstOrDefaultAsync(ct) as Student;
 
         if (student is null)
         {
             logger.LogWarning("Enrollment failed: Student {StudentId} not found", request.StudentId);
             return ApplicationErrors.StudentNotFound(request.StudentId);
+        }
+
+        var existingEnrollment = await mongoContext.Enrollments
+            .Find(e => e.StudentId == request.StudentId && e.CourseId == request.CourseId)
+            .FirstOrDefaultAsync(ct);
+
+        if (existingEnrollment is not null)
+        {
+            logger.LogWarning("Enrollment failed: Student {StudentId} is already enrolled in course {CourseId}", request.StudentId, request.CourseId);
+            return CourseErrors.StudentAlreadyEnrolled(request.StudentId);
         }
 
         var enrollmentResult = course.Enroll(student);
@@ -48,8 +78,10 @@ public sealed class EnrollStudentInCourseCommandHandler(
             return enrollmentResult.TopError;
         }
 
-        await dbContext.Enrollments.AddAsync(enrollmentResult.Value, ct);
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.Courses.ReplaceOneAsync(c => c.Id == course.Id, course, cancellationToken: ct);
+        await mongoContext.Enrollments.InsertOneAsync(enrollmentResult.Value, cancellationToken: ct);
+
+        eventTracker.TrackEntity(course);
         await cacheInvalidator.InvalidateAsync([CacheTags.Courses, CacheTags.Students], ct);
 
         logger.LogInformation("Successfully enrolled student {StudentId} in course {CourseId}", request.StudentId,

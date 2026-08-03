@@ -10,7 +10,7 @@ public static class StudentQuizMapper
         return new StudentQuizDto(
             quiz.Id,
             quiz.Title,
-            quiz.Course?.Name ?? string.Empty,
+            quiz.CourseName,
             quiz.Questions.Count(),
             quiz.StartsAtUtc,
             quiz.EndsAtUtc,

@@ -3,6 +3,8 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
@@ -43,9 +45,8 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
 
         // Verify existence in database
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var courseInDb = await dbContext.Courses
-            .FirstOrDefaultAsync(c => c.Id == result.Value.Id);
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var courseInDb = await mongoContext.Courses.Find(c => c.Id == result.Value.Id).FirstOrDefaultAsync();
 
         courseInDb.Should().NotBeNull();
         courseInDb.Name.Should().Be("Valid Course Name");
@@ -154,8 +155,8 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
 
         // Verify existence in database
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.Id);
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var courseInDb = await mongoContext.Courses.Find(c => c.Id == result.Value.Id).FirstOrDefaultAsync();
         courseInDb.Should().NotBeNull();
         courseInDb.Name.Should().Be("ABC");
     }
@@ -182,8 +183,8 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
 
         // Verify existence in database
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.Id);
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var courseInDb = await mongoContext.Courses.Find(c => c.Id == result.Value.Id).FirstOrDefaultAsync();
         courseInDb.Should().NotBeNull();
         courseInDb.Name.Should().Be(longName);
     }
@@ -284,8 +285,8 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
 
         // Verify existence in database
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.Id);
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var courseInDb = await mongoContext.Courses.Find(c => c.Id == result.Value.Id).FirstOrDefaultAsync();
         courseInDb.Should().NotBeNull();
         courseInDb.MinimumPassingMarks.Should().Be(100);
         courseInDb.MaximumMarks.Should().Be(100);
@@ -347,8 +348,8 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
 
         // Verify in database
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == result.Value.Id);
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var courseInDb = await mongoContext.Courses.Find(c => c.Id == result.Value.Id).FirstOrDefaultAsync();
         courseInDb.Should().NotBeNull();
         courseInDb.InstructorId.Should().Be(instructorId);
     }
@@ -357,13 +358,12 @@ public class CreateCourseCommandHandlerTests(CustomWebApplicationFactory factory
     {
         var adminId = Guid.Parse(TestUsers.Admin.User.Id);
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        if (!dbContext.Admins.Any(a => a.Id == adminId))
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        if (!mongoContext.Users.Find(u => u.UserRole == UserRole.Admin && u.Id == adminId).Any())
         {
             var personalInfo = PersonalInformation.Create("Admin User", "admin@quiznova.local", "01000000000").Value;
             var admin = Admin.Create(adminId, personalInfo).Value;
-            dbContext.Admins.Add(admin);
-            dbContext.SaveChangesAsync().GetAwaiter().GetResult();
+            mongoContext.Users.InsertOne(admin);
         }
 
         TestCurrentUser.Set(TestUsers.Admin.User);

@@ -3,6 +3,8 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.Features.Quizzes.Queries.GetInstructorQuizzes;
@@ -48,8 +50,8 @@ public class GetInstructorQuizzesQueryTests(CustomWebApplicationFactory factory)
         Guid courseId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            var course = await dbContext.Courses.FirstAsync();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            var course = await mongoContext.Courses.Find(_ => true).FirstAsync();
             courseId = course.Id;
             instructorId = course.InstructorId!.Value;
         }

@@ -37,11 +37,6 @@ public sealed class CompleteQuizAttemptCommandHandler(
             return ApplicationErrors.QuizAttemptNotFound(request.AttemptId);
         }
 
-        if (attempt.Quiz is null)
-        {
-            return ApplicationErrors.QuizNotFound(attempt.QuizId);
-        }
-
         if (attempt.StudentId != studentId)
         {
             return Error.Forbidden("Forbidden", "You do not own this attempt.");

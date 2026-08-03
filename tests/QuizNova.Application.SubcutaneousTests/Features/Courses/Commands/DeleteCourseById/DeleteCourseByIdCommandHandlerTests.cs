@@ -3,11 +3,14 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Courses.Commands.DeleteCourseById;
 using QuizNova.Application.SubcutaneousTests.Common;
+using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.Users.Admins;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 using QuizNova.Tests.Common.Security;
@@ -36,6 +39,7 @@ public class DeleteCourseByIdCommandHandlerTests(CustomWebApplicationFactory fac
     public async Task Handle_WithNonExistentCourseId_ShouldReturnNotFoundError()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
         var command = new DeleteCourseByIdCommand(Guid.NewGuid());
 
@@ -71,8 +75,8 @@ public class DeleteCourseByIdCommandHandlerTests(CustomWebApplicationFactory fac
 
         // Verify removed from database
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var courseInDb = await mongoContext.Courses.Find(c => c.Id == courseId).FirstOrDefaultAsync();
         courseInDb.Should().BeNull();
     }
 
@@ -105,8 +109,8 @@ public class DeleteCourseByIdCommandHandlerTests(CustomWebApplicationFactory fac
 
         // Verify absent in database
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var courseInDb = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var courseInDb = await mongoContext.Courses.Find(c => c.Id == courseId).FirstOrDefaultAsync();
         courseInDb.Should().BeNull();
     }
 
@@ -114,13 +118,12 @@ public class DeleteCourseByIdCommandHandlerTests(CustomWebApplicationFactory fac
     {
         var adminId = Guid.Parse(TestUsers.Admin.User.Id);
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        if (!dbContext.Admins.Any(a => a.Id == adminId))
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        if (!mongoContext.Users.Find(u => u.UserRole == UserRole.Admin && u.Id == adminId).Any())
         {
             var personalInfo = PersonalInformation.Create("Admin User", "admin@quiznova.local", "01000000000").Value;
             var admin = Admin.Create(adminId, personalInfo).Value;
-            dbContext.Admins.Add(admin);
-            dbContext.SaveChangesAsync().GetAwaiter().GetResult();
+            mongoContext.Users.InsertOne(admin);
         }
 
         TestCurrentUser.Set(TestUsers.Admin.User);

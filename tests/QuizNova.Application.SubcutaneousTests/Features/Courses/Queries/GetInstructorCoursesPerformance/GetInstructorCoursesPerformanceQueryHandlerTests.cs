@@ -2,6 +2,8 @@ using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
 using QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesPerformance;
@@ -52,6 +54,7 @@ public class GetInstructorCoursesPerformanceQueryHandlerTests(CustomWebApplicati
     public async Task Handle_WithValidInstructorId_ShouldReturnPerformanceData()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
 
         // Create an instructor
@@ -63,9 +66,6 @@ public class GetInstructorCoursesPerformanceQueryHandlerTests(CustomWebApplicati
             Role: nameof(UserRole.Instructor)));
         instructorResult.IsSuccess.Should().BeTrue();
         var instructorId = instructorResult.Value.Id;
-
-        // Set admin context for CreateCourseCommand
-        EnsureAdminContext();
 
         // Create a course assigned to this instructor
         var courseResult = await mediator.Send(new CreateCourseCommand(
@@ -91,13 +91,12 @@ public class GetInstructorCoursesPerformanceQueryHandlerTests(CustomWebApplicati
     {
         var adminId = Guid.Parse(TestUsers.Admin.User.Id);
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        if (!dbContext.Admins.Any(a => a.Id == adminId))
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        if (!mongoContext.Users.Find(u => u.UserRole == UserRole.Admin && u.Id == adminId).Any())
         {
             var personalInfo = PersonalInformation.Create("Admin User", "admin@quiznova.local", "01000000000").Value;
             var admin = Admin.Create(adminId, personalInfo).Value;
-            dbContext.Admins.Add(admin);
-            dbContext.SaveChangesAsync().GetAwaiter().GetResult();
+            mongoContext.Users.InsertOne(admin);
         }
 
         TestCurrentUser.Set(TestUsers.Admin.User);

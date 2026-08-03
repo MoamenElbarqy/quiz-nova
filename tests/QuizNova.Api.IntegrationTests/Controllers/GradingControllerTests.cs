@@ -4,11 +4,14 @@ using FluentAssertions;
 
 using Microsoft.EntityFrameworkCore;
 
+using MongoDB.Driver;
+
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.IntegrationTests.Common;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.QuizAttempts.DTOs;
+using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers.EssayAnswer;
 using QuizNova.Domain.Entities.Quizzes;
@@ -185,22 +188,22 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
     private async Task<(Guid attemptId, Guid answerId, Guid questionId)> SeedManualAnswerAsync(string instructorEmail)
     {
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
 
-        var instructor = await dbContext.Instructors
-                             .Include(i => i.Courses)
-                             .FirstOrDefaultAsync(i => i.PersonalInformation.Email == instructorEmail)
+        var instructor = await mongoContext.Users
+                             .Find(u => u.UserRole == UserRole.Instructor && u.PersonalInformation.Email == instructorEmail)
+                             .FirstOrDefaultAsync()
                          ?? throw new InvalidOperationException($"Instructor {instructorEmail} not found.");
 
-        var course = instructor.Courses.FirstOrDefault();
+        var course = await mongoContext.Courses.Find(c => c.InstructorId == instructor.Id).FirstOrDefaultAsync();
         if (course is null)
         {
-            course = await dbContext.Courses.FirstAsync();
+            course = await mongoContext.Courses.Find(_ => true).FirstAsync();
             course.UpdateInstructor(instructor.Id);
-            await dbContext.SaveChangesAsync();
+            await mongoContext.Courses.ReplaceOneAsync(c => c.Id == course.Id, course);
         }
 
-        var student = await dbContext.Students.FirstOrDefaultAsync()
+        var student = await mongoContext.Users.Find(u => u.UserRole == UserRole.Student).FirstOrDefaultAsync()
                       ?? throw new InvalidOperationException("No students found in database.");
 
         var quizId = Guid.NewGuid();
@@ -216,10 +219,13 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
             quizId,
             course.Id,
             instructor.Id,
+            course.Name,
+            instructor.PersonalInformation.Name,
             "Essay Quiz",
             DateTimeOffset.UtcNow.AddDays(1),
             DateTimeOffset.UtcNow.AddDays(2),
-            questionArgs).Value;
+            questionArgs,
+            course).Value;
 
         var questionId = quiz.Questions.Last().Id;
 
@@ -230,17 +236,19 @@ public class GradingControllerTests(CustomWebApplicationFactory factory) : IClas
             student.Id,
             questionId,
             attemptId,
-            "REST stands for Representational State Transfer...").Value;
+            "REST stands for Representational State Transfer...",
+            10,
+            null).Value;
 
         var attempt = QuizAttempt.Start(
             attemptId,
             student.Id,
             quizId,
-            DateTime.UtcNow.AddMinutes(2)).Value;
+            DateTime.UtcNow.AddMinutes(2),
+            quiz.EndsAtUtc).Value;
         attempt.SubmitAnswer(answer);
         attempt.Complete(DateTime.UtcNow.AddMinutes(4));
 
-        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
         await mongoContext.Quizzes.InsertOneAsync(quiz);
         await mongoContext.QuizAttempts.InsertOneAsync(attempt);
 

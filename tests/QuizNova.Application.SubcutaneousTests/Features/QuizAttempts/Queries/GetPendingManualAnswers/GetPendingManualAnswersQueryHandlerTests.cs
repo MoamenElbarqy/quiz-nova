@@ -2,6 +2,8 @@ using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.QuizAttempts.Queries.GetPendingManualAnswers;
 using QuizNova.Application.SubcutaneousTests.Common;
@@ -104,12 +106,11 @@ public class GetPendingManualAnswersQueryHandlerTests(CustomWebApplicationFactor
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
-            dbContext.Instructors.Add(instructor);
-            dbContext.Students.Add(student);
-            dbContext.Courses.Add(course);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Users.InsertOneAsync(instructor);
+            await mongoContext.Users.InsertOneAsync(student);
+            await mongoContext.Courses.InsertOneAsync(course);
+
             await mongoContext.Quizzes.InsertManyAsync([quizWithPending, quizAllScored]);
             await mongoContext.QuizAttempts.InsertManyAsync([attemptWithPending, attemptAllScored]);
         }

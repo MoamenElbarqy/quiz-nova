@@ -49,11 +49,13 @@ public static class QuizErrors
     public static readonly Error TitleTooLong =
         Error.Validation("Quiz_Title_TooLong", "Quiz title cannot exceed 30 characters.");
 
-    public static readonly Error QuestionSequenceInvalid =
-        Error.Validation("Quiz_QuestionSequenceInvalid", "Question display orders must contain exactly all values from 1 to N without any missing values.");
-
     public static readonly Error CourseCompleted =
         Error.Validation("Quiz_CourseCompleted", "Cannot perform operations on a quiz belonging to a completed course.");
+
+    public static Error CourseMismatch(Guid passedCourseId, Guid quizCourseId) =>
+        Error.Validation(
+            "Quiz_CourseMismatch",
+            $"Course with ID '{passedCourseId}' does not match the quiz's course ID '{quizCourseId}'.");
 
     public static readonly Error ScheduleDurationTooShort =
         Error.Validation("Quiz_Schedule_DurationTooShort", "Quiz start and end time must be at least 10 minutes apart.");

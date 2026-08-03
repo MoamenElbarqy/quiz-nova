@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Caching;
@@ -10,20 +9,36 @@ using QuizNova.Application.Features.Students.DTOs;
 using QuizNova.Application.Features.Students.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Identity;
+using QuizNova.Domain.Entities.Users.Admins;
 using QuizNova.Domain.Entities.Users.Student;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Application.Features.Students.Commands.CreateStudent;
 
 public sealed class CreateStudentCommandHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     IAuthService authService,
     ILogger<CreateStudentCommandHandler> logger,
-    ICacheInvalidator cacheInvalidator)
+    ICacheInvalidator cacheInvalidator,
+    IUser currentUser)
     : IRequestHandler<CreateStudentCommand, Result<StudentDto>>
 {
     public async Task<Result<StudentDto>> Handle(CreateStudentCommand request, CancellationToken ct)
     {
+        if (string.IsNullOrEmpty(currentUser.Id) || !Guid.TryParse(currentUser.Id, out var currentUserId))
+        {
+            return ApplicationErrors.UserIdClaimInvalid;
+        }
+
+        var isExecutingUserAdmin = await mongoContext.Users
+            .Find(u => u.Id == currentUserId && u is Admin)
+            .AnyAsync(ct);
+
+        if (!isExecutingUserAdmin)
+        {
+            return ApplicationErrors.AdminNotFound(currentUserId);
+        }
+
         logger.LogInformation("Creating student with email: {Email}", request.PersonalInformation.Email);
 
         if (!Enum.TryParse<UserRole>(request.Role, true, out var role))
@@ -38,7 +53,9 @@ public sealed class CreateStudentCommandHandler(
             return ApplicationErrors.CreateStudentRoleInvalid(request.Role);
         }
 
-        if (await dbContext.Users.AnyAsync(u => u.PersonalInformation.PhoneNumber == request.PersonalInformation.PhoneNumber, ct))
+        if (await mongoContext.Users.CountDocumentsAsync(
+                u => u.PersonalInformation.PhoneNumber == request.PersonalInformation.PhoneNumber,
+                cancellationToken: ct) > 0)
         {
             logger.LogWarning(
                 "Student creation failed: Phone number {PhoneNumber} already exists",
@@ -78,9 +95,7 @@ public sealed class CreateStudentCommandHandler(
         // 3. Create Student Domain Aggregate
         var createStudentResult = Student.Create(
             userId,
-            personalInformationResult.Value,
-            [],
-            []);
+            personalInformationResult.Value);
 
         if (createStudentResult.IsError)
         {
@@ -90,8 +105,7 @@ public sealed class CreateStudentCommandHandler(
             return createStudentResult.TopError;
         }
 
-        await dbContext.Students.AddAsync(createStudentResult.Value, ct);
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.Users.InsertOneAsync(createStudentResult.Value, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync([CacheTags.Students], ct);
 
         logger.LogInformation("Successfully created student {StudentId} with email {Email}",

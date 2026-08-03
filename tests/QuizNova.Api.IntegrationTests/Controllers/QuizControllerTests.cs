@@ -4,11 +4,14 @@ using FluentAssertions;
 
 using Microsoft.EntityFrameworkCore;
 
+using MongoDB.Driver;
+
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.IntegrationTests.Common;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Quizzes.DTOs;
+using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Quizzes.Questions;
 using QuizNova.Tests.Common.Security;
@@ -414,9 +417,9 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     private async Task<(Guid quizId, Guid questionId)> SeedQuizWithQuestionAsync(int questionCount = 3)
     {
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var course = await dbContext.Courses.FirstAsync();
-        var instructor = await dbContext.Instructors.FirstAsync(instructor => instructor.Id == course.InstructorId);
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var course = await mongoContext.Courses.Find(_ => true).FirstAsync();
+        var instructor = await mongoContext.Users.Find(u => u.UserRole == UserRole.Instructor && u.Id == course.InstructorId).FirstAsync();
         var quizId = Guid.NewGuid();
         var questionArgs = Enumerable.Range(0, questionCount)
             .Select(index => new CreateTfArgs(
@@ -429,12 +432,14 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
             quizId,
             course.Id,
             instructor.Id,
+            course.Name,
+            instructor.PersonalInformation.Name,
             $"Seed {Guid.NewGuid():N}"[..20],
             DateTimeOffset.UtcNow.AddDays(1),
             DateTimeOffset.UtcNow.AddDays(2),
-            questionArgs).Value;
+            questionArgs,
+            course).Value;
 
-        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
         await mongoContext.Quizzes.InsertOneAsync(quiz);
 
         return (quizId, quiz.Questions.First().Id);
@@ -443,10 +448,10 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     private async Task<(Guid courseId, Guid instructorId, Guid studentId)> GetSeededIdsAsync()
     {
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var instructor = await dbContext.Instructors.FirstAsync(i => i.PersonalInformation.Email == TestUsers.Instructor1.User.Email);
-        var course = await dbContext.Courses.FirstAsync(c => c.InstructorId == instructor.Id);
-        var student = await dbContext.Students.FirstAsync();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var instructor = await mongoContext.Users.Find(u => u.UserRole == UserRole.Instructor && u.PersonalInformation.Email == TestUsers.Instructor1.User.Email).FirstAsync();
+        var course = await mongoContext.Courses.Find(c => c.InstructorId == instructor.Id).FirstAsync();
+        var student = await mongoContext.Users.Find(u => u.UserRole == UserRole.Student).FirstAsync();
 
         return (course.Id, instructor.Id, student.Id);
     }
@@ -454,10 +459,10 @@ public class QuizControllerTests(CustomWebApplicationFactory factory) : IClassFi
     private async Task<(Guid courseId, Guid instructorId, Guid studentId)> GetAlternateSeededIdsAsync()
     {
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var instructor = await dbContext.Instructors.FirstAsync(i => i.PersonalInformation.Email == TestUsers.Instructor1.User.Email);
-        var course = await dbContext.Courses.Where(c => c.InstructorId == instructor.Id).OrderByDescending(c => c.Name).FirstAsync();
-        var student = await dbContext.Students.FirstAsync();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var instructor = await mongoContext.Users.Find(u => u.UserRole == UserRole.Instructor && u.PersonalInformation.Email == TestUsers.Instructor1.User.Email).FirstAsync();
+        var course = await mongoContext.Courses.Find(c => c.InstructorId == instructor.Id).SortByDescending(c => c.Name).FirstAsync();
+        var student = await mongoContext.Users.Find(u => u.UserRole == UserRole.Student).FirstAsync();
 
         return (course.Id, instructor.Id, student.Id);
     }

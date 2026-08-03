@@ -1,7 +1,8 @@
 using FluentAssertions;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+
+using MongoDB.Driver;
 
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
@@ -9,6 +10,9 @@ using QuizNova.Application.Features.Admins.Commands.CreateAdmin;
 using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Entities.Identity;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.UserPersonalInformation;
+using QuizNova.Tests.Common.Security;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Admins.Commands.CreateAdmin;
 
@@ -19,6 +23,7 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
     public async Task Handle_WithValidData_ShouldCreateAdminSuccessfully()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
         var uniqueEmail = $"admin_{Guid.NewGuid()}@example.com";
         var uniquePhone = $"+1{Guid.NewGuid().ToString()[..10]}"; // ensure valid length between 7 and 15
@@ -38,9 +43,10 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         result.Value.PersonalInformation.Email.Should().Be(uniqueEmail);
 
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var adminInDb = await dbContext.Admins
-            .FirstOrDefaultAsync(a => a.PersonalInformation.Email == uniqueEmail);
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var adminInDb = await mongoContext.Users
+            .Find(u => u.UserRole == UserRole.Admin && u.PersonalInformation.Email == uniqueEmail)
+            .FirstOrDefaultAsync();
 
         adminInDb.Should().NotBeNull();
         adminInDb.PersonalInformation.Name.Should().Be("Valid Admin Name");
@@ -63,7 +69,8 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.Errors.Should().Contain(e => e.Code == "PersonalInformation.Name" && e.Description.Contains("at least 3 characters"));
+        result.Errors.Should().Contain(e =>
+            e.Code == "PersonalInformation.Name" && e.Description.Contains("at least 3 characters"));
     }
 
     [Fact]
@@ -81,7 +88,8 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.Errors.Should().Contain(e => e.Code == "PersonalInformation.Email" && e.Description.Contains("required"));
+        result.Errors.Should()
+            .Contain(e => e.Code == "PersonalInformation.Email" && e.Description.Contains("required"));
     }
 
     [Fact]
@@ -99,7 +107,8 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
 
         // Assert
         result.IsError.Should().BeTrue();
-        result.Errors.Should().Contain(e => e.Code == "PersonalInformation.Email" && e.Description.Contains("valid email address"));
+        result.Errors.Should().Contain(e =>
+            e.Code == "PersonalInformation.Email" && e.Description.Contains("valid email address"));
     }
 
     [Fact]
@@ -154,7 +163,8 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // Assert
         result.IsError.Should().BeTrue();
         result.Errors.Should()
-            .Contain(e => e.Code == "PersonalInformation.PhoneNumber" && e.Description.Contains("between 7 and 15 characters"));
+            .Contain(e =>
+                e.Code == "PersonalInformation.PhoneNumber" && e.Description.Contains("between 7 and 15 characters"));
     }
 
     [Fact]
@@ -173,20 +183,24 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         // Assert
         result.IsError.Should().BeTrue();
         result.Errors.Should()
-            .Contain(e => e.Code == "PersonalInformation.PhoneNumber" && e.Description.Contains("between 7 and 15 characters"));
+            .Contain(e =>
+                e.Code == "PersonalInformation.PhoneNumber" && e.Description.Contains("between 7 and 15 characters"));
     }
 
     [Fact]
     public async Task Handle_WithDuplicateEmail_ShouldReturnDuplicateEmailError()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
         var email = $"admin_{Guid.NewGuid()}@example.com";
         var phone1 = $"+1{Guid.NewGuid().ToString()[..10]}";
         var phone2 = $"+1{Guid.NewGuid().ToString()[..10]}";
 
-        var command1 = new CreateAdminCommand(new PersonalInformationDto("Admin One", email, phone1), "SecurePass123!", nameof(UserRole.Admin));
-        var command2 = new CreateAdminCommand(new PersonalInformationDto("Admin Two", email, phone2), "SecurePass123!", nameof(UserRole.Admin));
+        var command1 = new CreateAdminCommand(new PersonalInformationDto("Admin One", email, phone1), "SecurePass123!",
+            nameof(UserRole.Admin));
+        var command2 = new CreateAdminCommand(new PersonalInformationDto("Admin Two", email, phone2), "SecurePass123!",
+            nameof(UserRole.Admin));
 
         // Act
         var result1 = await mediator.Send(command1);
@@ -202,13 +216,16 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
     public async Task Handle_WithDuplicatePhoneNumber_ShouldReturnDuplicatePhoneNumberError()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
         var email1 = $"admin_{Guid.NewGuid()}@example.com";
         var email2 = $"admin_{Guid.NewGuid()}@example.com";
         var phone = $"+1{Guid.NewGuid().ToString()[..10]}";
 
-        var command1 = new CreateAdminCommand(new PersonalInformationDto("Admin One", email1, phone), "SecurePass123!", nameof(UserRole.Admin));
-        var command2 = new CreateAdminCommand(new PersonalInformationDto("Admin Two", email2, phone), "SecurePass123!", nameof(UserRole.Admin));
+        var command1 = new CreateAdminCommand(new PersonalInformationDto("Admin One", email1, phone), "SecurePass123!",
+            nameof(UserRole.Admin));
+        var command2 = new CreateAdminCommand(new PersonalInformationDto("Admin Two", email2, phone), "SecurePass123!",
+            nameof(UserRole.Admin));
 
         // Act
         var result1 = await mediator.Send(command1);
@@ -218,5 +235,20 @@ public class CreateAdminCommandHandlerTests(CustomWebApplicationFactory factory)
         result1.IsSuccess.Should().BeTrue();
         result2.IsError.Should().BeTrue();
         result2.TopError.Code.Should().Be(ApplicationErrors.UserPhoneNumberAlreadyExists(string.Empty).Code);
+    }
+
+    private void EnsureAdminContext()
+    {
+        var adminId = Guid.Parse(TestUsers.Admin.User.Id);
+        using var scope = factory.Services.CreateScope();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        if (!mongoContext.Users.Find(u => u.UserRole == UserRole.Admin && u.Id == adminId).Any())
+        {
+            var personalInfo = PersonalInformation.Create("Admin User", "admin@quiznova.local", "01000000000").Value;
+            var admin = Admin.Create(adminId, personalInfo).Value;
+            mongoContext.Users.InsertOne(admin);
+        }
+
+        TestCurrentUser.Set(TestUsers.Admin.User);
     }
 }

@@ -32,9 +32,13 @@ public sealed class GetQuizAttemptByIdQueryHandler(
             return ApplicationErrors.QuizAttemptNotFound(request.QuizAttemptId);
         }
 
+        var quiz = await mongoContext.Quizzes
+            .Find(q => q.Id == quizAttempt.QuizId)
+            .FirstOrDefaultAsync(ct);
+
         logger.LogInformation("Successfully retrieved quiz attempt {QuizAttemptId}", request.QuizAttemptId);
 
-        return quizAttempt.ToQuizAttemptDto();
+        return quizAttempt.ToQuizAttemptDto(quiz);
     }
 }
 

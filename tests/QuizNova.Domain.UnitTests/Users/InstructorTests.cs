@@ -20,9 +20,7 @@ public class InstructorTests
         // Act
         var result = Instructor.Create(
             id,
-            personalInfoResult.Value,
-            [],
-            []);
+            personalInfoResult.Value);
 
         // Assert
         Assert.True(result.IsSuccess);

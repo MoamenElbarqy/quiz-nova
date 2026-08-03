@@ -1,22 +1,25 @@
 using QuizNova.Application.Features.QuizAttempts.DTOs;
 using QuizNova.Application.Features.Quizzes.Mappers;
 using QuizNova.Domain.Entities.QuizAttempts;
+using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 
 namespace QuizNova.Application.Features.QuizAttempts.Mappers;
 
 public static class QuizAttemptMapper
 {
-    public static QuizAttemptDto ToQuizAttemptDto(this QuizAttempt quizAttempt)
+    public static QuizAttemptDto ToQuizAttemptDto(this QuizAttempt quizAttempt, Quiz? quiz = null)
     {
         var studentAnswers = quizAttempt.StudentAnswers.ToList();
         var answeredQuestions = studentAnswers.Count;
 
-        var questionsById = quizAttempt.Quiz?.Questions
-            .ToDictionary(question => question.Id) ?? new Dictionary<Guid, Question>();
+        var questions = quiz?.Questions.ToList();
+        var questionsById = questions
+            ?.ToDictionary(question => question.Id) ?? new Dictionary<Guid, Question>();
+
         var totalQuestions = questionsById.Count;
-        var questionDtos = quizAttempt.Quiz?.Questions
-            .OrderBy(question => question.DisplayOrder)
+        var questionDtos = questions
+            ?.OrderBy(question => question.DisplayOrder)
             .Select(question => question.ToQuestionDto())
             .ToList() ?? [];
 
@@ -25,14 +28,14 @@ public static class QuizAttemptMapper
             .ToList();
 
         var correctAnswers = answerDtos.OfType<AutoGradedAnswerDto>().Count(answer => answer.IsCorrect);
-        var totalMarks = quizAttempt.Quiz?.Questions.Sum(question => question.Marks) ?? 0;
+        var totalMarks = questions?.Sum(question => question.Marks) ?? 0;
 
         return new QuizAttemptDto(
             quizAttempt.Id,
             quizAttempt.QuizId,
-            quizAttempt.Quiz?.Title ?? string.Empty,
+            quiz?.Title ?? string.Empty,
             quizAttempt.StartedAt,
-            quizAttempt.SubmittedAt,
+            quizAttempt.SubmittedAt ?? default,
             totalQuestions,
             answeredQuestions,
             correctAnswers,

@@ -59,9 +59,9 @@ public class GetInstructorByIdQueryHandlerTests(CustomWebApplicationFactory fact
         // 2. Save to DB
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            dbContext.Instructors.Add(instructor);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            await mongoContext.Users.InsertOneAsync(instructor);
+
         }
 
         var query = new GetInstructorByIdQuery(instructor.Id);

@@ -26,14 +26,14 @@ public class QuizMapperTests
             questionArgs: questionArgs).Value;
 
         // Act
-        var dto = quiz.ToQuizDto("Course", "Instructor");
+        var dto = quiz.ToQuizDto();
 
         // Assert
         Assert.NotNull(dto);
         Assert.Equal(quiz.Id, dto.QuizId);
         Assert.Equal(quiz.Title, dto.Title);
-        Assert.Equal("Course", dto.CourseName);
-        Assert.Equal("Instructor", dto.InstructorName);
+        Assert.Equal(quiz.CourseName, dto.CourseName);
+        Assert.Equal(quiz.InstructorName, dto.InstructorName);
         Assert.Equal(30, dto.Marks); // 5 + 15 + 10
         Assert.Equal(quiz.CourseId, dto.CourseId);
         Assert.Equal(quiz.InstructorId, dto.InstructorId);
@@ -56,18 +56,18 @@ public class QuizMapperTests
         var upcomingQuiz = QuizFactory.CreateQuiz(
             startsAtUtc: DateTimeOffset.UtcNow.AddMinutes(10),
             endsAtUtc: DateTimeOffset.UtcNow.AddMinutes(30)).Value;
-        Assert.Equal("Upcoming", upcomingQuiz.ToQuizDto(string.Empty, string.Empty).State);
+        Assert.Equal("Upcoming", upcomingQuiz.ToQuizDto().State);
 
         // Active Quiz
         var activeQuiz = QuizFactory.CreateQuiz(
             startsAtUtc: DateTimeOffset.UtcNow.AddMinutes(-10),
             endsAtUtc: DateTimeOffset.UtcNow.AddMinutes(10)).Value;
-        Assert.Equal("Active", activeQuiz.ToQuizDto(string.Empty, string.Empty).State);
+        Assert.Equal("Active", activeQuiz.ToQuizDto().State);
 
         // Completed Quiz
         var completedQuiz = QuizFactory.CreateQuiz(
             startsAtUtc: DateTimeOffset.UtcNow.AddMinutes(-30),
             endsAtUtc: DateTimeOffset.UtcNow.AddMinutes(-10)).Value;
-        Assert.Equal("Completed", completedQuiz.ToQuizDto(string.Empty, string.Empty).State);
+        Assert.Equal("Completed", completedQuiz.ToQuizDto().State);
     }
 }

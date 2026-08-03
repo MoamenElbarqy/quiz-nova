@@ -1,31 +1,30 @@
+using System.Text.Json;
+
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Domain.Entities.CourseChats;
 
 public sealed class CourseChatRoom : Entity
 {
-    private readonly List<Student> _students;
-    private readonly List<Message> _messages;
+    private List<Guid> _studentIds = [];
+    private List<Message> _messages = [];
 
     private CourseChatRoom()
     {
-        _students = [];
-        _messages = [];
     }
 
     private CourseChatRoom(
         Guid id,
         Guid courseId,
         Guid? instructorId,
-        List<Student> students,
+        List<Guid> studentIds,
         List<Message> messages)
         : base(id)
     {
         CourseId = courseId;
         InstructorId = instructorId;
-        _students = students;
+        _studentIds = studentIds;
         _messages = messages;
     }
 
@@ -33,7 +32,7 @@ public sealed class CourseChatRoom : Entity
 
     public Guid? InstructorId { get; private set; }
 
-    public IEnumerable<Student> Students => _students.AsReadOnly();
+    public IEnumerable<Guid> StudentIds => _studentIds.AsReadOnly();
 
     public IEnumerable<Message> Messages => _messages.AsReadOnly();
 
@@ -65,33 +64,44 @@ public sealed class CourseChatRoom : Entity
         return Result.Updated;
     }
 
-    public Result<Updated> AddStudent(Student student)
+    public Result<Updated> AddStudent(Guid studentId)
     {
-        if (_students.Any(s => s.Id == student.Id))
+        if (_studentIds.Contains(studentId))
         {
             return CourseChatErrors.StudentAlreadyInRoom;
         }
 
-        _students.Add(student);
+        _studentIds.Add(studentId);
         return Result.Updated;
     }
 
-    public Result<Updated> RemoveStudent(Student student)
+    public Result<Updated> RemoveStudent(Guid studentId)
     {
-        var existing = _students.FirstOrDefault(s => s.Id == student.Id);
-        if (existing == null)
+        if (!_studentIds.Remove(studentId))
         {
             return CourseChatErrors.StudentNotInRoom;
         }
 
-        _students.Remove(existing);
         return Result.Updated;
+    }
+
+    public Result<Message> SendMessage(Guid senderId, Guid? replyOnId, JsonDocument content)
+    {
+        var messageResult = Message.Create(Id, senderId, replyOnId, content);
+        if (messageResult.IsError)
+        {
+            return messageResult.Errors;
+        }
+
+        var message = messageResult.Value;
+        _messages.Add(message);
+        return message;
     }
 
     public bool CanJoin(Guid userId)
     {
         return InstructorId == userId ||
-               _students.Any(s => s.Id == userId);
+               _studentIds.Contains(userId);
     }
 
     public bool CanSend(Guid userId)

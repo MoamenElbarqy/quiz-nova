@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
@@ -11,11 +10,11 @@ using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
+using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Application.Features.QuizAttempts.Queries.GetPendingManualAnswers;
 
 public sealed class GetPendingManualAnswersQueryHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     IUser user,
     ILogger<GetPendingManualAnswersQueryHandler> logger)
@@ -42,7 +41,7 @@ public sealed class GetPendingManualAnswersQueryHandler(
         var instructorQuizIds = quizMap.Keys.ToList();
 
         var filter = Builders<QuizAttempt>.Filter.In(a => a.QuizId, instructorQuizIds) &
-                     Builders<QuizAttempt>.Filter.ElemMatch(a => a.StudentAnswers,
+                     Builders<QuizAttempt>.Filter.ElemMatch("student_answers",
                          Builders<QuestionAnswer>.Filter
                              .OfType(
                                  Builders<ManuallyGradedAnswers>.Filter.Eq(m => m.Score, null)));
@@ -57,14 +56,23 @@ public sealed class GetPendingManualAnswersQueryHandler(
             .ToListAsync(ct);
 
         var studentIds = attempts.Select(a => a.StudentId).Distinct().ToList();
-        var students = await dbContext.Students
-            .Where(s => studentIds.Contains(s.Id))
-            .ToDictionaryAsync(s => s.Id, s => s.PersonalInformation.Name, ct);
+
+        var studentNames = new Dictionary<Guid, string>();
+        if (studentIds.Count != 0)
+        {
+            var students = await mongoContext.Users
+                .Find(u => studentIds.Contains(u.Id) && u is Student)
+                .ToListAsync(ct);
+            studentNames = students
+                .Cast<Student>()
+                .ToDictionary(s => s.Id, s => s.PersonalInformation.Name);
+        }
 
         var courseIds = quizzes.Select(q => q.CourseId).Distinct().ToList();
-        var courses = await dbContext.Courses
-            .Where(c => courseIds.Contains(c.Id))
-            .ToDictionaryAsync(c => c.Id, c => c.Name, ct);
+        var courses = await mongoContext.Courses
+            .Find(c => courseIds.Contains(c.Id))
+            .ToListAsync(ct);
+        var courseDict = courses.ToDictionary(c => c.Id, c => c.Name);
 
         var items = attempts.Select(a =>
         {
@@ -72,10 +80,10 @@ public sealed class GetPendingManualAnswersQueryHandler(
             return new PendingManualAnswersDto(
                 a.Id,
                 a.StudentId,
-                students.GetValueOrDefault(a.StudentId, string.Empty),
-                quiz != null ? courses.GetValueOrDefault(quiz.CourseId, string.Empty) : string.Empty,
+                studentNames.GetValueOrDefault(a.StudentId, string.Empty),
+                quiz != null ? courseDict.GetValueOrDefault(quiz.CourseId, string.Empty) : string.Empty,
                 quiz?.Title ?? string.Empty,
-                a.SubmittedAt,
+                a.SubmittedAt ?? default,
                 a.StudentAnswers.OfType<ManuallyGradedAnswers>().Count(m => m.Score == null));
         }).ToList();
 
@@ -95,4 +103,3 @@ public sealed class GetPendingManualAnswersQueryHandler(
         return result;
     }
 }
-

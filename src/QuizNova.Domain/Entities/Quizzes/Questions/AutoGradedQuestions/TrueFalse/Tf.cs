@@ -86,7 +86,8 @@ public class Tf : AutoGradedQuestion<bool>
             Id,
             quizAttemptId,
             answer,
-            isCorrect);
+            isCorrect,
+            Marks);
 
         if (createResult.IsError)
         {

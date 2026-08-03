@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
@@ -11,7 +10,7 @@ using QuizNova.Domain.Entities.CourseChats;
 namespace QuizNova.Application.Features.CourseChats.Commands.RemoveReaction;
 
 public sealed class RemoveReactionCommandHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     IUser currentUser,
     ILogger<RemoveReactionCommandHandler> logger)
     : IRequestHandler<RemoveReactionCommand, Result<Success>>
@@ -24,9 +23,9 @@ public sealed class RemoveReactionCommandHandler(
             return CourseChatErrors.CannotReact;
         }
 
-        var room = await dbContext.CourseChatRooms
-            .Include(r => r.Students)
-            .FirstOrDefaultAsync(r => r.Id == request.RoomId, ct);
+        var room = await mongoContext.CourseChatRooms
+            .Find(r => r.Id == request.RoomId)
+            .FirstOrDefaultAsync(ct);
 
         if (room == null)
         {
@@ -35,25 +34,10 @@ public sealed class RemoveReactionCommandHandler(
 
         if (!room.CanReact(userId))
         {
-            var isInstructor = await dbContext.Courses
-                .AnyAsync(c => c.Id == room.CourseId && c.InstructorId == userId, ct);
-
-            if (!isInstructor)
-            {
-                var isEnrolled = await dbContext.Enrollments
-                    .AnyAsync(e => e.CourseId == room.CourseId && e.StudentId == userId, ct);
-
-                if (!isEnrolled)
-                {
-                    return CourseChatErrors.CannotReact;
-                }
-            }
+            return CourseChatErrors.CannotReact;
         }
 
-        var message = await dbContext.CourseChatRoomMessages
-            .Include(m => m.Reacts)
-            .FirstOrDefaultAsync(m => m.Id == request.MessageId && m.RoomId == request.RoomId, ct);
-
+        var message = room.Messages.FirstOrDefault(m => m.Id == request.MessageId);
         if (message == null)
         {
             return ApplicationErrors.MessageNotFound(request.MessageId);
@@ -76,7 +60,7 @@ public sealed class RemoveReactionCommandHandler(
             return removeResult.Errors;
         }
 
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.CourseChatRooms.ReplaceOneAsync(r => r.Id == room.Id, room, cancellationToken: ct);
 
         logger.LogInformation("User {UserId} removed reaction from message {MessageId}", userId, request.MessageId);
 

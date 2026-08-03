@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
@@ -11,7 +10,7 @@ using QuizNova.Domain.Common.Results;
 namespace QuizNova.Application.Features.Enrollments.Queries.GetStudentEnrollmentsCount;
 
 public sealed class GetStudentEnrollmentsCountQueryHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetStudentEnrollmentsCountQueryHandler> logger)
     : IRequestHandler<GetStudentEnrollmentsCountQuery, Result<EnrollmentCountDto>>
 {
@@ -19,8 +18,9 @@ public sealed class GetStudentEnrollmentsCountQueryHandler(
     {
         logger.LogInformation("Retrieving enrolled courses count for student with ID: {StudentId}", request.StudentId);
 
-        var studentExists =
-            await dbContext.Students.AsNoTracking().AnyAsync(student => student.Id == request.StudentId, ct);
+        var studentExists = await mongoContext.Users
+            .Find(u => u.Id == request.StudentId)
+            .AnyAsync(ct);
 
         if (!studentExists)
         {
@@ -28,8 +28,8 @@ public sealed class GetStudentEnrollmentsCountQueryHandler(
             return ApplicationErrors.StudentNotFound(request.StudentId);
         }
 
-        var courseCount = await dbContext.Enrollments
-            .CountAsync(enrollment => enrollment.StudentId == request.StudentId, ct);
+        var courseCount = (int)await mongoContext.Enrollments
+            .CountDocumentsAsync(e => e.StudentId == request.StudentId, cancellationToken: ct);
 
         logger.LogInformation("Successfully retrieved enrolled courses count for student {StudentId}: {Count}",
             request.StudentId, courseCount);

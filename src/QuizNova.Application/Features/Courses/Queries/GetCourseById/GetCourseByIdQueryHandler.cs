@@ -1,17 +1,16 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Application.Features.Courses.Queries.GetCourseById;
 
 public sealed class GetCourseByIdQueryHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     ILogger<GetCourseByIdQueryHandler> logger)
     : IRequestHandler<GetCourseByIdQuery, Result<CourseDto>>
@@ -20,21 +19,8 @@ public sealed class GetCourseByIdQueryHandler(
     {
         logger.LogInformation("Retrieving course with ID: {CourseId}", request.CourseId);
 
-        var course = await dbContext.Courses
-            .AsNoTracking()
-            .Where(c => c.Id == request.CourseId)
-            .Select(c => new
-            {
-                c.Id,
-                c.Name,
-                c.InstructorId,
-                c.MaximumMarks,
-                InstructorName = dbContext.Instructors
-                    .Where(i => i.Id == c.InstructorId)
-                    .Select(i => i.PersonalInformation.Name)
-                    .FirstOrDefault() ?? string.Empty,
-                EnrolledStudentsCount = dbContext.Enrollments.Count(sc => sc.CourseId == c.Id),
-            })
+        var course = await mongoContext.Courses
+            .Find(c => c.Id == request.CourseId)
             .FirstOrDefaultAsync(ct);
 
         if (course is null)
@@ -42,6 +28,18 @@ public sealed class GetCourseByIdQueryHandler(
             logger.LogWarning("Course with ID {CourseId} was not found", request.CourseId);
             return ApplicationErrors.CourseNotFound(request.CourseId);
         }
+
+        var instructorName = string.Empty;
+        if (course.InstructorId.HasValue)
+        {
+            var instructor = await mongoContext.Users
+                .Find(u => u.Id == course.InstructorId.Value && u is Instructor)
+                .FirstOrDefaultAsync(ct) as Instructor;
+            instructorName = instructor?.PersonalInformation.Name ?? string.Empty;
+        }
+
+        var enrolledStudentsCount = (int)await mongoContext.Enrollments
+            .CountDocumentsAsync(sc => sc.CourseId == request.CourseId, cancellationToken: ct);
 
         var stats = await mongoContext.Quizzes
             .Aggregate()
@@ -62,8 +60,8 @@ public sealed class GetCourseByIdQueryHandler(
             course.Id,
             course.Name,
             course.InstructorId,
-            course.InstructorName,
-            course.EnrolledStudentsCount,
+            instructorName,
+            enrolledStudentsCount,
             quizzesCount,
             course.MaximumMarks - consumedMarks);
 
@@ -72,4 +70,3 @@ public sealed class GetCourseByIdQueryHandler(
         return response;
     }
 }
-

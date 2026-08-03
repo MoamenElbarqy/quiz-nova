@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.OutputCaching;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Application.Common.Caching;
+using QuizNova.Application.Features.Enrollments.Commands.DisenrollStudentFromCourse;
 using QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
-using QuizNova.Application.Features.Enrollments.Commands.RemoveStudentFromCourse;
 using QuizNova.Application.Features.Enrollments.DTOs;
 using QuizNova.Application.Features.Enrollments.Queries.GetAllCoursesEnrollmentCount;
 using QuizNova.Application.Features.Enrollments.Queries.GetStudentEnrollmentsById;
@@ -46,12 +46,12 @@ public sealed class EnrollmentController(ISender sender) : ApiController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [EndpointSummary("Removes a student from a course.")]
-    [EndpointDescription("Deletes a course enrollment for the specified student.")]
-    [EndpointName("RemoveStudentFromCourse")]
-    public async Task<ActionResult> RemoveStudentFromCourse(Guid enrollmentId, Guid studentId, CancellationToken ct)
+    [EndpointSummary("Disenrolls a student from a course.")]
+    [EndpointDescription("Disenrolls a student from a course.")]
+    [EndpointName("DisenrollStudentFromCourse")]
+    public async Task<ActionResult> DisenrollStudentFromCourse(Guid enrollmentId, Guid studentId, CancellationToken ct)
     {
-        var result = await sender.Send(new RemoveStudentFromCourseCommand(enrollmentId, studentId), ct);
+        var result = await sender.Send(new DisenrollStudentFromCourseCommand(enrollmentId, studentId), ct);
         return result.Match(_ => NoContent(), Problem);
     }
 

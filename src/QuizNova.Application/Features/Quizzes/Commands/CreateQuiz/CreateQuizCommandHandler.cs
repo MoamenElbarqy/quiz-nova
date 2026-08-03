@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Caching;
@@ -9,14 +8,13 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Quizzes.DTOs;
 using QuizNova.Application.Features.Quizzes.Mappers;
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Courses.Enums;
 using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Quizzes.Questions;
+using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 
 public sealed class CreateQuizCommandHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     IUser user,
     ILogger<CreateQuizCommandHandler> logger,
@@ -34,8 +32,9 @@ public sealed class CreateQuizCommandHandler(
 
         var quizId = Guid.NewGuid();
 
-        var course = await dbContext.Courses
-            .FirstOrDefaultAsync(course => course.Id == request.CourseId, ct);
+        var course = await mongoContext.Courses
+            .Find(course => course.Id == request.CourseId)
+            .FirstOrDefaultAsync(ct);
 
         if (course is null)
         {
@@ -43,8 +42,9 @@ public sealed class CreateQuizCommandHandler(
             return ApplicationErrors.QuizCourseNotFound(request.CourseId);
         }
 
-        var instructor = await dbContext.Instructors
-            .FirstOrDefaultAsync(instructor => instructor.Id == instructorId, ct);
+        var instructor = await mongoContext.Users
+            .Find(u => u.Id == instructorId)
+            .FirstOrDefaultAsync(ct) as Instructor;
 
         if (instructor is null)
         {
@@ -62,22 +62,19 @@ public sealed class CreateQuizCommandHandler(
             return ApplicationErrors.QuizInstructorIsNotAssignedToCourse(instructorId, request.CourseId);
         }
 
-        if (course.Status == CourseStatus.Completed)
-        {
-            logger.LogWarning("Quiz creation failed: Course {CourseId} is completed", request.CourseId);
-            return ApplicationErrors.QuizCourseCompleted(request.CourseId);
-        }
-
         var questionArgs = request.Questions.Select(MapToDomainArgs).ToList();
 
         var createQuizResult = Quiz.Create(
             quizId,
             request.CourseId,
             instructorId,
+            course.Name,
+            instructor.PersonalInformation.Name,
             request.Title,
             request.StartsAtUtc,
             request.EndsAtUtc,
-            questionArgs);
+            questionArgs,
+            course);
 
         if (createQuizResult.IsError)
         {
@@ -89,6 +86,7 @@ public sealed class CreateQuizCommandHandler(
 
         var quiz = createQuizResult.Value;
 
+        await mongoContext.Courses.ReplaceOneAsync(c => c.Id == course.Id, course, cancellationToken: ct);
         await mongoContext.Quizzes.InsertOneAsync(quiz, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync([CacheTags.Quizzes], ct);
 
@@ -97,7 +95,7 @@ public sealed class CreateQuizCommandHandler(
             quizId,
             quiz.Questions.Count());
 
-        return quiz.ToQuizDto(course.Name, instructor.PersonalInformation.Name);
+        return quiz.ToQuizDto();
     }
 
     private static CreateQuestionArgs MapToDomainArgs(CreateQuestionCommand command) => command switch

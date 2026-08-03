@@ -1,17 +1,16 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.QuizAttempts.DTOs;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Application.Features.QuizAttempts.Queries.GetStudentQuizAttemptsCount;
 
 public sealed class GetStudentQuizAttemptsCountQueryHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     ILogger<GetStudentQuizAttemptsCountQueryHandler> logger)
     : IRequestHandler<GetStudentQuizAttemptsCountQuery, Result<QuizAttemptsCountDto>>
@@ -20,9 +19,9 @@ public sealed class GetStudentQuizAttemptsCountQueryHandler(
     {
         logger.LogInformation("Retrieving quiz attempts count for student with ID: {StudentId}", request.StudentId);
 
-        var studentExists = await dbContext.Students
-            .AsNoTracking()
-            .AnyAsync(student => student.Id == request.StudentId, ct);
+        var studentExists = await mongoContext.Users
+            .Find(u => u.Id == request.StudentId && u is Student)
+            .AnyAsync(ct);
 
         if (!studentExists)
         {
@@ -38,5 +37,3 @@ public sealed class GetStudentQuizAttemptsCountQueryHandler(
         return new QuizAttemptsCountDto(quizAttemptCount);
     }
 }
-
-

@@ -18,7 +18,7 @@ public sealed class MongoHealthCheck : IHealthCheck
 
     public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         try
         {
@@ -26,7 +26,7 @@ public sealed class MongoHealthCheck : IHealthCheck
             var database = client.GetDatabase(_settings.DatabaseName);
             await database.RunCommandAsync<MongoDB.Bson.BsonDocument>(
                 new MongoDB.Bson.BsonDocument("ping", 1),
-                cancellationToken: cancellationToken);
+                cancellationToken: ct);
 
             return HealthCheckResult.Healthy();
         }

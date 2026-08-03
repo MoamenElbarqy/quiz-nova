@@ -12,20 +12,16 @@ using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq.Choices
 using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
 using QuizNova.Domain.Entities.Quizzes.Questions.Base;
 using QuizNova.Domain.Entities.Quizzes.Questions.ManuallyGradedQuestions;
-using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Domain.Entities.Quizzes;
 
 public class Quiz : Entity
 {
-    private List<Question> _questions;
-    private List<QuizAttempt> _quizAttempts;
+    private List<Question> _questions = [];
 
     [SetsRequiredMembers]
     private Quiz()
     {
-        _questions = [];
-        _quizAttempts = [];
     }
 
     [SetsRequiredMembers]
@@ -33,24 +29,33 @@ public class Quiz : Entity
         Guid id,
         Guid courseId,
         Guid instructorId,
+        string courseName,
+        string instructorName,
         string title,
         DateTimeOffset startsAtUtc,
         DateTimeOffset endsAtUtc,
+        int marks,
         List<Question> questions)
         : base(id)
     {
         CourseId = courseId;
         InstructorId = instructorId;
+        CourseName = courseName;
+        InstructorName = instructorName;
         Title = title;
         StartsAtUtc = startsAtUtc;
         EndsAtUtc = endsAtUtc;
+        Marks = marks;
         _questions = questions;
-        _quizAttempts = [];
     }
 
     public Guid CourseId { get; private set; }
 
     public Guid InstructorId { get; private set; }
+
+    public required string CourseName { get; set; }
+
+    public required string InstructorName { get; set; }
 
     public required string Title { get; set; }
 
@@ -58,23 +63,13 @@ public class Quiz : Entity
 
     public DateTimeOffset EndsAtUtc { get; private set; }
 
-    public int Marks => Questions.Sum(q => q.Marks);
+    public int Marks { get; private set; }
 
     public IEnumerable<Question> Questions
     {
         get => _questions.AsReadOnly();
         private set => _questions = [.. value];
     }
-
-    public IEnumerable<QuizAttempt> QuizAttempts
-    {
-        get => _quizAttempts.AsReadOnly();
-        private set => _quizAttempts = [.. value];
-    }
-
-    public Course? Course { get; init; }
-
-    public Instructor? Instructor { get; init; }
 
     public QuizStatus Status => DateTimeOffset.UtcNow < StartsAtUtc
         ? QuizStatus.Scheduled
@@ -86,14 +81,27 @@ public class Quiz : Entity
         Guid id,
         Guid courseId,
         Guid instructorId,
+        string courseName,
+        string instructorName,
         string title,
         DateTimeOffset startsAtUtc,
         DateTimeOffset endsAtUtc,
-        IEnumerable<CreateQuestionArgs> questionArgs)
+        IEnumerable<CreateQuestionArgs> questionArgs,
+        Course course)
     {
         if (courseId == Guid.Empty)
         {
             return QuizErrors.CourseIdRequired;
+        }
+
+        if (course.Id != courseId)
+        {
+            return QuizErrors.CourseMismatch(course.Id, courseId);
+        }
+
+        if (course.Status == CourseStatus.Completed)
+        {
+            return QuizErrors.CourseCompleted;
         }
 
         if (instructorId == Guid.Empty)
@@ -150,18 +158,29 @@ public class Quiz : Entity
             questions.Add(createQuestionResult.Value);
         }
 
-        if (questions.Sum(q => q.Marks) <= 0)
+        var totalMarks = questions.Sum(q => q.Marks);
+
+        if (totalMarks <= 0)
         {
             return QuizErrors.MarksInvalid;
+        }
+
+        var consumeResult = course.ConsumeMarks(totalMarks);
+        if (consumeResult.IsError)
+        {
+            return consumeResult.TopError;
         }
 
         var quiz = new Quiz(
             id,
             courseId,
             instructorId,
+            courseName,
+            instructorName,
             trimmedTitle,
             startsAtUtc,
             endsAtUtc,
+            totalMarks,
             questions);
 
         return quiz;
@@ -172,11 +191,6 @@ public class Quiz : Entity
         DateTimeOffset startsAtUtc,
         DateTimeOffset endsAtUtc)
     {
-        if (Course?.Status == CourseStatus.Completed)
-        {
-            return QuizErrors.CourseCompleted;
-        }
-
         if (Status != QuizStatus.Scheduled)
         {
             return QuizErrors.CannotUpdateStartedOrCompletedQuiz;
@@ -218,11 +232,6 @@ public class Quiz : Entity
 
     public Result<Updated> UpdateCourseId(Guid newCourseId)
     {
-        if (Course?.Status == CourseStatus.Completed)
-        {
-            return QuizErrors.CourseCompleted;
-        }
-
         if (newCourseId == Guid.Empty)
         {
             return QuizErrors.CourseIdRequired;
@@ -239,9 +248,14 @@ public class Quiz : Entity
         return Result.Updated;
     }
 
-    public Result<Added> AddQuestion(Question question)
+    public Result<Added> AddQuestion(Question question, Course course)
     {
-        if (Course?.Status == CourseStatus.Completed)
+        if (course.Id != CourseId)
+        {
+            return QuizErrors.CourseMismatch(course.Id, CourseId);
+        }
+
+        if (course.Status == CourseStatus.Completed)
         {
             return QuizErrors.CourseCompleted;
         }
@@ -261,14 +275,25 @@ public class Quiz : Entity
             return QuizErrors.QuestionAlreadyExists(question.Id);
         }
 
+        var consumeResult = course.ConsumeMarks(question.Marks);
+        if (consumeResult.IsError)
+        {
+            return consumeResult.TopError;
+        }
+
         _questions.Add(question);
 
         return Result.Added;
     }
 
-    public Result<Deleted> DeleteQuestion(Question question)
+    public Result<Deleted> DeleteQuestion(Question question, Course course)
     {
-        if (Course?.Status == CourseStatus.Completed)
+        if (course.Id != CourseId)
+        {
+            return QuizErrors.CourseMismatch(course.Id, CourseId);
+        }
+
+        if (course.Status == CourseStatus.Completed)
         {
             return QuizErrors.CourseCompleted;
         }
@@ -293,6 +318,12 @@ public class Quiz : Entity
             return QuizErrors.MinimumQuestionsReached;
         }
 
+        var releaseResult = course.ReleaseMarks(question.Marks);
+        if (releaseResult.IsError)
+        {
+            return releaseResult.TopError;
+        }
+
         _questions.Remove(question);
 
         return Result.Deleted;
@@ -303,12 +334,18 @@ public class Quiz : Entity
         string questionText,
         int displayOrder,
         int marks,
-        Guid? correctChoiceId = null,
-        bool? tfCorrectChoice = null,
-        List<Choice>? choices = null,
-        string? answerReference = null)
+        Course course,
+        Guid? correctChoiceId,
+        bool? tfCorrectChoice,
+        List<Choice>? choices,
+        string? answerReference)
     {
-        if (Course?.Status == CourseStatus.Completed)
+        if (course.Id != CourseId)
+        {
+            return QuizErrors.CourseMismatch(course.Id, CourseId);
+        }
+
+        if (course.Status == CourseStatus.Completed)
         {
             return QuizErrors.CourseCompleted;
         }
@@ -323,6 +360,24 @@ public class Quiz : Entity
         if (question is null)
         {
             return QuizErrors.QuestionNotFound;
+        }
+
+        var marksDelta = marks - question.Marks;
+        if (marksDelta > 0)
+        {
+            var consumeResult = course.ConsumeMarks(marksDelta);
+            if (consumeResult.IsError)
+            {
+                return consumeResult.TopError;
+            }
+        }
+        else if (marksDelta < 0)
+        {
+            var releaseResult = course.ReleaseMarks(-marksDelta);
+            if (releaseResult.IsError)
+            {
+                return releaseResult.TopError;
+            }
         }
 
         return question switch
@@ -341,11 +396,6 @@ public class Quiz : Entity
 
     public Result<QuizAttempt> StartAttempt(Guid studentId)
     {
-        if (Course?.Status == CourseStatus.Completed)
-        {
-            return QuizErrors.CourseCompleted;
-        }
-
         if (studentId == Guid.Empty)
         {
             return QuizAttemptErrors.StudentIdRequired;
@@ -367,6 +417,7 @@ public class Quiz : Entity
             Guid.NewGuid(),
             studentId,
             Id,
-            startedAt.UtcDateTime);
+            startedAt.UtcDateTime,
+            EndsAtUtc);
     }
 }

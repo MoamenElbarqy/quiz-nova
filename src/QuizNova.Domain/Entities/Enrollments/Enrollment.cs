@@ -1,16 +1,15 @@
 using QuizNova.Domain.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
-using QuizNova.Domain.Entities.Enrollments.Events;
 using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Domain.Entities.Enrollments;
 
 public class Enrollment : Entity
 {
-    public Guid StudentId { get; }
+    public Guid StudentId { get; private set; }
 
-    public Guid CourseId { get; }
+    public Guid CourseId { get; private set; }
 
     public DateTimeOffset EnrolledOnUtc { get; private set; }
 
@@ -49,11 +48,5 @@ public class Enrollment : Entity
 
         var enrollment = new Enrollment(id, studentId, courseId, enrolledOnUtc);
         return enrollment;
-    }
-
-    public Result<Deleted> Delete()
-    {
-        AddDomainEvent(new EnrollmentDeletedEvent(StudentId, CourseId));
-        return Result.Deleted;
     }
 }

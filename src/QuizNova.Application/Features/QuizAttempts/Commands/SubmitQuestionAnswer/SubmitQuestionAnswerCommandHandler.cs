@@ -43,12 +43,16 @@ public sealed class SubmitQuestionAnswerCommandHandler(
             return Error.Forbidden("Forbidden", "You do not own this attempt.");
         }
 
-        if (attempt.Quiz is null)
+        var quiz = await mongoContext.Quizzes
+            .Find(q => q.Id == attempt.QuizId)
+            .FirstOrDefaultAsync(ct);
+
+        if (quiz is null)
         {
             return ApplicationErrors.QuizNotFound(attempt.QuizId);
         }
 
-        var question = attempt.Quiz.Questions
+        var question = quiz.Questions
             .FirstOrDefault(q => q.Id == request.Answer.QuestionId);
 
         if (question is null)

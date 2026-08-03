@@ -1,10 +1,10 @@
 using FluentValidation;
 
-namespace QuizNova.Application.Features.Enrollments.Commands.RemoveStudentFromCourse;
+namespace QuizNova.Application.Features.Enrollments.Commands.DisenrollStudentFromCourse;
 
-public sealed class RemoveStudentFromCourseCommandValidator : AbstractValidator<RemoveStudentFromCourseCommand>
+public sealed class DisenrollStudentFromCourseCommandValidator : AbstractValidator<DisenrollStudentFromCourseCommand>
 {
-    public RemoveStudentFromCourseCommandValidator()
+    public DisenrollStudentFromCourseCommandValidator()
     {
         RuleFor(command => command.EnrollmentId)
             .NotEmpty()

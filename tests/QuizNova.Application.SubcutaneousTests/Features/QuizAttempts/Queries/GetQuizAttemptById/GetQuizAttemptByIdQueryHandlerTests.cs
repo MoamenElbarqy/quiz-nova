@@ -2,6 +2,8 @@ using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.QuizAttempts.Queries.GetQuizAttemptById;
@@ -73,12 +75,11 @@ public class GetQuizAttemptByIdQueryHandlerTests(CustomWebApplicationFactory fac
         // Save directly to DB
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
-            dbContext.Students.Add(student);
-            dbContext.Instructors.Add(instructor);
-            dbContext.Courses.Add(course);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Users.InsertOneAsync(student);
+            await mongoContext.Users.InsertOneAsync(instructor);
+            await mongoContext.Courses.InsertOneAsync(course);
+
             await mongoContext.Quizzes.InsertOneAsync(quiz);
             await mongoContext.QuizAttempts.InsertOneAsync(attempt);
         }

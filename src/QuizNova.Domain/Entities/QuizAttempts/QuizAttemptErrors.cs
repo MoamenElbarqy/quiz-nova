@@ -25,14 +25,6 @@ public static class QuizAttemptErrors
     public static readonly Error AttemptAlreadyCompleted =
         Error.Validation("QuizAttempt_Already_Completed", "Cannot modify a completed attempt.");
 
-    public static readonly Error QuestionAnswerRequired =
-        Error.Validation("QuizAttempt_QuestionAnswer_Required", "Question answer is required.");
-
-    public static Error QuizIdMismatch(Guid expectedQuizId, Guid actualQuizId) =>
-        Error.Validation(
-            "QuizAttempt_QuizId_Mismatch",
-            $"Quiz ID '{actualQuizId}' does not match quiz aggregate ID '{expectedQuizId}'.");
-
     public static Error SubmittedAtAfterQuizEnd(DateTimeOffset quizEndTimeUtc) =>
         Error.Validation(
             "QuizAttempt_SubmittedAt_AfterQuizEnd",
@@ -52,19 +44,4 @@ public static class QuizAttemptErrors
         Error.Validation(
             "QuizAttempt_Question_NotFoundInQuiz",
             $"Question '{questionId}' does not belong to quiz '{quizId}'.");
-
-    public static Error QuestionTypeMismatch(Guid questionId, string expectedAnswerType) =>
-        Error.Validation(
-            "QuizAttempt_Question_TypeMismatch",
-            $"Question '{questionId}' does not match expected answer type '{expectedAnswerType}'.");
-
-    public static Error AnswerQuizAttemptMismatch(Guid questionId, Guid expectedAttemptId, Guid actualAttemptId) =>
-        Error.Validation(
-            "QuizAttempt_Answer_QuizAttempt_Mismatch",
-            $"Answer for question '{questionId}' references attempt '{actualAttemptId}' but expected '{expectedAttemptId}'.");
-
-    public static Error AnswerStudentMismatch(Guid questionId, Guid expectedStudentId, Guid actualStudentId) =>
-        Error.Validation(
-            "QuizAttempt_Answer_Student_Mismatch",
-            $"Answer for question '{questionId}' references student '{actualStudentId}' but expected '{expectedStudentId}'.");
 }

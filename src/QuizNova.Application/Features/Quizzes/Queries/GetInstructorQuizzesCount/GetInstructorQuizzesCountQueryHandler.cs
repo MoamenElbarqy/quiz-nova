@@ -1,17 +1,16 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Quizzes.DTOs;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Application.Features.Quizzes.Queries.GetInstructorQuizzesCount;
 
 public sealed class GetInstructorQuizzesCountQueryHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     ILogger<GetInstructorQuizzesCountQueryHandler> logger)
     : IRequestHandler<GetInstructorQuizzesCountQuery, Result<QuizzesCountDto>>
@@ -20,8 +19,10 @@ public sealed class GetInstructorQuizzesCountQueryHandler(
     {
         logger.LogInformation("Retrieving quizzes count for instructor with ID: {InstructorId}", request.InstructorId);
 
-        var instructorExists =
-            await dbContext.Instructors.AnyAsync(instructor => instructor.Id == request.InstructorId, ct);
+        var instructorExists = await mongoContext.Users
+            .Find(u => u.Id == request.InstructorId && u is Instructor)
+            .AnyAsync(ct);
+
         if (!instructorExists)
         {
             logger.LogWarning("Retrieval failed: Instructor with ID {InstructorId} not found", request.InstructorId);
@@ -38,5 +39,3 @@ public sealed class GetInstructorQuizzesCountQueryHandler(
         return new QuizzesCountDto(quizzesCount);
     }
 }
-
-

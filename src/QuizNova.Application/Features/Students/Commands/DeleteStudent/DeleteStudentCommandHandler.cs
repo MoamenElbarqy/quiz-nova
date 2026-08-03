@@ -1,27 +1,44 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Application.Features.Students.Commands.DeleteStudent;
 
 public sealed class DeleteStudentCommandHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<DeleteStudentCommandHandler> logger,
-    ICacheInvalidator cacheInvalidator)
+    ICacheInvalidator cacheInvalidator,
+    IUser currentUser)
     : IRequestHandler<DeleteStudentCommand, Result<Deleted>>
 {
     public async Task<Result<Deleted>> Handle(DeleteStudentCommand request, CancellationToken ct)
     {
+        if (string.IsNullOrEmpty(currentUser.Id) || !Guid.TryParse(currentUser.Id, out var currentUserId))
+        {
+            return ApplicationErrors.UserIdClaimInvalid;
+        }
+
+        var isExecutingUserAdmin = await mongoContext.Users
+            .Find(u => u.Id == currentUserId && u is Admin)
+            .AnyAsync(ct);
+
+        if (!isExecutingUserAdmin)
+        {
+            return ApplicationErrors.AdminNotFound(currentUserId);
+        }
+
         logger.LogInformation("Deleting student with ID: {StudentId}", request.Id);
 
-        var student = await dbContext.Students
-            .FirstOrDefaultAsync(entity => entity.Id == request.Id, ct);
+        var student = await mongoContext.Users
+            .Find(u => u.Id == request.Id && u is Student)
+            .FirstOrDefaultAsync(ct) as Student;
 
         if (student is null)
         {
@@ -36,8 +53,7 @@ public sealed class DeleteStudentCommandHandler(
             return deleteResult.TopError;
         }
 
-        dbContext.Students.Remove(student);
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.Users.DeleteOneAsync(u => u.Id == request.Id, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync([CacheTags.Students, $"students:{request.Id}"], ct);
 
         logger.LogInformation("Successfully deleted student {StudentId}", request.Id);

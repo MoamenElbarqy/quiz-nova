@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Interfaces;
@@ -8,12 +7,13 @@ using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Admins.DTOs;
 using QuizNova.Application.Features.Admins.Mappers;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users;
 using QuizNova.Domain.Entities.Users.Admins;
 
 namespace QuizNova.Application.Features.Admins.Queries.GetAllAdmins;
 
 public sealed class GetAllAdminsQueryHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetAllAdminsQueryHandler> logger)
     : IRequestHandler<GetAllAdminsQuery, Result<PaginatedList<AdminDto>>>
 {
@@ -21,57 +21,46 @@ public sealed class GetAllAdminsQueryHandler(
     {
         logger.LogInformation("Retrieving all admins");
 
-        IQueryable<Admin> query = dbContext.Admins
-            .AsNoTracking()
-            .AsQueryable();
+        var filter = Builders<User>.Filter.Where(u => u is Admin);
+        filter = ApplySearchTerm(filter, request);
 
-        query = ApplySearchTerm(query, request);
-        query = ApplyFiltering(query, request);
-        query = ApplySorting(query);
+        var totalCount = (int)await mongoContext.Users.CountDocumentsAsync(filter, cancellationToken: ct);
 
-        var totalCount = await query.CountAsync(ct);
-
-        var admins = await query
+        var admins = await mongoContext.Users
+            .Find(filter)
+            .SortBy(u => u.PersonalInformation.Name)
             .Skip((request.PageNumber - 1) * request.PageSize)
-            .Take(request.PageSize)
-            .Select(admin => admin.ToAdminDto())
+            .Limit(request.PageSize)
             .ToListAsync(ct);
 
+        var adminDtos = admins
+            .Cast<Admin>()
+            .Select(admin => admin.ToAdminDto())
+            .ToList();
+
         var response = new PaginatedList<AdminDto>(
-            admins,
+            adminDtos,
             totalCount,
             request.PageNumber,
             request.PageSize);
 
-        logger.LogInformation("Successfully retrieved {Count} admins for page {PageNumber}", admins.Count, request.PageNumber);
+        logger.LogInformation("Successfully retrieved {Count} admins for page {PageNumber}", adminDtos.Count,
+            request.PageNumber);
 
         return response;
     }
 
-    private static IQueryable<Admin> ApplySearchTerm(
-        IQueryable<Admin> query,
+    private static FilterDefinition<User> ApplySearchTerm(
+        FilterDefinition<User> filter,
         GetAllAdminsQuery request)
     {
         if (string.IsNullOrWhiteSpace(request.SearchTerm))
         {
-            return query;
+            return filter;
         }
 
-        return query.Where(admin =>
+        return filter & Builders<User>.Filter.Where(admin =>
             admin.PersonalInformation.Name.Contains(request.SearchTerm) ||
             admin.PersonalInformation.Email.Contains(request.SearchTerm));
-    }
-
-    private static IOrderedQueryable<Admin> ApplySorting(IQueryable<Admin> query)
-    {
-        return query.OrderBy(admin => admin.PersonalInformation.Name);
-    }
-
-    private static IQueryable<Admin> ApplyFiltering(
-        IQueryable<Admin> query,
-        GetAllAdminsQuery request)
-    {
-        _ = request;
-        return query;
     }
 }
