@@ -100,3 +100,17 @@ variable "mongodb_wait_queue_timeout_minutes" {
   description = "Wait queue timeout in minutes for MongoDB"
   default     = 2
 }
+
+variable "atlas_public_key" {
+  type = string
+}
+
+variable "atlas_private_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "atlas_project_id" {
+  type = string
+  sensitive = true
+}
