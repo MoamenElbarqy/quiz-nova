@@ -1,50 +1,32 @@
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Identity;
-using QuizNova.Domain.Entities.Quizzes;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Domain.Entities.Users.Instructors;
 
 public class Instructor : User
 {
-    private readonly List<Course> _courses;
-
-    private readonly List<Quiz> _quizzes;
-
     private Instructor()
     {
     }
 
     private Instructor(
         Guid id,
-        PersonalInformation personalInformation,
-        List<Course> courses,
-        List<Quiz> quizzes)
+        PersonalInformation personalInformation)
         : base(
             id,
             personalInformation,
             UserRole.Instructor)
     {
-        _courses = courses;
-        _quizzes = quizzes;
     }
-
-    public IEnumerable<Course> Courses => _courses.AsReadOnly();
-
-    public IEnumerable<Quiz> Quizzes => _quizzes.AsReadOnly();
 
     public static Result<Instructor> Create(
         Guid id,
-        PersonalInformation personalInformation,
-        List<Course> courses,
-        List<Quiz> quizzes)
+        PersonalInformation personalInformation)
     {
         var instructor = new Instructor(
             id,
-            personalInformation,
-            courses,
-            quizzes);
+            personalInformation);
         return instructor;
     }
 

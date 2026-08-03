@@ -3,6 +3,8 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
@@ -10,6 +12,9 @@ using QuizNova.Application.Features.Instructors.Commands.UpdateInstructor;
 using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Entities.Identity;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.UserPersonalInformation;
+using QuizNova.Tests.Common.Security;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Instructors.Commands.UpdateInstructor;
 
@@ -55,6 +60,7 @@ public class UpdateInstructorCommandHandlerTests(CustomWebApplicationFactory fac
     public async Task Handle_WithExistingId_ShouldUpdateSuccessfully()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
 
         // 1. Create a valid Instructor first
@@ -86,8 +92,8 @@ public class UpdateInstructorCommandHandlerTests(CustomWebApplicationFactory fac
 
         // Verify updated in database
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var instructorInDb = await dbContext.Instructors.FirstOrDefaultAsync(i => i.Id == instructorId);
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var instructorInDb = await mongoContext.Users.Find(u => u.UserRole == UserRole.Instructor && u.Id == instructorId).FirstOrDefaultAsync();
 
         instructorInDb.Should().NotBeNull();
         instructorInDb.PersonalInformation.Name.Should().Be("Updated Instructor Name");
@@ -99,6 +105,7 @@ public class UpdateInstructorCommandHandlerTests(CustomWebApplicationFactory fac
     public async Task Handle_WithInvalidData_ShouldReturnValidationError()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
 
         // Create Instructor
@@ -128,6 +135,7 @@ public class UpdateInstructorCommandHandlerTests(CustomWebApplicationFactory fac
     public async Task Handle_WithDuplicateEmailForAnotherUser_ShouldReturnDuplicateEmailError()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
 
         // 1. Create Instructor A
@@ -167,6 +175,7 @@ public class UpdateInstructorCommandHandlerTests(CustomWebApplicationFactory fac
     public async Task Handle_WithDuplicatePhoneNumberForAnotherUser_ShouldReturnDuplicatePhoneNumberError()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
 
         // 1. Create Instructor A
@@ -202,4 +211,18 @@ public class UpdateInstructorCommandHandlerTests(CustomWebApplicationFactory fac
         result.TopError.Code.Should().Be(ApplicationErrors.UserPhoneNumberAlreadyExists(string.Empty).Code);
     }
 
+    private void EnsureAdminContext()
+    {
+        var adminId = Guid.Parse(TestUsers.Admin.User.Id);
+        using var scope = factory.Services.CreateScope();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        if (!mongoContext.Users.Find(u => u.UserRole == UserRole.Admin && u.Id == adminId).Any())
+        {
+            var personalInfo = PersonalInformation.Create("Admin User", "admin@quiznova.local", "01000000000").Value;
+            var admin = Admin.Create(adminId, personalInfo).Value;
+            mongoContext.Users.InsertOne(admin);
+        }
+
+        TestCurrentUser.Set(TestUsers.Admin.User);
+    }
 }

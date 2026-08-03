@@ -126,7 +126,8 @@ public class Essay : ManuallyGradedQuestion<string>
             studentId,
             Id,
             quizAttemptId,
-            answer);
+            answer,
+            Marks);
 
         if (createResult.IsError)
         {

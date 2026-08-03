@@ -105,6 +105,17 @@ public static class DependencyInjection
         services.AddSignalR();
         services.AddCustomResponseCompression();
         services.AddIdentityInfrastructure();
+
+        services.AddOptions<PostgresSettings>()
+            .Bind(configuration.GetSection(PostgresSettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddOptions<MongoDbSettings>()
+            .Bind(configuration.GetSection(MongoDbSettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         return services;
     }
 

@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Interfaces;
@@ -8,11 +7,11 @@ using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Quizzes.DTOs;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Quizzes;
+using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Application.Features.Quizzes.Queries.GetAllQuizzes;
 
 public sealed class GetAllQuizzesQueryHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     ILogger<GetAllQuizzesQueryHandler> logger)
     : IRequestHandler<GetAllQuizzesQuery, Result<PaginatedList<QuizDto>>>
@@ -29,39 +28,50 @@ public sealed class GetAllQuizzesQueryHandler(
             filter &= filterBuilder.Text(request.SearchTerm);
         }
 
-        if (request.Marks.HasValue)
-        {
-            filter &= filterBuilder.Where(q => q.Questions.Sum(question => question.Marks) == request.Marks.Value);
-        }
-
-        var totalCount = (int)await mongoContext.Quizzes.CountDocumentsAsync(filter, cancellationToken: ct);
-
         var quizzes = await mongoContext.Quizzes
             .Find(filter)
             .SortByDescending(q => q.StartsAtUtc)
-            .Skip((request.PageNumber - 1) * request.PageSize)
-            .Limit(request.PageSize)
             .ToListAsync(ct);
 
-        var courseIds = quizzes.Select(q => q.CourseId).Distinct().ToList();
-        var instructorIds = quizzes.Select(q => q.InstructorId).Distinct().ToList();
+        if (request.Marks.HasValue)
+        {
+            quizzes = [.. quizzes.Where(q => q.Questions.Sum(question => question.Marks) == request.Marks.Value)];
+        }
 
-        var courses = await dbContext.Courses
-            .Where(c => courseIds.Contains(c.Id))
-            .ToDictionaryAsync(c => c.Id, c => c.Name, ct);
+        var totalCount = quizzes.Count;
 
-        var instructors = await dbContext.Instructors
-            .Where(i => instructorIds.Contains(i.Id))
-            .ToDictionaryAsync(i => i.Id, i => i.PersonalInformation.Name, ct);
+        var pagedQuizzes = quizzes
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToList();
+
+        var courseIds = pagedQuizzes.Select(q => q.CourseId).Distinct().ToList();
+        var instructorIds = pagedQuizzes.Select(q => q.InstructorId).Distinct().ToList();
+
+        var courses = await mongoContext.Courses
+            .Find(c => courseIds.Contains(c.Id))
+            .ToListAsync(ct);
+        var courseDict = courses.ToDictionary(c => c.Id, c => c.Name);
+
+        var instructorNames = new Dictionary<Guid, string>();
+        if (instructorIds.Count != 0)
+        {
+            var instructors = await mongoContext.Users
+                .Find(u => instructorIds.Contains(u.Id) && u is Instructor)
+                .ToListAsync(ct);
+            instructorNames = instructors
+                .Cast<Instructor>()
+                .ToDictionary(i => i.Id, i => i.PersonalInformation.Name);
+        }
 
         var now = DateTimeOffset.UtcNow;
 
-        var quizDtos = quizzes.Select(quiz => new QuizDto
+        var quizDtos = pagedQuizzes.Select(quiz => new QuizDto
         {
             QuizId = quiz.Id,
             Title = quiz.Title,
-            CourseName = courses.GetValueOrDefault(quiz.CourseId, string.Empty),
-            InstructorName = instructors.GetValueOrDefault(quiz.InstructorId, string.Empty),
+            CourseName = courseDict.GetValueOrDefault(quiz.CourseId, string.Empty),
+            InstructorName = instructorNames.GetValueOrDefault(quiz.InstructorId, string.Empty),
             Marks = quiz.Questions.Sum(question => question.Marks),
             StartsAtUtc = quiz.StartsAtUtc,
             EndsAtUtc = quiz.EndsAtUtc,
@@ -83,4 +93,3 @@ public sealed class GetAllQuizzesQueryHandler(
         return response;
     }
 }
-

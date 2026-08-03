@@ -3,6 +3,8 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
@@ -56,9 +58,8 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
 
         // Verify enrollment exists in database
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var enrollment = await dbContext.Enrollments
-            .FirstOrDefaultAsync(e => e.StudentId == studentId && e.CourseId == courseId);
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var enrollment = await mongoContext.Enrollments.Find(e => e.StudentId == studentId && e.CourseId == courseId).FirstOrDefaultAsync();
         enrollment.Should().NotBeNull();
     }
 
@@ -96,6 +97,7 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
     public async Task Handle_WithNonExistentCourse_ShouldReturnNotFoundError()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
         var command = new EnrollStudentInCourseCommand(Guid.NewGuid(), Guid.NewGuid());
 
@@ -163,11 +165,11 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
         // 3. Mark course as completed directly via DbContext
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            var course = await dbContext.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            var course = await mongoContext.Courses.Find(c => c.Id == courseId).FirstOrDefaultAsync();
             course.Should().NotBeNull();
             course.MarkAsCompeleted();
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Courses.ReplaceOneAsync(c => c.Id == courseId, course);
         }
 
         // Act — try to enroll in a completed course
@@ -221,13 +223,12 @@ public class EnrollStudentInCourseCommandHandlerTests(CustomWebApplicationFactor
     {
         var adminId = Guid.Parse(TestUsers.Admin.User.Id);
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        if (!dbContext.Admins.Any(a => a.Id == adminId))
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        if (!mongoContext.Users.Find(u => u.UserRole == UserRole.Admin && u.Id == adminId).Any())
         {
             var personalInfo = PersonalInformation.Create("Admin User", "admin@quiznova.local", "01000000000").Value;
             var admin = Admin.Create(adminId, personalInfo).Value;
-            dbContext.Admins.Add(admin);
-            dbContext.SaveChangesAsync().GetAwaiter().GetResult();
+            mongoContext.Users.InsertOne(admin);
         }
 
         TestCurrentUser.Set(TestUsers.Admin.User);

@@ -1,6 +1,5 @@
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
-using QuizNova.Domain.Entities.Quizzes;
 
 namespace QuizNova.Tests.Common.Courses;
 
@@ -10,15 +9,12 @@ public static class CourseFactory
         Guid? instructorId = null,
         string name = "Test Course",
         int minimumPassingMarks = 50,
-        int maximumMarks = 100,
-        List<Quiz>? quizzes = null)
+        int maximumMarks = 100)
     {
         return Course.Create(
             instructorId,
             name,
             minimumPassingMarks,
-            maximumMarks,
-            quizzes ?? [],
-            []);
+            maximumMarks);
     }
 }

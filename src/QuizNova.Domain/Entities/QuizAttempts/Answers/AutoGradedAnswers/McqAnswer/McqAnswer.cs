@@ -7,22 +7,20 @@ public class McqAnswer : AutoGradedAnswer
 {
     public Guid SelectedChoiceId { get; private set; }
 
-    public Mcq? Mcq { get; init; }
-
     public void Update(Guid selectedChoiceId, bool isCorrect)
     {
         SelectedChoiceId = selectedChoiceId;
         UpdateIsCorrect(isCorrect);
     }
 
-    // Required by EF Core
     private McqAnswer()
         : base(
             Guid.Empty,
             Guid.Empty,
             Guid.Empty,
             Guid.Empty,
-            false)
+            false,
+            0)
     {
     }
 
@@ -32,12 +30,11 @@ public class McqAnswer : AutoGradedAnswer
         Guid questionId,
         Guid quizAttemptId,
         Guid selectedChoiceId,
-        Mcq mcq,
-        bool isCorrect)
-        : base(id, studentId, questionId, quizAttemptId, isCorrect)
+        bool isCorrect,
+        int marks)
+        : base(id, studentId, questionId, quizAttemptId, isCorrect, marks)
     {
         SelectedChoiceId = selectedChoiceId;
-        Mcq = mcq;
     }
 
     public static Result<McqAnswer> Create(
@@ -71,6 +68,6 @@ public class McqAnswer : AutoGradedAnswer
             return McqAnswerErrors.SelectedChoiceDoesNotBelongToQuestion(questionId, selectedChoiceId);
         }
 
-        return new McqAnswer(id, studentId, questionId, quizAttemptId, selectedChoiceId, question, isCorrect);
+        return new McqAnswer(id, studentId, questionId, quizAttemptId, selectedChoiceId, isCorrect, question.Marks);
     }
 }

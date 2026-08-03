@@ -5,22 +5,34 @@ using Microsoft.Extensions.Logging;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Colleges.DTOs;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Courses;
+using QuizNova.Domain.Entities.Users.Instructors;
+using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Application.Features.Colleges.Queries.GetCollegeSummary;
 
 public sealed class GetCollegeSummaryQueryHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetCollegeSummaryQueryHandler> logger)
     : IRequestHandler<GetCollegeSummaryQuery, Result<CollegeSummaryDto>>
 {
-    public Task<Result<CollegeSummaryDto>> Handle(GetCollegeSummaryQuery request, CancellationToken ct)
+    public async Task<Result<CollegeSummaryDto>> Handle(GetCollegeSummaryQuery request, CancellationToken ct)
     {
         logger.LogInformation("Retrieving college summary");
 
+        var totalStudents = (int)await mongoContext.Users.CountDocumentsAsync(
+            u => u is Student, cancellationToken: ct);
+
+        var totalInstructors = (int)await mongoContext.Users.CountDocumentsAsync(
+            u => u is Instructor, cancellationToken: ct);
+
+        var totalCourses = (int)await mongoContext.Courses.CountDocumentsAsync(
+            Builders<Course>.Filter.Empty, cancellationToken: ct);
+
         var summaryDto = new CollegeSummaryDto(
-            dbContext.Students.Count(),
-            dbContext.Instructors.Count(),
-            dbContext.Courses.Count());
+            totalStudents,
+            totalInstructors,
+            totalCourses);
 
         logger.LogInformation(
             "College summary retrieved: {StudentCount} students, {InstructorCount} instructors, {CourseCount} courses",
@@ -28,6 +40,6 @@ public sealed class GetCollegeSummaryQueryHandler(
             summaryDto.TotalInstructors,
             summaryDto.TotalCourses);
 
-        return Task.FromResult<Result<CollegeSummaryDto>>(summaryDto);
+        return summaryDto;
     }
 }

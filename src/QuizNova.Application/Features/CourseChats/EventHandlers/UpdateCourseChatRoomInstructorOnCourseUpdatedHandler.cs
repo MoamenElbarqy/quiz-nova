@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Interfaces;
@@ -9,7 +8,7 @@ using QuizNova.Domain.Entities.Courses.Events;
 namespace QuizNova.Application.Features.CourseChats.EventHandlers;
 
 public sealed class UpdateCourseChatRoomInstructorOnCourseUpdatedHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<UpdateCourseChatRoomInstructorOnCourseUpdatedHandler> logger)
     : INotificationHandler<CourseUpdatedEvent>
 {
@@ -17,9 +16,9 @@ public sealed class UpdateCourseChatRoomInstructorOnCourseUpdatedHandler(
     {
         logger.LogInformation("Updating instructor for chatroom of course {CourseId}", notification.Id);
 
-        var course = await dbContext.Courses
-            .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == notification.Id, ct);
+        var course = await mongoContext.Courses
+            .Find(c => c.Id == notification.Id)
+            .FirstOrDefaultAsync(ct);
 
         if (course is null)
         {
@@ -27,8 +26,9 @@ public sealed class UpdateCourseChatRoomInstructorOnCourseUpdatedHandler(
             return;
         }
 
-        var chatRoom = await dbContext.CourseChatRooms
-            .FirstOrDefaultAsync(r => r.CourseId == notification.Id, ct);
+        var chatRoom = await mongoContext.CourseChatRooms
+            .Find(r => r.CourseId == notification.Id)
+            .FirstOrDefaultAsync(ct);
 
         if (chatRoom is null)
         {
@@ -37,7 +37,7 @@ public sealed class UpdateCourseChatRoomInstructorOnCourseUpdatedHandler(
         }
 
         chatRoom.UpdateInstructor(course.InstructorId);
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.CourseChatRooms.ReplaceOneAsync(r => r.Id == chatRoom.Id, chatRoom, cancellationToken: ct);
 
         logger.LogInformation("Successfully updated instructor for chatroom {RoomId} to {InstructorId}", chatRoom.Id, course.InstructorId);
     }

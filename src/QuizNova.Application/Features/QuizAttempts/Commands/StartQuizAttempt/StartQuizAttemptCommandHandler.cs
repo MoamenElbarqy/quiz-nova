@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Caching;
@@ -10,11 +9,11 @@ using QuizNova.Application.Features.QuizAttempts.DTOs;
 using QuizNova.Application.Features.QuizAttempts.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts.Enums;
+using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Application.Features.QuizAttempts.Commands.StartQuizAttempt;
 
 public sealed class StartQuizAttemptCommandHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     IUser user,
     ILogger<StartQuizAttemptCommandHandler> logger,
@@ -30,9 +29,9 @@ public sealed class StartQuizAttemptCommandHandler(
             studentId,
             request.QuizId);
 
-        var studentExists = await dbContext.Students
-            .AsNoTracking()
-            .AnyAsync(s => s.Id == studentId, ct);
+        var studentExists = await mongoContext.Users
+            .Find(u => u.Id == studentId && u is Student)
+            .AnyAsync(ct);
 
         if (!studentExists)
         {
@@ -50,9 +49,9 @@ public sealed class StartQuizAttemptCommandHandler(
             return ApplicationErrors.QuizNotFound(request.QuizId);
         }
 
-        var isStudentEnrolled = await dbContext.Enrollments
-            .AsNoTracking()
-            .AnyAsync(e => e.StudentId == studentId && e.CourseId == quiz.CourseId, ct);
+        var isStudentEnrolled = await mongoContext.Enrollments
+            .Find(e => e.StudentId == studentId && e.CourseId == quiz.CourseId)
+            .AnyAsync(ct);
 
         if (!isStudentEnrolled)
         {
@@ -116,6 +115,6 @@ public sealed class StartQuizAttemptCommandHandler(
             attempt.Id,
             studentId);
 
-        return attempt.ToQuizAttemptDto();
+        return attempt.ToQuizAttemptDto(quiz);
     }
 }

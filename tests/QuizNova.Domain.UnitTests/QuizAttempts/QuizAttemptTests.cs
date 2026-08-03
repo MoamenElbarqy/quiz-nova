@@ -1,8 +1,6 @@
 using QuizNova.Domain.Entities.QuizAttempts;
-using QuizNova.Domain.Entities.QuizAttempts.Answers.Base;
 using QuizNova.Domain.Entities.QuizAttempts.Enums;
 using QuizNova.Domain.Entities.Quizzes;
-using QuizNova.Tests.Common.Courses;
 using QuizNova.Tests.Common.QuizAttempts;
 using QuizNova.Tests.Common.QuizAttempts.Answers;
 using QuizNova.Tests.Common.Quizzes;
@@ -35,20 +33,6 @@ public class QuizAttemptTests
         Assert.NotNull(result.Value);
         Assert.Equal(QuizAttemptStatus.InProgress, result.Value.Status);
         Assert.Equal(quiz.Id, result.Value.QuizId);
-    }
-
-    [Fact]
-    public void StartAttempt_ShouldFail_WhenCourseCompleted()
-    {
-        var quiz = QuizFactory.CreateQuiz().Value;
-        var course = CourseFactory.CreateCourse(quizzes: [quiz]).Value;
-        course.MarkAsCompeleted();
-        typeof(Quiz).GetProperty("Course")!.SetValue(quiz, course);
-
-        var result = quiz.StartAttempt(Guid.NewGuid());
-
-        Assert.True(result.IsError);
-        Assert.Equal(QuizErrors.CourseCompleted, result.TopError);
     }
 
     [Fact]
@@ -179,20 +163,13 @@ public class QuizAttemptTests
     [Fact]
     public void Complete_ShouldFail_WhenSubmittedAfterQuizEnd()
     {
-        var activeQuiz = QuizFactory.CreateQuiz(
-            startsAtUtc: DateTimeOffset.UtcNow.AddHours(-2),
-            endsAtUtc: DateTimeOffset.UtcNow.AddHours(2)).Value;
-        var attempt = activeQuiz.StartAttempt(Guid.NewGuid()).Value;
-
-        var endedQuiz = QuizFactory.CreateQuiz(
-            startsAtUtc: DateTimeOffset.UtcNow.AddHours(-2),
-            endsAtUtc: DateTimeOffset.UtcNow.AddHours(-1)).Value;
-        attempt.Quiz = endedQuiz;
+        var endsAtUtc = DateTimeOffset.UtcNow.AddHours(-1);
+        var attempt = QuizAttemptFactory.CreateQuizAttempt(quizEndsAtUtc: endsAtUtc).Value;
 
         var result = attempt.Complete(DateTime.UtcNow);
 
         Assert.True(result.IsError);
-        Assert.Equal(QuizAttemptErrors.SubmittedAtAfterQuizEnd(endedQuiz.EndsAtUtc).Code, result.TopError.Code);
+        Assert.Equal(QuizAttemptErrors.SubmittedAtAfterQuizEnd(endsAtUtc).Code, result.TopError.Code);
     }
 
     [Fact]
@@ -203,20 +180,17 @@ public class QuizAttemptTests
 
         var tfQuest = QuestionFactory.CreateTfQuestion(marks: 10).Value;
         var tfAns = AnswerFactory.CreateTfAnswer(studentId: studentId, questionId: tfQuest.Id,
-            quizAttemptId: attemptId, isCorrect: true).Value;
-        typeof(QuestionAnswer).GetProperty("Question")!.SetValue(tfAns, tfQuest);
+            quizAttemptId: attemptId, isCorrect: true, marks: 10).Value;
 
         var tfQuestIncorrect = QuestionFactory.CreateTfQuestion(marks: 10).Value;
         var tfAnsIncorrect = AnswerFactory.CreateTfAnswer(studentId: studentId,
-            questionId: tfQuestIncorrect.Id, quizAttemptId: attemptId, isCorrect: false).Value;
-        typeof(QuestionAnswer).GetProperty("Question")!.SetValue(tfAnsIncorrect, tfQuestIncorrect);
+            questionId: tfQuestIncorrect.Id, quizAttemptId: attemptId, isCorrect: false, marks: 10).Value;
 
         var mcqQuest = QuestionFactory.CreateMcqQuestion(marks: 15).Value;
         var mcqAns = AnswerFactory.CreateMcqAnswer(studentId: studentId, quizAttemptId: attemptId,
                 questionId: mcqQuest.Id, selectedChoiceId: mcqQuest.CorrectChoiceId, question: mcqQuest,
                 isCorrect: true)
             .Value;
-        typeof(QuestionAnswer).GetProperty("Question")!.SetValue(mcqAns, mcqQuest);
 
         var attempt = QuizAttemptFactory.CreateQuizAttempt(id: attemptId, studentId: studentId).Value;
         attempt.SubmitAnswer(tfAns);

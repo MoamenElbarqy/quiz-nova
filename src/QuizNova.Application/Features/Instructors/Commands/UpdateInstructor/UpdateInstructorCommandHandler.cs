@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Caching;
@@ -9,12 +8,12 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Instructors.DTOs;
 using QuizNova.Application.Features.Instructors.Mappers;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users.Instructors;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Application.Features.Instructors.Commands.UpdateInstructor;
 
 public sealed class UpdateInstructorCommandHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     ILogger<UpdateInstructorCommandHandler> logger,
     ICacheInvalidator cacheInvalidator)
@@ -24,9 +23,9 @@ public sealed class UpdateInstructorCommandHandler(
     {
         logger.LogInformation("Updating instructor with ID: {InstructorId}", request.Id);
 
-        var instructor = await dbContext.Instructors
-            .Include(i => i.Courses)
-            .FirstOrDefaultAsync(entity => entity.Id == request.Id, ct);
+        var instructor = await mongoContext.Users
+            .Find(u => u.Id == request.Id && u is Instructor)
+            .FirstOrDefaultAsync(ct) as Instructor;
 
         if (instructor is null)
         {
@@ -34,15 +33,17 @@ public sealed class UpdateInstructorCommandHandler(
             return ApplicationErrors.InstructorNotFound(request.Id);
         }
 
-        if (await dbContext.Users.AnyAsync(
-                user => user.Id != request.Id && user.PersonalInformation.Email == request.PersonalInformation.Email, ct))
+        if (await mongoContext.Users.CountDocumentsAsync(
+                u => u.Id != request.Id && u.PersonalInformation.Email == request.PersonalInformation.Email,
+                cancellationToken: ct) > 0)
         {
             logger.LogWarning("Instructor update failed: Email {Email} already exists for another user", request.PersonalInformation.Email);
             return ApplicationErrors.UserEmailAlreadyExists(request.PersonalInformation.Email);
         }
 
-        if (await dbContext.Users.AnyAsync(
-                user => user.Id != request.Id && user.PersonalInformation.PhoneNumber == request.PersonalInformation.PhoneNumber, ct))
+        if (await mongoContext.Users.CountDocumentsAsync(
+                u => u.Id != request.Id && u.PersonalInformation.PhoneNumber == request.PersonalInformation.PhoneNumber,
+                cancellationToken: ct) > 0)
         {
             logger.LogWarning(
                 "Instructor update failed: Phone number {PhoneNumber} already exists for another user",
@@ -70,14 +71,14 @@ public sealed class UpdateInstructorCommandHandler(
             return updateInstructorResult.TopError;
         }
 
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.Users.ReplaceOneAsync(u => u.Id == instructor.Id, instructor, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync([CacheTags.Instructors], ct);
 
+        var coursesCount = (int)await mongoContext.Courses.CountDocumentsAsync(c => c.InstructorId == request.Id, cancellationToken: ct);
         var quizzesCount = (int)await mongoContext.Quizzes.CountDocumentsAsync(q => q.InstructorId == request.Id, cancellationToken: ct);
 
         logger.LogInformation("Successfully updated instructor {InstructorId}", request.Id);
 
-        return instructor.ToInstructorDto(instructor.Courses.Count(), quizzesCount);
+        return instructor.ToInstructorDto(coursesCount, quizzesCount);
     }
 }
-

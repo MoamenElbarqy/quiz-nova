@@ -26,7 +26,7 @@ public sealed class GradeQuestionCommandHandler(
             request.Score);
 
         var filter = Builders<QuizAttempt>.Filter.ElemMatch(
-            a => a.StudentAnswers,
+            "student_answers",
             Builders<QuestionAnswer>.Filter.Eq(ans => ans.Id, request.AnswerId));
 
         var attempt = await mongoContext.QuizAttempts
@@ -47,15 +47,6 @@ public sealed class GradeQuestionCommandHandler(
         if (answer is null)
         {
             return ApplicationErrors.AnswerNotFound(request.AnswerId);
-        }
-
-        var quiz = await mongoContext.Quizzes
-            .Find(q => q.Id == attempt.QuizId)
-            .FirstOrDefaultAsync(ct);
-
-        if (quiz is not null)
-        {
-            attempt.AttachQuizQuestions(quiz.Questions);
         }
 
         var gradeResult = answer.Grade(request.Score, request.Feedback);

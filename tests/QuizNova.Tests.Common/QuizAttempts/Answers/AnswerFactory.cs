@@ -47,7 +47,9 @@ public static class AnswerFactory
         Guid questionId,
         Guid quizAttemptId,
         bool studentChoice = true,
-        bool isCorrect = true, Guid? id = null)
+        bool isCorrect = true,
+        Guid? id = null,
+        int marks = 10)
     {
         return TfAnswer.Create(
             id ?? Guid.NewGuid(),
@@ -55,7 +57,8 @@ public static class AnswerFactory
             questionId,
             quizAttemptId,
             studentChoice,
-            isCorrect);
+            isCorrect,
+            marks);
     }
 
     public static Result<EssayAnswer> CreateEssayAnswer(
@@ -64,6 +67,7 @@ public static class AnswerFactory
         Guid? questionId = null,
         Guid? quizAttemptId = null,
         string studentResponse = "Sample essay response",
+        int marks = 10,
         int? score = null)
     {
         return EssayAnswer.Create(
@@ -72,6 +76,7 @@ public static class AnswerFactory
             questionId ?? Guid.NewGuid(),
             quizAttemptId ?? Guid.NewGuid(),
             studentResponse,
+            marks,
             score);
     }
 }

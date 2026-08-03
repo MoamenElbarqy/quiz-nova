@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Caching;
@@ -10,20 +9,36 @@ using QuizNova.Application.Features.Instructors.DTOs;
 using QuizNova.Application.Features.Instructors.Mappers;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Identity;
+using QuizNova.Domain.Entities.Users.Admins;
 using QuizNova.Domain.Entities.Users.Instructors;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 
 namespace QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
 
 public sealed class CreateInstructorCommandHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     IAuthService authService,
     ILogger<CreateInstructorCommandHandler> logger,
-    ICacheInvalidator cacheInvalidator)
+    ICacheInvalidator cacheInvalidator,
+    IUser currentUser)
     : IRequestHandler<CreateInstructorCommand, Result<InstructorDto>>
 {
     public async Task<Result<InstructorDto>> Handle(CreateInstructorCommand request, CancellationToken ct)
     {
+        if (string.IsNullOrEmpty(currentUser.Id) || !Guid.TryParse(currentUser.Id, out var currentUserId))
+        {
+            return ApplicationErrors.UserIdClaimInvalid;
+        }
+
+        var isExecutingUserAdmin = await mongoContext.Users
+            .Find(u => u.Id == currentUserId && u is Admin)
+            .AnyAsync(ct);
+
+        if (!isExecutingUserAdmin)
+        {
+            return ApplicationErrors.AdminNotFound(currentUserId);
+        }
+
         logger.LogInformation("Creating instructor with email: {Email}", request.PersonalInformation.Email);
 
         if (!Enum.TryParse<UserRole>(request.Role, true, out var role))
@@ -38,15 +53,17 @@ public sealed class CreateInstructorCommandHandler(
             return ApplicationErrors.CreateInstructorRoleInvalid(request.Role);
         }
 
-        if (await dbContext.Users
-                .AnyAsync(user => user.PersonalInformation.Email == request.PersonalInformation.Email, ct))
+        if (await mongoContext.Users.CountDocumentsAsync(
+                u => u.PersonalInformation.Email == request.PersonalInformation.Email,
+                cancellationToken: ct) > 0)
         {
             logger.LogWarning("Instructor creation failed: Email {Email} already exists", request.PersonalInformation.Email);
             return ApplicationErrors.UserEmailAlreadyExists(request.PersonalInformation.Email);
         }
 
-        if (await dbContext.Users
-                .AnyAsync(user => user.PersonalInformation.PhoneNumber == request.PersonalInformation.PhoneNumber, ct))
+        if (await mongoContext.Users.CountDocumentsAsync(
+                u => u.PersonalInformation.PhoneNumber == request.PersonalInformation.PhoneNumber,
+                cancellationToken: ct) > 0)
         {
             logger.LogWarning("Instructor creation failed: Phone number {PhoneNumber} already exists",
                 request.PersonalInformation.PhoneNumber);
@@ -85,9 +102,7 @@ public sealed class CreateInstructorCommandHandler(
         // 3. Create Instructor Domain Aggregate
         var createInstructorResult = Instructor.Create(
             userId,
-            personalInformationResult.Value,
-            [],
-            []);
+            personalInformationResult.Value);
 
         if (createInstructorResult.IsError)
         {
@@ -96,8 +111,7 @@ public sealed class CreateInstructorCommandHandler(
             return createInstructorResult.TopError;
         }
 
-        await dbContext.Instructors.AddAsync(createInstructorResult.Value, ct);
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.Users.InsertOneAsync(createInstructorResult.Value, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync([CacheTags.Instructors], ct);
 
         logger.LogInformation("Successfully created instructor {InstructorId} with email {Email}",

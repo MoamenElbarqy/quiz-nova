@@ -6,6 +6,7 @@ namespace QuizNova.Domain.Entities.QuizAttempts.Answers.ManuallyGradedAnswers;
 public abstract class ManuallyGradedAnswers : QuestionAnswer
 {
     public int? Score { get; private set; }
+    public int MaxMarks { get; private set; }
     public string? Feedback { get; private set; }
     public DateTimeOffset? GradedAt { get; private set; }
     public bool IsGraded => Score.HasValue;
@@ -15,10 +16,12 @@ public abstract class ManuallyGradedAnswers : QuestionAnswer
         Guid studentId,
         Guid questionId,
         Guid quizAttemptId,
-        int? score)
+        int? score,
+        int maxMarks)
         : base(id, studentId, questionId, quizAttemptId)
     {
         Score = score;
+        MaxMarks = maxMarks;
     }
 
     protected ManuallyGradedAnswers()
@@ -37,11 +40,9 @@ public abstract class ManuallyGradedAnswers : QuestionAnswer
             return ManuallyGradedAnswerErrors.NegativeScore;
         }
 
-        var maxMarks = Question!.Marks;
-
-        if (score > maxMarks)
+        if (score > MaxMarks)
         {
-            return ManuallyGradedAnswerErrors.ScoreExceedsMaxMarks(maxMarks);
+            return ManuallyGradedAnswerErrors.ScoreExceedsMaxMarks(MaxMarks);
         }
 
         if (feedback is not null)

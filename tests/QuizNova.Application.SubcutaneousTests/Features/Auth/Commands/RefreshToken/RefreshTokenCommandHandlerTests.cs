@@ -3,12 +3,14 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Errors;
+using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Auth.Commands.Login;
 using QuizNova.Application.Features.Auth.Commands.RefreshToken;
 using QuizNova.Application.SubcutaneousTests.Common;
-using QuizNova.Infrastructure.Data;
-using QuizNova.Infrastructure.Identity;
+using QuizNova.Domain.Entities.Identity;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Auth.Commands.RefreshToken;
 
@@ -61,15 +63,13 @@ public class RefreshTokenCommandHandlerTests(CustomWebApplicationFactory factory
 
         // Verify DB state: old refresh token is revoked, new one is active
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
 
-        var oldToken = await dbContext.UserRefreshTokens
-            .FirstOrDefaultAsync(rt => rt.Token == originalRefreshToken);
+        var oldToken = await mongoContext.UserRefreshTokens.Find(rt => rt.Token == originalRefreshToken).FirstOrDefaultAsync();
         oldToken.Should().NotBeNull();
         oldToken.RevokedOnUtc.Should().NotBeNull("because the old token should be revoked");
 
-        var newToken = await dbContext.UserRefreshTokens
-            .FirstOrDefaultAsync(rt => rt.Token == refreshResult.Value.RefreshToken);
+        var newToken = await mongoContext.UserRefreshTokens.Find(rt => rt.Token == refreshResult.Value.RefreshToken).FirstOrDefaultAsync();
         newToken.Should().NotBeNull();
         newToken.RevokedOnUtc.Should().BeNull("because the new token should still be active");
     }
@@ -91,20 +91,18 @@ public class RefreshTokenCommandHandlerTests(CustomWebApplicationFactory factory
         var expiredRefreshToken = Guid.NewGuid().ToString();
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var userId = await dbContext.UserRefreshTokens
-                .Where(rt => rt.Token == loginResult.Value.Token.RefreshToken)
-                .Select(rt => rt.UserId)
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            var userToken = await mongoContext.UserRefreshTokens
+                .Find(rt => rt.Token == loginResult.Value.Token.RefreshToken)
                 .FirstAsync();
 
-            dbContext.UserRefreshTokens.Add(new UserRefreshToken
+            await mongoContext.UserRefreshTokens.InsertOneAsync(new UserRefreshToken
             {
                 Id = Guid.NewGuid(),
                 Token = expiredRefreshToken,
-                UserId = userId,
+                UserId = userToken.UserId,
                 ExpiresOnUtc = DateTimeOffset.UtcNow.AddDays(-1), // already expired
             });
-            await dbContext.SaveChangesAsync(CancellationToken.None);
         }
 
         // Act
@@ -172,11 +170,10 @@ public class RefreshTokenCommandHandlerTests(CustomWebApplicationFactory factory
         // Manually revoke the refresh token in the DB
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var storedToken = await dbContext.UserRefreshTokens
-                .FirstAsync(rt => rt.Token == refreshToken);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            var storedToken = await mongoContext.UserRefreshTokens.Find(rt => rt.Token == refreshToken).FirstAsync();
             storedToken.RevokedOnUtc = DateTimeOffset.UtcNow;
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.UserRefreshTokens.ReplaceOneAsync(rt => rt.Id == storedToken.Id, storedToken);
         }
 
         // Act

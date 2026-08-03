@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
@@ -14,7 +13,6 @@ using QuizNova.Domain.Entities.Quizzes.Enums;
 namespace QuizNova.Application.Features.Quizzes.Queries.GetStudentQuizzes;
 
 public sealed class GetStudentQuizzesQueryHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     ILogger<GetStudentQuizzesQueryHandler> logger)
     : IRequestHandler<GetStudentQuizzesQuery, Result<StudentQuizzesDto>>
@@ -23,9 +21,9 @@ public sealed class GetStudentQuizzesQueryHandler(
     {
         logger.LogInformation("Retrieving available quizzes for student with ID: {StudentId}", request.StudentId);
 
-        var studentExists = await dbContext.Students
-            .AsNoTracking()
-            .AnyAsync(student => student.Id == request.StudentId, ct);
+        var studentExists = await mongoContext.Users
+            .Find(u => u.Id == request.StudentId)
+            .AnyAsync(ct);
 
         if (!studentExists)
         {
@@ -35,10 +33,9 @@ public sealed class GetStudentQuizzesQueryHandler(
 
         var serverUtc = DateTimeOffset.UtcNow;
 
-        var enrolledCourseIds = await dbContext.Enrollments
-            .AsNoTracking()
-            .Where(enrollment => enrollment.StudentId == request.StudentId)
-            .Select(enrollment => enrollment.CourseId)
+        var enrolledCourseIds = await mongoContext.Enrollments
+            .Find(enrollment => enrollment.StudentId == request.StudentId)
+            .Project(enrollment => enrollment.CourseId)
             .ToListAsync(ct);
 
         var quizzes = await mongoContext.Quizzes

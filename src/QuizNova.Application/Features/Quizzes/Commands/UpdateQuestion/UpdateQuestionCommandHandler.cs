@@ -50,6 +50,16 @@ public sealed class UpdateQuestionCommandHandler(
             return ApplicationErrors.QuizNotFound(request.QuizId);
         }
 
+        var course = await mongoContext.Courses
+            .Find(c => c.Id == quiz.CourseId)
+            .FirstOrDefaultAsync(ct);
+
+        if (course is null)
+        {
+            logger.LogWarning("Course {CourseId} not found for quiz {QuizId}", quiz.CourseId, request.QuizId);
+            return ApplicationErrors.QuizCourseNotFound(quiz.CourseId);
+        }
+
         Guid? correctChoiceId = null;
         bool? tfCorrectChoice = null;
         List<Choice>? choices = null;
@@ -99,6 +109,7 @@ public sealed class UpdateQuestionCommandHandler(
             request.QuestionText,
             request.DisplayOrder,
             request.Marks,
+            course,
             correctChoiceId,
             tfCorrectChoice,
             choices,
@@ -114,6 +125,7 @@ public sealed class UpdateQuestionCommandHandler(
         }
 
         await mongoContext.Quizzes.ReplaceOneAsync(q => q.Id == quiz.Id, quiz, cancellationToken: ct);
+        await mongoContext.Courses.ReplaceOneAsync(c => c.Id == course.Id, course, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync([CacheTags.Quizzes], ct);
 
         logger.LogInformation(

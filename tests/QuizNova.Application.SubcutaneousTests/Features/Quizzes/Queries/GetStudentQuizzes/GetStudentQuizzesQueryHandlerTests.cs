@@ -1,16 +1,21 @@
 using FluentAssertions;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+
+using MongoDB.Driver;
 
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
 using QuizNova.Application.Features.Quizzes.Commands.CreateQuiz;
 using QuizNova.Application.Features.Quizzes.Queries.GetStudentQuizzes;
 using QuizNova.Application.SubcutaneousTests.Common;
+using QuizNova.Domain.Entities.Identity;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 using QuizNova.Infrastructure.Identity;
 using QuizNova.Tests.Common.Security;
 using QuizNova.Tests.Common.Users.Students;
+using QuizNova.Tests.Common.Users.UserPersonalInformation;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Quizzes.Queries.GetStudentQuizzes;
 
@@ -37,15 +42,15 @@ public class GetStudentQuizzesQueryHandlerTests(CustomWebApplicationFactory fact
         Guid studentId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
             var student = StudentFactory.CreateStudent(
-                personalInformation: Tests.Common.Users.UserPersonalInformation.PersonalInformationFactory
+                personalInformation: PersonalInformationFactory
                     .CreatePersonalInformation(
                         name: "No Enrollments Student",
                         email: $"student_{Guid.NewGuid()}@example.com")).Value;
 
-            await dbContext.Students.AddAsync(student);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Users.InsertOneAsync(student);
+
             studentId = student.Id;
         }
 
@@ -67,14 +72,15 @@ public class GetStudentQuizzesQueryHandlerTests(CustomWebApplicationFactory fact
         Guid instructorId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            studentId = (await dbContext.Students.FirstAsync()).Id;
-            var course = await dbContext.Courses.FirstAsync();
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            studentId = (await mongoContext.Users.Find(u => u.UserRole == UserRole.Student).FirstAsync()).Id;
+            var course = await mongoContext.Courses.Find(_ => true).FirstAsync();
             courseId = course.Id;
             instructorId = course.InstructorId!.Value;
         }
 
         // Enroll student and create quiz
+        EnsureAdminContext();
         var enrollResult = await mediator.Send(new EnrollStudentInCourseCommand(courseId, studentId));
         if (enrollResult.IsError)
         {
@@ -100,5 +106,20 @@ public class GetStudentQuizzesQueryHandlerTests(CustomWebApplicationFactory fact
         result.IsSuccess.Should().BeTrue();
         result.Value.Quizzes.Should().NotBeEmpty();
         result.Value.Quizzes.Should().Contain(q => q.Title == quizTitle);
+    }
+
+    private void EnsureAdminContext()
+    {
+        var adminId = Guid.Parse(TestUsers.Admin.User.Id);
+        using var scope = factory.Services.CreateScope();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        if (!mongoContext.Users.Find(u => u.UserRole == UserRole.Admin && u.Id == adminId).Any())
+        {
+            var personalInfo = PersonalInformation.Create("Admin User", "admin@quiznova.local", "01000000000").Value;
+            var admin = Admin.Create(adminId, personalInfo).Value;
+            mongoContext.Users.InsertOne(admin);
+        }
+
+        TestCurrentUser.Set(TestUsers.Admin.User);
     }
 }

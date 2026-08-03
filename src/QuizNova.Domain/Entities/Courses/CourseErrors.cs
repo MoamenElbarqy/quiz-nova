@@ -30,4 +30,14 @@ public static class CourseErrors
 
     public static Error StudentAlreadyEnrolled(Guid studentId) =>
         Error.Conflict("Course_Student_Already_Enrolled", $"Student {studentId} is already enrolled in this course.");
+
+    public static readonly Error MarksInvalid =
+        Error.Validation("Course_Marks_Invalid", "Marks value is invalid.");
+
+    public static Error InsufficientRemainingMarks(int remaining, int requested) =>
+        Error.Validation("Course_Insufficient_Remaining_Marks",
+            $"Insufficient remaining marks. Available: {remaining}, Requested: {requested}.");
+
+    public static readonly Error CannotDisenrollFromCompletedCourse =
+        Error.Validation("Course_CannotDisenroll_Completed", "Cannot disenroll from a completed course.");
 }

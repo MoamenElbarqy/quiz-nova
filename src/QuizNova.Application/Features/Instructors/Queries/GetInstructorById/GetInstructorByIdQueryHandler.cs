@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
@@ -8,11 +7,11 @@ using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Instructors.DTOs;
 using QuizNova.Application.Features.Instructors.Mappers;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Application.Features.Instructors.Queries.GetInstructorById;
 
 public sealed class GetInstructorByIdQueryHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     ILogger<GetInstructorByIdQueryHandler> logger)
     : IRequestHandler<GetInstructorByIdQuery, Result<InstructorDto>>
@@ -21,10 +20,9 @@ public sealed class GetInstructorByIdQueryHandler(
     {
         logger.LogInformation("Retrieving instructor with ID: {InstructorId}", request.Id);
 
-        var instructor = await dbContext.Instructors
-            .AsNoTracking()
-            .Include(i => i.Courses)
-            .FirstOrDefaultAsync(i => i.Id == request.Id, ct);
+        var instructor = await mongoContext.Users
+            .Find(u => u.Id == request.Id && u is Instructor)
+            .FirstOrDefaultAsync(ct) as Instructor;
 
         if (instructor is null)
         {
@@ -32,10 +30,11 @@ public sealed class GetInstructorByIdQueryHandler(
             return ApplicationErrors.InstructorNotFound(request.Id);
         }
 
+        var coursesCount = (int)await mongoContext.Courses.CountDocumentsAsync(c => c.InstructorId == request.Id, cancellationToken: ct);
         var quizzesCount = (int)await mongoContext.Quizzes.CountDocumentsAsync(q => q.InstructorId == request.Id, cancellationToken: ct);
 
         logger.LogInformation("Successfully retrieved instructor {InstructorId}", request.Id);
 
-        return instructor.ToInstructorDto(instructor.Courses.Count(), quizzesCount);
+        return instructor.ToInstructorDto(coursesCount, quizzesCount);
     }
 }

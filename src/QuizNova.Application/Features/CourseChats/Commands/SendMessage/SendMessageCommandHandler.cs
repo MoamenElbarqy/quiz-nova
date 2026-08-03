@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
@@ -14,7 +13,7 @@ using QuizNova.Domain.Entities.CourseChats;
 namespace QuizNova.Application.Features.CourseChats.Commands.SendMessage;
 
 public sealed class SendMessageCommandHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     IUser currentUser,
     ILogger<SendMessageCommandHandler> logger)
     : IRequestHandler<SendMessageCommand, Result<MessageDto>>
@@ -27,9 +26,9 @@ public sealed class SendMessageCommandHandler(
             return CourseChatErrors.CannotSend;
         }
 
-        var room = await dbContext.CourseChatRooms
-            .Include(r => r.Students)
-            .FirstOrDefaultAsync(r => r.Id == request.RoomId, ct);
+        var room = await mongoContext.CourseChatRooms
+            .Find(r => r.Id == request.RoomId)
+            .FirstOrDefaultAsync(ct);
 
         if (room == null)
         {
@@ -38,36 +37,23 @@ public sealed class SendMessageCommandHandler(
 
         if (!room.CanSend(userId))
         {
-            var isInstructor = await dbContext.Courses
-                .AnyAsync(c => c.Id == room.CourseId && c.InstructorId == userId, ct);
-
-            if (!isInstructor)
-            {
-                var isEnrolled = await dbContext.Enrollments
-                    .AnyAsync(e => e.CourseId == room.CourseId && e.StudentId == userId, ct);
-
-                if (!isEnrolled)
-                {
-                    return CourseChatErrors.CannotSend;
-                }
-            }
+            return CourseChatErrors.CannotSend;
         }
 
-        var messageResult = Message.Create(request.RoomId, userId, request.ReplyOnId, request.Content);
-        if (messageResult.IsError)
+        var sendResult = room.SendMessage(userId, request.ReplyOnId, request.Content);
+        if (sendResult.IsError)
         {
-            return messageResult.Errors;
+            return sendResult.Errors;
         }
 
-        var message = messageResult.Value;
-        await dbContext.CourseChatRoomMessages.AddAsync(message, ct);
-        await dbContext.SaveChangesAsync(ct);
+        var message = sendResult.Value;
+        await mongoContext.CourseChatRooms.ReplaceOneAsync(r => r.Id == room.Id, room, cancellationToken: ct);
 
-        var senderUser = await dbContext.Users
-            .AsNoTracking()
-            .FirstAsync(u => u.Id == userId, ct);
+        var senderUser = await mongoContext.Users
+            .Find(u => u.Id == userId)
+            .FirstOrDefaultAsync(ct);
 
-        var senderDto = senderUser.ToDto();
+        var senderDto = senderUser!.ToDto();
 
         logger.LogInformation("Message sent by user {UserId} in room {RoomId}", userId, request.RoomId);
 

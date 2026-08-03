@@ -55,9 +55,9 @@ public class GetCourseByIdQueryHandlerTests(CustomWebApplicationFactory factory)
         // 2. Save directly to DB
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            dbContext.Courses.Add(course);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            await mongoContext.Courses.InsertOneAsync(course);
+
         }
 
         var query = new GetCourseByIdQuery(course.Id);

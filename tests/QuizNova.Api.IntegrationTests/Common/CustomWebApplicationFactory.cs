@@ -11,6 +11,13 @@ namespace QuizNova.Api.IntegrationTests.Common;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>, IAsyncLifetime
 {
+    static CustomWebApplicationFactory()
+    {
+        Environment.SetEnvironmentVariable("DOTNET_USE_POLLING_FILE_WATCHER", "1");
+        Environment.SetEnvironmentVariable("ASPNETCORE_hostBuilder_reloadConfigOnChange", "false");
+        Environment.SetEnvironmentVariable("DOTNET_hostBuilder_reloadConfigOnChange", "false");
+    }
+
     private static readonly PostgreSqlContainer DbContainer = new PostgreSqlBuilder()
         .WithImage("postgres:18.3")
         .WithDatabase("postgres")
@@ -66,9 +73,25 @@ public class CustomWebApplicationFactory : WebApplicationFactory<AssemblyMarker>
     {
         builder.UseEnvironment("Testing");
 
+        builder.ConfigureAppConfiguration((_, configBuilder) =>
+        {
+            foreach (var source in configBuilder.Sources.OfType<FileConfigurationSource>())
+            {
+                source.ReloadOnChange = false;
+            }
+        });
+
         builder.UseSetting("PostgresSettings:DefaultConnection", _connectionString);
+        builder.UseSetting("PostgresSettings:MaximumPoolSize", "5");
+        builder.UseSetting("PostgresSettings:MinimumPoolSize", "0");
+        builder.UseSetting("PostgresSettings:ConnectionTimeoutSeconds", "15");
+
         builder.UseSetting("MongoDbSettings:ConnectionString", MongoContainer.GetConnectionString());
         builder.UseSetting("MongoDbSettings:DatabaseName", _mongoDatabaseName);
+        builder.UseSetting("MongoDbSettings:MaxConnectionPoolSize", "100");
+        builder.UseSetting("MongoDbSettings:MinConnectionPoolSize", "0");
+        builder.UseSetting("MongoDbSettings:MaxConnecting", "2");
+        builder.UseSetting("MongoDbSettings:WaitQueueTimeoutMinutes", "2");
         builder.UseSetting("JwtSettings:Secret", "QuizNova-Development-Secret-Key-Change-This-2026-Super-Long-Key");
         builder.UseSetting("JwtSettings:Issuer", "QuizNova.Api");
         builder.UseSetting("JwtSettings:Audiences:0", "QuizNova.Client");

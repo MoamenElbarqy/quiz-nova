@@ -53,16 +53,15 @@ public class GetQuizByIdQueryHandlerTests(CustomWebApplicationFactory factory)
 
         var instructor = InstructorFactory.CreateInstructor().Value;
         var course = CourseFactory.CreateCourse(instructorId: instructor.Id).Value;
-        var quiz = QuizFactory.CreateQuiz(courseId: course.Id, instructorId: instructor.Id, title: "Special Quiz Title").Value;
+        var quiz = QuizFactory.CreateQuiz(course: course, instructorId: instructor.Id, title: "Special Quiz Title").Value;
 
         // Save directly to DB
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
-            dbContext.Instructors.Add(instructor);
-            dbContext.Courses.Add(course);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Users.InsertOneAsync(instructor);
+            await mongoContext.Courses.InsertOneAsync(course);
+
             await mongoContext.Quizzes.InsertOneAsync(quiz);
         }
 

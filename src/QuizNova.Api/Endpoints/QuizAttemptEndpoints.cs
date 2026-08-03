@@ -31,7 +31,7 @@ public static class QuizAttemptEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
-        studentsGroup.MapGet("{studentId:guid}/quiz-attempts/{id:guid}", async (ISender sender, Guid studentId, Guid id) =>
+        studentsGroup.MapGet("{studentId:guid}/quiz-attempts/{id:guid}", async (ISender sender, Guid id) =>
         {
             var result = await sender.Send(new GetQuizAttemptByIdQuery(id));
             return result.ToOk();

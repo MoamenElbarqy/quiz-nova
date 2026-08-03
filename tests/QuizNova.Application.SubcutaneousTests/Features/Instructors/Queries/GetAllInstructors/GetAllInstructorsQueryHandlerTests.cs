@@ -2,6 +2,8 @@ using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Instructors.Queries.GetAllInstructors;
 using QuizNova.Application.SubcutaneousTests.Common;
@@ -52,9 +54,9 @@ public class GetAllInstructorsQueryHandlerTests(CustomWebApplicationFactory fact
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            dbContext.Instructors.AddRange(instructor1, instructor2);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            await mongoContext.Users.InsertManyAsync([instructor1, instructor2]);
+
         }
 
         var query = new GetAllInstructorsQuery(PageNumber: 1, PageSize: 10, SearchTerm: uniqueSearchTerm,
@@ -90,11 +92,10 @@ public class GetAllInstructorsQueryHandlerTests(CustomWebApplicationFactory fact
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
-            dbContext.Instructors.AddRange(instructorEmpty, instructorActive);
-            dbContext.Courses.Add(course);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Users.InsertManyAsync([instructorEmpty, instructorActive]);
+            await mongoContext.Courses.InsertOneAsync(course);
+
             await mongoContext.Quizzes.InsertOneAsync(quiz);
         }
 

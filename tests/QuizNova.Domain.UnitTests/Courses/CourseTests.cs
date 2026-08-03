@@ -174,28 +174,12 @@ public class CourseTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
-        Assert.Contains(course.Enrollments, e => e.StudentId == student.Id);
+        Assert.Equal(student.Id, result.Value.StudentId);
 
         var enrolledEvent = Assert.Single(course.DomainEvents);
         var studentEnrolledEvent = Assert.IsType<StudentEnrolledEvent>(enrolledEvent);
         Assert.Equal(course.Id, studentEnrolledEvent.CourseId);
         Assert.Equal(student.Id, studentEnrolledEvent.StudentId);
-    }
-
-    [Fact]
-    public void Enroll_ShouldFail_WhenStudentAlreadyEnrolled()
-    {
-        // Arrange
-        var course = CourseFactory.CreateCourse().Value;
-        var student = StudentFactory.CreateStudent().Value;
-        course.Enroll(student);
-
-        // Act
-        var result = course.Enroll(student);
-
-        // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(CourseErrors.StudentAlreadyEnrolled(student.Id).Code, result.TopError.Code);
     }
 
     [Fact]

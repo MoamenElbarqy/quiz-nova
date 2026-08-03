@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
@@ -13,7 +12,7 @@ using QuizNova.Domain.Entities.CourseChats;
 namespace QuizNova.Application.Features.CourseChats.Commands.ReactToMessage;
 
 public sealed class ReactToMessageCommandHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     IUser currentUser,
     ILogger<ReactToMessageCommandHandler> logger)
     : IRequestHandler<ReactToMessageCommand, Result<ReactDto>>
@@ -26,9 +25,9 @@ public sealed class ReactToMessageCommandHandler(
             return CourseChatErrors.CannotReact;
         }
 
-        var room = await dbContext.CourseChatRooms
-            .Include(r => r.Students)
-            .FirstOrDefaultAsync(r => r.Id == request.RoomId, ct);
+        var room = await mongoContext.CourseChatRooms
+            .Find(r => r.Id == request.RoomId)
+            .FirstOrDefaultAsync(ct);
 
         if (room == null)
         {
@@ -37,25 +36,10 @@ public sealed class ReactToMessageCommandHandler(
 
         if (!room.CanReact(userId))
         {
-            var isInstructor = await dbContext.Courses
-                .AnyAsync(c => c.Id == room.CourseId && c.InstructorId == userId, ct);
-
-            if (!isInstructor)
-            {
-                var isEnrolled = await dbContext.Enrollments
-                    .AnyAsync(e => e.CourseId == room.CourseId && e.StudentId == userId, ct);
-
-                if (!isEnrolled)
-                {
-                    return CourseChatErrors.CannotReact;
-                }
-            }
+            return CourseChatErrors.CannotReact;
         }
 
-        var message = await dbContext.CourseChatRoomMessages
-            .Include(m => m.Reacts)
-            .FirstOrDefaultAsync(m => m.Id == request.MessageId && m.RoomId == request.RoomId, ct);
-
+        var message = room.Messages.FirstOrDefault(m => m.Id == request.MessageId);
         if (message == null)
         {
             return ApplicationErrors.MessageNotFound(request.MessageId);
@@ -74,9 +58,7 @@ public sealed class ReactToMessageCommandHandler(
             return addResult.Errors;
         }
 
-        dbContext.Reactions.Add(reaction);
-
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.CourseChatRooms.ReplaceOneAsync(r => r.Id == room.Id, room, cancellationToken: ct);
 
         logger.LogInformation("User {UserId} reacted to message {MessageId}", userId, request.MessageId);
 

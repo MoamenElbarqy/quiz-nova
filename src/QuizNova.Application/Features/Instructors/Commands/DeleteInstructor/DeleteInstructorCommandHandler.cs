@@ -1,27 +1,44 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Caching;
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Application.Features.Instructors.Commands.DeleteInstructor;
 
 public sealed class DeleteInstructorCommandHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<DeleteInstructorCommandHandler> logger,
-    ICacheInvalidator cacheInvalidator)
+    ICacheInvalidator cacheInvalidator,
+    IUser currentUser)
     : IRequestHandler<DeleteInstructorCommand, Result<Deleted>>
 {
     public async Task<Result<Deleted>> Handle(DeleteInstructorCommand request, CancellationToken ct)
     {
+        if (string.IsNullOrEmpty(currentUser.Id) || !Guid.TryParse(currentUser.Id, out var currentUserId))
+        {
+            return ApplicationErrors.UserIdClaimInvalid;
+        }
+
+        var isExecutingUserAdmin = await mongoContext.Users
+            .Find(u => u.Id == currentUserId && u is Admin)
+            .AnyAsync(ct);
+
+        if (!isExecutingUserAdmin)
+        {
+            return ApplicationErrors.AdminNotFound(currentUserId);
+        }
+
         logger.LogInformation("Deleting instructor with ID: {InstructorId}", request.Id);
 
-        var instructor = await dbContext.Instructors
-            .FirstOrDefaultAsync(entity => entity.Id == request.Id, ct);
+        var instructor = await mongoContext.Users
+            .Find(u => u.Id == request.Id && u is Instructor)
+            .FirstOrDefaultAsync(ct) as Instructor;
 
         if (instructor is null)
         {
@@ -36,8 +53,7 @@ public sealed class DeleteInstructorCommandHandler(
             return deleteResult.TopError;
         }
 
-        dbContext.Instructors.Remove(instructor);
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.Users.DeleteOneAsync(u => u.Id == request.Id, ct);
         await cacheInvalidator.InvalidateAsync([CacheTags.Instructors], ct);
 
         logger.LogInformation("Successfully deleted instructor {InstructorId}", request.Id);

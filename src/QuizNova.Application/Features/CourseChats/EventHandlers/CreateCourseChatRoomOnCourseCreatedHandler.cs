@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Interfaces;
@@ -10,7 +9,7 @@ using QuizNova.Domain.Entities.Courses.Events;
 namespace QuizNova.Application.Features.CourseChats.EventHandlers;
 
 public sealed class CreateCourseChatRoomOnCourseCreatedHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<CreateCourseChatRoomOnCourseCreatedHandler> logger)
     : INotificationHandler<CourseCreatedEvent>
 {
@@ -18,9 +17,9 @@ public sealed class CreateCourseChatRoomOnCourseCreatedHandler(
     {
         logger.LogInformation("Creating course chatroom for course {CourseId}", notification.Id);
 
-        var course = await dbContext.Courses
-            .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == notification.Id, ct);
+        var course = await mongoContext.Courses
+            .Find(c => c.Id == notification.Id)
+            .FirstOrDefaultAsync(ct);
 
         if (course is null)
         {
@@ -28,7 +27,9 @@ public sealed class CreateCourseChatRoomOnCourseCreatedHandler(
             return;
         }
 
-        var exists = await dbContext.CourseChatRooms.AnyAsync(r => r.CourseId == notification.Id, ct);
+        var exists = (await mongoContext.CourseChatRooms
+            .CountDocumentsAsync(r => r.CourseId == notification.Id, cancellationToken: ct)) > 0;
+
         if (exists)
         {
             return;
@@ -41,8 +42,7 @@ public sealed class CreateCourseChatRoomOnCourseCreatedHandler(
             return;
         }
 
-        await dbContext.CourseChatRooms.AddAsync(chatRoomResult.Value, ct);
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.CourseChatRooms.InsertOneAsync(chatRoomResult.Value, cancellationToken: ct);
 
         logger.LogInformation("Successfully created chatroom {RoomId} for course {CourseId}", chatRoomResult.Value.Id, notification.Id);
     }

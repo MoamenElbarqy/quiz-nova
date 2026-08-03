@@ -80,12 +80,11 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
         Guid quizId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
-            var course = await dbContext.Courses.FirstAsync();
+            var course = await mongoContext.Courses.Find(_ => true).FirstAsync();
 
             var quiz = QuizFactory.CreateQuiz(
-                courseId: course.Id,
+                course: course,
                 instructorId: course.InstructorId!.Value,
                 title: "Active Quiz",
                 startsAtUtc: fakeTime.GetUtcNow().AddMinutes(-10),
@@ -112,12 +111,11 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
         Guid quizId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
-            var course = await dbContext.Courses.FirstAsync();
+            var course = await mongoContext.Courses.Find(_ => true).FirstAsync();
 
             var quiz = QuizFactory.CreateQuiz(
-                courseId: course.Id,
+                course: course,
                 instructorId: course.InstructorId!.Value,
                 title: "Completed Quiz",
                 startsAtUtc: fakeTime.GetUtcNow().AddMinutes(-10),
@@ -147,12 +145,11 @@ public class AddQuestionCommandHandlerTests(CustomWebApplicationFactory factory)
         int initialQuestionCount;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
-            var course = await dbContext.Courses.FirstAsync();
+            var course = await mongoContext.Courses.Find(_ => true).FirstAsync();
 
             var quiz = QuizFactory.CreateQuiz(
-                courseId: course.Id,
+                course: course,
                 instructorId: course.InstructorId!.Value,
                 title: "Future Quiz",
                 startsAtUtc: fakeTime.GetUtcNow().AddDays(1),

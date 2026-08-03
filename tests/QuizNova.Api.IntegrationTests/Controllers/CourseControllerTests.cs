@@ -4,11 +4,14 @@ using FluentAssertions;
 
 using Microsoft.EntityFrameworkCore;
 
+using MongoDB.Driver;
+
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.IntegrationTests.Common;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Courses.DTOs;
+using QuizNova.Domain.Entities.Identity;
 using QuizNova.Tests.Common.Security;
 
 using Xunit;
@@ -419,13 +422,13 @@ public class CourseControllerTests(CustomWebApplicationFactory factory) : IClass
     private async Task<(Guid courseId, Guid instructorId, Guid studentId)> GetSeededIdsAsync()
     {
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
 
-        var course = await dbContext.Courses.FirstOrDefaultAsync()
+        var course = await mongoContext.Courses.Find(_ => true).FirstOrDefaultAsync()
                      ?? throw new InvalidOperationException("No courses found in database.");
-        var instructor = await dbContext.Instructors.FirstOrDefaultAsync()
+        var instructor = await mongoContext.Users.Find(u => u.UserRole == UserRole.Instructor).FirstOrDefaultAsync()
                          ?? throw new InvalidOperationException("No instructors found in database.");
-        var student = await dbContext.Students.FirstOrDefaultAsync()
+        var student = await mongoContext.Users.Find(u => u.UserRole == UserRole.Student).FirstOrDefaultAsync()
                       ?? throw new InvalidOperationException("No students found in database.");
 
         return (course.Id, instructor.Id, student.Id);

@@ -2,15 +2,20 @@ using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Queries.GetAllCourses;
 using QuizNova.Application.Features.Instructors.Commands.CreateInstructor;
 using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Entities.Identity;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 using QuizNova.Tests.Common.Courses;
 using QuizNova.Tests.Common.Enrollments;
 using QuizNova.Tests.Common.Quizzes;
+using QuizNova.Tests.Common.Security;
 using QuizNova.Tests.Common.Users.Instructors;
 using QuizNova.Tests.Common.Users.Students;
 
@@ -48,9 +53,9 @@ public class GetAllCoursesQueryHandlerTests(CustomWebApplicationFactory factory)
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            dbContext.Courses.AddRange(course1, course2);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            await mongoContext.Courses.InsertManyAsync([course1, course2]);
+
         }
 
         var query = new GetAllCoursesQuery(SearchTerm: uniqueSearchTerm);
@@ -68,6 +73,7 @@ public class GetAllCoursesQueryHandlerTests(CustomWebApplicationFactory factory)
     public async Task Handle_WithInstructorId_ShouldFilterCorrectly()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
 
         var createInstructorCmd1 = new CreateInstructorCommand(
@@ -94,9 +100,9 @@ public class GetAllCoursesQueryHandlerTests(CustomWebApplicationFactory factory)
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            dbContext.Courses.AddRange(instructedCourse, otherCourse);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            await mongoContext.Courses.InsertManyAsync([instructedCourse, otherCourse]);
+
         }
 
         var query = new GetAllCoursesQuery(InstructorId: instructorId);
@@ -123,11 +129,11 @@ public class GetAllCoursesQueryHandlerTests(CustomWebApplicationFactory factory)
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            dbContext.Students.Add(student);
-            dbContext.Courses.AddRange(enrolledCourse, nonEnrolledCourse);
-            dbContext.Enrollments.Add(enrollment);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            await mongoContext.Users.InsertOneAsync(student);
+            await mongoContext.Courses.InsertManyAsync([enrolledCourse, nonEnrolledCourse]);
+            await mongoContext.Enrollments.InsertOneAsync(enrollment);
+
         }
 
         var query = new GetAllCoursesQuery(StudentId: student.Id);
@@ -153,17 +159,16 @@ public class GetAllCoursesQueryHandlerTests(CustomWebApplicationFactory factory)
         var courseEmpty = CourseFactory.CreateCourse().Value;
 
         var enrollment = EnrollmentFactory.CreateEnrollment(studentId: student.Id, courseId: courseActive.Id).Value;
-        var quiz = QuizFactory.CreateQuiz(courseId: courseActive.Id, instructorId: instructor.Id).Value;
+        var quiz = QuizFactory.CreateQuiz(course: courseActive, instructorId: instructor.Id).Value;
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
-            dbContext.Students.Add(student);
-            dbContext.Instructors.Add(instructor);
-            dbContext.Courses.AddRange(courseActive, courseEmpty);
-            dbContext.Enrollments.Add(enrollment);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Users.InsertOneAsync(student);
+            await mongoContext.Users.InsertOneAsync(instructor);
+            await mongoContext.Courses.InsertManyAsync([courseActive, courseEmpty]);
+            await mongoContext.Enrollments.InsertOneAsync(enrollment);
+
             await mongoContext.Quizzes.InsertOneAsync(quiz);
         }
 
@@ -182,5 +187,20 @@ public class GetAllCoursesQueryHandlerTests(CustomWebApplicationFactory factory)
         resultEmpty.IsSuccess.Should().BeTrue();
         resultEmpty.Value.Items.Any(c => c.Id == courseEmpty.Id).Should().BeTrue();
         resultEmpty.Value.Items.Any(c => c.Id == courseActive.Id).Should().BeFalse();
+    }
+
+    private void EnsureAdminContext()
+    {
+        var adminId = Guid.Parse(TestUsers.Admin.User.Id);
+        using var scope = factory.Services.CreateScope();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        if (!mongoContext.Users.Find(u => u.UserRole == UserRole.Admin && u.Id == adminId).Any())
+        {
+            var personalInfo = PersonalInformation.Create("Admin User", "admin@quiznova.local", "01000000000").Value;
+            var admin = Admin.Create(adminId, personalInfo).Value;
+            mongoContext.Users.InsertOne(admin);
+        }
+
+        TestCurrentUser.Set(TestUsers.Admin.User);
     }
 }

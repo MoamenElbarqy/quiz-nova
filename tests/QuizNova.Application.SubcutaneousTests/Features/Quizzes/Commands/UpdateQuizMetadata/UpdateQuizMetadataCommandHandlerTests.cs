@@ -104,9 +104,8 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
         Guid quizId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
-            var course = await dbContext.Courses.FirstAsync();
+            var course = await mongoContext.Courses.Find(_ => true).FirstAsync();
 
             // Create and save an active quiz
             var quiz = QuizFactory.CreateQuiz(
@@ -138,9 +137,8 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
         Guid quizId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
-            var course = await dbContext.Courses.FirstAsync();
+            var course = await mongoContext.Courses.Find(_ => true).FirstAsync();
 
             // Create a completed quiz
             var quiz = QuizFactory.CreateQuiz(
@@ -172,11 +170,10 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
         Guid quizId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
 
             // Find a course that isn't completed
-            var course = await dbContext.Courses.FirstAsync();
+            var course = await mongoContext.Courses.Find(_ => true).FirstAsync();
 
             // Create a scheduled quiz explicitly (future start date)
             var quiz = QuizFactory.CreateQuiz(
@@ -209,11 +206,10 @@ public class UpdateQuizMetadataCommandHandlerTests(CustomWebApplicationFactory f
         Guid quizId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
 
             // Find a course that isn't completed
-            var course = await dbContext.Courses.FirstAsync();
+            var course = await mongoContext.Courses.Find(_ => true).FirstAsync();
 
             // Create a scheduled quiz explicitly
             var quiz = QuizFactory.CreateQuiz(

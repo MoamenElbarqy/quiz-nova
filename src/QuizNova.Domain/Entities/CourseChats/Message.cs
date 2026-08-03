@@ -9,7 +9,7 @@ namespace QuizNova.Domain.Entities.CourseChats;
 
 public sealed class Message : Entity
 {
-    private readonly List<Reaction> _reacts;
+    private List<Reaction> _reacts = [];
 
     [SetsRequiredMembers]
     private Message()

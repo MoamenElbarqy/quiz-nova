@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Caching;
@@ -8,11 +7,11 @@ using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Application.Features.Courses.Commands.UpdateCourseInstructor;
 
 public sealed class UpdateCourseInstructorCommandHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     ILogger<UpdateCourseInstructorCommandHandler> logger,
     ICacheInvalidator cacheInvalidator)
@@ -22,8 +21,9 @@ public sealed class UpdateCourseInstructorCommandHandler(
     {
         logger.LogInformation("Updating instructor for course {CourseId}", request.CourseId);
 
-        var course = await dbContext.Courses
-            .FirstOrDefaultAsync(entity => entity.Id == request.CourseId, ct);
+        var course = await mongoContext.Courses
+            .Find(entity => entity.Id == request.CourseId)
+            .FirstOrDefaultAsync(ct);
 
         if (course is null)
         {
@@ -31,12 +31,18 @@ public sealed class UpdateCourseInstructorCommandHandler(
             return ApplicationErrors.CourseNotFound(request.CourseId);
         }
 
-        if (request.InstructorId.HasValue &&
-            !await dbContext.Instructors.AnyAsync(instructor => instructor.Id == request.InstructorId.Value, ct))
+        if (request.InstructorId.HasValue)
         {
-            logger.LogWarning("Course instructor update failed: Instructor {InstructorId} not found",
-                request.InstructorId);
-            return ApplicationErrors.InstructorNotFound(request.InstructorId.Value);
+            var instructorExists = await mongoContext.Users
+                .Find(u => u.Id == request.InstructorId.Value && u is Instructor)
+                .AnyAsync(ct);
+
+            if (!instructorExists)
+            {
+                logger.LogWarning("Course instructor update failed: Instructor {InstructorId} not found",
+                    request.InstructorId);
+                return ApplicationErrors.InstructorNotFound(request.InstructorId.Value);
+            }
         }
 
         var updateResult = course.UpdateInstructor(request.InstructorId);
@@ -47,18 +53,20 @@ public sealed class UpdateCourseInstructorCommandHandler(
             return updateResult.TopError;
         }
 
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.Courses.ReplaceOneAsync(c => c.Id == course.Id, course, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync([CacheTags.Courses], ct);
 
-        var instructorName = request.InstructorId.HasValue
-            ? await dbContext.Instructors
-                .Where(instructor => instructor.Id == request.InstructorId.Value)
-                .Select(instructor => instructor.PersonalInformation.Name)
-                .FirstOrDefaultAsync(ct) ?? string.Empty
-            : string.Empty;
+        var instructorName = string.Empty;
+        if (request.InstructorId.HasValue)
+        {
+            var instructor = await mongoContext.Users
+                .Find(u => u.Id == request.InstructorId.Value && u is Instructor)
+                .FirstOrDefaultAsync(ct) as Instructor;
+            instructorName = instructor?.PersonalInformation.Name ?? string.Empty;
+        }
 
-        var enrolledStudentsCount = await dbContext.Enrollments
-            .CountAsync(enrollment => enrollment.CourseId == course.Id, ct);
+        var enrolledStudentsCount = (int)await mongoContext.Enrollments
+            .CountDocumentsAsync(e => e.CourseId == course.Id, cancellationToken: ct);
 
         var courseQuizzes = await mongoContext.Quizzes
             .Find(q => q.CourseId == course.Id)

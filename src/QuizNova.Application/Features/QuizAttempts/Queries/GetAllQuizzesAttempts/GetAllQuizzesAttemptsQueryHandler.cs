@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Interfaces;
@@ -11,11 +10,11 @@ using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.QuizAttempts;
 using QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers;
 using QuizNova.Domain.Entities.Quizzes;
+using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Application.Features.QuizAttempts.Queries.GetAllQuizzesAttempts;
 
 public sealed class GetAllQuizzesAttemptsQueryHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     ILogger<GetAllQuizzesAttemptsQueryHandler> logger)
     : IRequestHandler<GetAllQuizzesAttemptsQuery, Result<PaginatedList<QuizAttemptDto>>>
@@ -33,9 +32,9 @@ public sealed class GetAllQuizzesAttemptsQueryHandler(
         {
             var searchTerm = request.SearchTerm.Trim();
 
-            var matchingStudentIds = await dbContext.Students
-                .Where(s => EF.Functions.Like(s.PersonalInformation.Name, $"%{searchTerm}%"))
-                .Select(s => s.Id)
+            var matchingStudentIds = await mongoContext.Users
+                .Find(u => u is Student && u.PersonalInformation.Name.Contains(searchTerm))
+                .Project(u => u.Id)
                 .ToListAsync(ct);
 
             var matchingQuizIds = await mongoContext.Quizzes
@@ -73,16 +72,9 @@ public sealed class GetAllQuizzesAttemptsQueryHandler(
 
         var quizMap = quizzes.ToDictionary(q => q.Id);
 
-        var response = pagedAttempts.Select(attempt =>
-        {
-            if (quizMap.TryGetValue(attempt.QuizId, out var quiz))
-            {
-                attempt.Quiz = quiz;
-                attempt.AttachQuizQuestions(quiz.Questions);
-            }
-
-            return attempt.ToQuizAttemptDto();
-        }).ToList();
+        var response = pagedAttempts
+            .Select(attempt => attempt.ToQuizAttemptDto(quizMap.GetValueOrDefault(attempt.QuizId)))
+            .ToList();
 
         var paginatedResponse = new PaginatedList<QuizAttemptDto>(
             response,
@@ -96,4 +88,3 @@ public sealed class GetAllQuizzesAttemptsQueryHandler(
         return paginatedResponse;
     }
 }
-

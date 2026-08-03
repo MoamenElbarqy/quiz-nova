@@ -11,4 +11,16 @@ public sealed class MongoDbSettings
 
     [Required]
     public required string DatabaseName { get; init; }
+
+    [Required]
+    public required int MaxConnectionPoolSize { get; init; }
+
+    [Required]
+    public required int MinConnectionPoolSize { get; init; }
+
+    [Required]
+    public required int MaxConnecting { get; init; }
+
+    [Required]
+    public required int WaitQueueTimeoutMinutes { get; init; }
 }

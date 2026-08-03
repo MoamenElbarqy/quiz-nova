@@ -20,9 +20,7 @@ public class StudentTests
         // Act
         var result = Student.Create(
             id,
-            personalInfoResult.Value,
-            [],
-            []);
+            personalInfoResult.Value);
 
         // Assert
         Assert.True(result.IsSuccess);

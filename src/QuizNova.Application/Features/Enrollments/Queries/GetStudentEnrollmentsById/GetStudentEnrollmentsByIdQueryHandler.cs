@@ -1,17 +1,17 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Enrollments.DTOs;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users.Instructors;
+using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Application.Features.Enrollments.Queries.GetStudentEnrollmentsById;
 
 public sealed class GetStudentEnrollmentsByIdQueryHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     ILogger<GetStudentEnrollmentsByIdQueryHandler> logger)
     : IRequestHandler<GetStudentEnrollmentsByIdQuery, Result<List<EnrollmentDto>>>
@@ -20,64 +20,82 @@ public sealed class GetStudentEnrollmentsByIdQueryHandler(
     {
         logger.LogInformation("Retrieving enrollments for student with ID: {StudentId}", request.StudentId);
 
-        var studentExists = await dbContext.Students.AsNoTracking().AnyAsync(s => s.Id == request.StudentId, ct);
+        var studentExists = await mongoContext.Users
+            .Find(u => u.Id == request.StudentId && u is Student)
+            .AnyAsync(ct);
+
         if (!studentExists)
         {
             logger.LogWarning("Retrieval failed: Student with ID {StudentId} not found", request.StudentId);
             return ApplicationErrors.StudentNotFound(request.StudentId);
         }
 
-        var enrollmentsList = await dbContext.Enrollments
-            .Where(sc => sc.StudentId == request.StudentId)
-            .AsNoTracking()
-            .Select(sc => new
-            {
-                sc.Id,
-                sc.CourseId,
-                CourseName = sc.Course!.Name,
-                InstructorId = sc.Course.InstructorId ?? Guid.Empty,
-                InstructorName = sc.Course.Instructor != null
-                    ? sc.Course.Instructor.PersonalInformation.Name
-                    : string.Empty,
-                sc.StudentId,
-                StudentName = sc.Student!.PersonalInformation.Name,
-                sc.EnrolledOnUtc,
-            })
+        var enrollmentsList = await mongoContext.Enrollments
+            .Find(sc => sc.StudentId == request.StudentId)
             .ToListAsync(ct);
 
         var courseIds = enrollmentsList.Select(e => e.CourseId).ToList();
 
-        var quizzesTask = mongoContext.Quizzes
+        var courses = await mongoContext.Courses
+            .Find(c => courseIds.Contains(c.Id))
+            .ToListAsync(ct);
+        var courseMap = courses.ToDictionary(c => c.Id);
+
+        var student = await mongoContext.Users
+            .Find(u => u.Id == request.StudentId && u is Student)
+            .FirstOrDefaultAsync(ct) as Student;
+        var studentName = student?.PersonalInformation.Name ?? string.Empty;
+
+        var instructorIds = courses
+            .Select(c => c.InstructorId)
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToList();
+
+        var instructorNames = new Dictionary<Guid, string>();
+        if (instructorIds.Count != 0)
+        {
+            var instructors = await mongoContext.Users
+                .Find(u => instructorIds.Contains(u.Id) && u is Instructor)
+                .ToListAsync(ct);
+            instructorNames = instructors
+                .Cast<Instructor>()
+                .ToDictionary(i => i.Id, i => i.PersonalInformation.Name);
+        }
+
+        var quizzes = await mongoContext.Quizzes
             .Find(q => courseIds.Contains(q.CourseId))
-            .Project(q => new { q.Id, q.CourseId })
             .ToListAsync(ct);
 
-        var attemptsTask = mongoContext.QuizAttempts
+        var attempts = await mongoContext.QuizAttempts
             .Find(a => a.StudentId == request.StudentId)
-            .Project(a => new { a.QuizId })
             .ToListAsync(ct);
 
-        await Task.WhenAll(quizzesTask, attemptsTask);
-
-        var quizzes = quizzesTask.Result;
         var quizCourseMap = quizzes.ToDictionary(q => q.Id, q => q.CourseId);
-
-        var attemptCountsByCourse = attemptsTask.Result
+        var attemptCountsByCourse = attempts
             .GroupBy(a => quizCourseMap.GetValueOrDefault(a.QuizId))
             .ToDictionary(g => g.Key, g => g.Count());
 
-        var enrollments = enrollmentsList.Select(sc => new EnrollmentDto(
-            sc.Id,
-            sc.CourseId,
-            sc.CourseName,
-            new EnrollmentInstructorDto(sc.InstructorId, sc.InstructorName),
-            new EnrollmentStudentDto(
-                sc.StudentId,
-                sc.StudentName,
-                attemptCountsByCourse.GetValueOrDefault(sc.CourseId, 0)),
-            sc.EnrolledOnUtc)).ToList();
+        var enrollments = enrollmentsList.Select(sc =>
+        {
+            var course = courseMap.GetValueOrDefault(sc.CourseId);
+            return new EnrollmentDto(
+                sc.Id,
+                sc.CourseId,
+                course?.Name ?? string.Empty,
+                new EnrollmentInstructorDto(
+                    course?.InstructorId ?? Guid.Empty,
+                    course?.InstructorId is not null
+                        ? instructorNames.GetValueOrDefault(course.InstructorId.Value, string.Empty)
+                        : string.Empty),
+                new EnrollmentStudentDto(
+                    sc.StudentId,
+                    studentName,
+                    attemptCountsByCourse.GetValueOrDefault(sc.CourseId, 0)),
+                sc.EnrolledOnUtc);
+        }).ToList();
 
         return enrollments;
     }
 }
-

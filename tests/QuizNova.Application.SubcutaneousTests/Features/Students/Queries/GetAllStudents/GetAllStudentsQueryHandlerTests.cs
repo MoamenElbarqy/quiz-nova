@@ -2,6 +2,8 @@ using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Students.Queries.GetAllStudents;
 using QuizNova.Application.SubcutaneousTests.Common;
@@ -131,9 +133,9 @@ public class GetAllStudentsQueryHandlerTests(CustomWebApplicationFactory factory
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            dbContext.Students.AddRange(student1, student2);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            await mongoContext.Users.InsertManyAsync([student1, student2]);
+
         }
 
         var query = new GetAllStudentsQuery(SearchTerm: uniqueSearchTerm);
@@ -168,11 +170,11 @@ public class GetAllStudentsQueryHandlerTests(CustomWebApplicationFactory factory
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            dbContext.Students.AddRange(studentNoCourses, studentWithCourse);
-            dbContext.Courses.Add(course);
-            dbContext.Enrollments.Add(enrollment);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            await mongoContext.Users.InsertManyAsync([studentNoCourses, studentWithCourse]);
+            await mongoContext.Courses.InsertOneAsync(course);
+            await mongoContext.Enrollments.InsertOneAsync(enrollment);
+
         }
 
         var queryZero = new GetAllStudentsQuery(EnrolledCoursesCount: 0);
@@ -213,11 +215,11 @@ public class GetAllStudentsQueryHandlerTests(CustomWebApplicationFactory factory
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            dbContext.Students.AddRange(enrolledStudent, notEnrolledStudent);
-            dbContext.Courses.Add(course);
-            dbContext.Enrollments.Add(enrollment);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            await mongoContext.Users.InsertManyAsync([enrolledStudent, notEnrolledStudent]);
+            await mongoContext.Courses.InsertOneAsync(course);
+            await mongoContext.Enrollments.InsertOneAsync(enrollment);
+
         }
 
         var query = new GetAllStudentsQuery(CourseId: course.Id, IsEnrolledInCourse: true);
@@ -252,11 +254,11 @@ public class GetAllStudentsQueryHandlerTests(CustomWebApplicationFactory factory
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            dbContext.Students.AddRange(enrolledStudent, notEnrolledStudent);
-            dbContext.Courses.Add(course);
-            dbContext.Enrollments.Add(enrollment);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            await mongoContext.Users.InsertManyAsync([enrolledStudent, notEnrolledStudent]);
+            await mongoContext.Courses.InsertOneAsync(course);
+            await mongoContext.Enrollments.InsertOneAsync(enrollment);
+
         }
 
         var query = new GetAllStudentsQuery(CourseId: course.Id, IsEnrolledInCourse: false);

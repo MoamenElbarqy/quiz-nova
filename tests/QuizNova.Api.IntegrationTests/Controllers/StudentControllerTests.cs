@@ -4,11 +4,14 @@ using FluentAssertions;
 
 using Microsoft.EntityFrameworkCore;
 
+using MongoDB.Driver;
+
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Api.IntegrationTests.Common;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Students.DTOs;
+using QuizNova.Domain.Entities.Identity;
 using QuizNova.Tests.Common.Security;
 
 using Xunit;
@@ -328,11 +331,11 @@ public class StudentControllerTests(CustomWebApplicationFactory factory) : IClas
     private async Task<(Guid studentId, Guid instructorId)> GetSeededIdsAsync()
     {
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
 
-        var student = await dbContext.Students.FirstOrDefaultAsync()
+        var student = await mongoContext.Users.Find(u => u.UserRole == UserRole.Student).FirstOrDefaultAsync()
                       ?? throw new InvalidOperationException("No students found in database.");
-        var instructor = await dbContext.Instructors.FirstOrDefaultAsync()
+        var instructor = await mongoContext.Users.Find(u => u.UserRole == UserRole.Instructor).FirstOrDefaultAsync()
                          ?? throw new InvalidOperationException("No instructors found in database.");
 
         return (student.Id, instructor.Id);

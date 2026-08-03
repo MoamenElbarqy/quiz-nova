@@ -3,6 +3,8 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Students.Commands.CreateStudent;
@@ -10,6 +12,9 @@ using QuizNova.Application.Features.Students.Commands.DeleteStudent;
 using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Entities.Identity;
+using QuizNova.Domain.Entities.Users.Admins;
+using QuizNova.Domain.Entities.Users.UserPersonalInformation;
+using QuizNova.Tests.Common.Security;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.Students.Commands.DeleteStudent;
 
@@ -35,6 +40,7 @@ public class DeleteStudentCommandHandlerTests(CustomWebApplicationFactory factor
     public async Task Handle_WithNonExistentId_ShouldReturnNotFoundError()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
         var nonExistentId = Guid.NewGuid();
         var command = new DeleteStudentCommand(nonExistentId);
@@ -51,6 +57,7 @@ public class DeleteStudentCommandHandlerTests(CustomWebApplicationFactory factor
     public async Task Handle_WithExistingId_ShouldDeleteSuccessfully()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
 
         // 1. Create a valid Student first
@@ -74,8 +81,8 @@ public class DeleteStudentCommandHandlerTests(CustomWebApplicationFactory factor
 
         // Verify removed from database
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var studentInDb = await dbContext.Students.FirstOrDefaultAsync(s => s.Id == studentId);
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var studentInDb = await mongoContext.Users.Find(u => u.UserRole == UserRole.Student && u.Id == studentId).FirstOrDefaultAsync();
         studentInDb.Should().BeNull();
     }
 
@@ -83,6 +90,7 @@ public class DeleteStudentCommandHandlerTests(CustomWebApplicationFactory factor
     public async Task Handle_WithExistingIdDeletedTwice_ShouldReturnNotFoundErrorOnSecondDelete()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
 
         // 1. Create a valid Student first
@@ -107,5 +115,20 @@ public class DeleteStudentCommandHandlerTests(CustomWebApplicationFactory factor
         deleteResult1.IsSuccess.Should().BeTrue();
         deleteResult2.IsError.Should().BeTrue();
         deleteResult2.TopError.Code.Should().Be(ApplicationErrors.StudentNotFound(Guid.Empty).Code);
+    }
+
+    private void EnsureAdminContext()
+    {
+        var adminId = Guid.Parse(TestUsers.Admin.User.Id);
+        using var scope = factory.Services.CreateScope();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        if (!mongoContext.Users.Find(u => u.UserRole == UserRole.Admin && u.Id == adminId).Any())
+        {
+            var personalInfo = PersonalInformation.Create("Admin User", "admin@quiznova.local", "01000000000").Value;
+            var admin = Admin.Create(adminId, personalInfo).Value;
+            mongoContext.Users.InsertOne(admin);
+        }
+
+        TestCurrentUser.Set(TestUsers.Admin.User);
     }
 }

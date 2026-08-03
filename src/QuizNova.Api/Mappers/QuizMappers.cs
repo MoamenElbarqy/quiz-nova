@@ -13,9 +13,7 @@ public static class QuizMappers
             request.CourseId,
             request.StartsAtUtc,
             request.EndsAtUtc,
-            request.Questions
-                .Select(q => q.ToCommand())
-                .ToList());
+            [.. request.Questions.Select(q => q.ToCommand())]);
     }
 
     public static CreateQuestionCommand ToCommand(this CreateQuizQuestionRequest request)
@@ -26,11 +24,7 @@ public static class QuizMappers
                 mcq.QuestionText,
                 mcq.Marks,
                 mcq.CorrectChoiceId,
-                mcq.Choices.Select(c => new CreateChoiceCommand(
-                        c.Id,
-                        c.Text,
-                        c.DisplayOrder))
-                    .ToList()),
+                [.. mcq.Choices.Select(c => new CreateChoiceCommand(c.Id, c.Text, c.DisplayOrder))]),
             CreateTfRequest tfq => new CreateTfCommand(
                 tfq.QuestionText,
                 tfq.Marks,
@@ -54,11 +48,9 @@ public static class QuizMappers
                 mcq.DisplayOrder,
                 mcq.Marks,
                 mcq.CorrectChoiceId,
-                mcq.Choices.Select(c => new CreateChoiceCommand(
-                        c.Id,
-                        c.Text,
-                        c.DisplayOrder))
-                    .ToList()),
+                [
+                    .. mcq.Choices.Select(c => new CreateChoiceCommand(c.Id, c.Text, c.DisplayOrder))
+                ]),
             UpdateTfRequest tf => new UpdateTfCommand(
                 quizId,
                 questionId,

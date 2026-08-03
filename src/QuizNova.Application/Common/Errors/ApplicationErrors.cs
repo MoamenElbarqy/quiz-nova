@@ -41,11 +41,6 @@ public static class ApplicationErrors
             code: "Instructor_NotFound",
             description: $"Instructor with ID '{instructorId}' was not found.");
 
-    public static Error NoCoursesForInstructor(Guid instructorId) =>
-        Error.NotFound(
-            code: "Courses_NoCoursesForInstructor",
-            description: $"No courses found for instructor with ID '{instructorId}'.");
-
     public static Error QuizAttemptStudentNotFound(Guid studentId) =>
         Error.NotFound(
             code: "QuizAttempt.Student.NotFound",
@@ -65,11 +60,6 @@ public static class ApplicationErrors
         Error.NotFound(
             code: "Quiz.Course.NotFound",
             description: $"Course with ID '{courseId}' was not found.");
-
-    public static Error QuizCourseCompleted(Guid courseId) =>
-        Error.Validation(
-            code: "Quiz.Course.Completed",
-            description: $"Cannot perform operations on a quiz for completed course with ID '{courseId}'.");
 
     public static Error QuizInstructorNotFound(Guid instructorId) =>
         Error.NotFound(

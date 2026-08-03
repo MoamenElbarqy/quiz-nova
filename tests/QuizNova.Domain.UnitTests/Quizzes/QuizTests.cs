@@ -67,8 +67,10 @@ public class QuizTests
             new CreateEssayArgs("Describe DDD.", 20, "Domain Driven Design explanation"),
         };
 
+        var course = CourseFactory.CreateCourse(instructorId: instructorId, maximumMarks: 500).Value;
+
         // Act
-        var result = Quiz.Create(id, courseId, instructorId, title, starts, ends, questionArgs);
+        var result = Quiz.Create(id, course.Id, instructorId, "Test Course", "Test Instructor", title, starts, ends, questionArgs, course);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -105,8 +107,10 @@ public class QuizTests
                 ]),
         };
 
+        var course = CourseFactory.CreateCourse(instructorId: instructorId, maximumMarks: 500).Value;
+
         // Act
-        var result = Quiz.Create(id, courseId, instructorId, title, starts, ends, questionArgs);
+        var result = Quiz.Create(id, course.Id, instructorId, "Test Course", "Test Instructor", title, starts, ends, questionArgs, course);
 
         // Assert
         Assert.True(result.IsError);
@@ -264,24 +268,6 @@ public class QuizTests
     }
 
     [Fact]
-    public void Update_ShouldFail_WhenAssociatedCourseCompleted()
-    {
-        // Arrange
-        var course = CourseFactory.CreateCourse().Value;
-        course.MarkAsCompeleted();
-
-        var quiz = QuizFactory.CreateQuiz().Value;
-        typeof(Quiz).GetProperty("Course")!.SetValue(quiz, course);
-
-        // Act
-        var result = quiz.Update("New Title", DateTimeOffset.UtcNow.AddHours(1), DateTimeOffset.UtcNow.AddHours(3));
-
-        // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(QuizErrors.CourseCompleted, result.TopError);
-    }
-
-    [Fact]
     public void UpdateCourseId_ShouldSuccess_WhenQuizScheduledAndShouldClearQuestions()
     {
         // Assert
@@ -295,31 +281,15 @@ public class QuizTests
     }
 
     [Fact]
-    public void UpdateCourseId_ShouldFail_WhenAssociatedCourseCompleted()
-    {
-        // Arrange
-        var course = CourseFactory.CreateCourse().Value;
-        course.MarkAsCompeleted();
-        var quiz = QuizFactory.CreateQuiz().Value;
-        typeof(Quiz).GetProperty("Course")!.SetValue(quiz, course);
-
-        // Act
-        var result = quiz.UpdateCourseId(Guid.NewGuid());
-
-        // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(QuizErrors.CourseCompleted, result.TopError);
-    }
-
-    [Fact]
     public void AddQuestion_ShouldSuccess_WhenQuizScheduled()
     {
         // Arrange
-        var quiz = QuizFactory.CreateQuiz().Value;
+        var course = CourseFactory.CreateCourse(maximumMarks: 500).Value;
+        var quiz = QuizFactory.CreateQuiz(courseId: course.Id, course: course).Value;
         var newQuestion = QuestionFactory.CreateTfQuestion(quizId: quiz.Id, displayOrder: 3).Value;
 
         // Act
-        var result = quiz.AddQuestion(newQuestion);
+        var result = quiz.AddQuestion(newQuestion, course);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -330,11 +300,12 @@ public class QuizTests
     public void AddQuestion_ShouldFail_WhenQuestionBelongsToDifferentQuiz()
     {
         // Arrange
-        var quiz = QuizFactory.CreateQuiz().Value;
+        var course = CourseFactory.CreateCourse(maximumMarks: 500).Value;
+        var quiz = QuizFactory.CreateQuiz(courseId: course.Id, course: course).Value;
         var diffQuizQuestion = QuestionFactory.CreateTfQuestion(quizId: Guid.NewGuid(), displayOrder: 3).Value;
 
         // Act
-        var result = quiz.AddQuestion(diffQuizQuestion);
+        var result = quiz.AddQuestion(diffQuizQuestion, course);
 
         // Assert
         Assert.True(result.IsError);
@@ -345,11 +316,12 @@ public class QuizTests
     public void AddQuestion_ShouldFail_WhenQuestionAlreadyExists()
     {
         // Arrange
-        var quiz = QuizFactory.CreateQuiz().Value;
+        var course = CourseFactory.CreateCourse(maximumMarks: 500).Value;
+        var quiz = QuizFactory.CreateQuiz(courseId: course.Id, course: course).Value;
         var existingQuestion = quiz.Questions.First();
 
         // Act
-        var result = quiz.AddQuestion(existingQuestion);
+        var result = quiz.AddQuestion(existingQuestion, course);
 
         // Assert
         Assert.True(result.IsError);
@@ -360,14 +332,13 @@ public class QuizTests
     public void AddQuestion_ShouldFail_WhenAssociatedCourseCompleted()
     {
         // Arrange
-        var course = CourseFactory.CreateCourse().Value;
+        var course = CourseFactory.CreateCourse(maximumMarks: 500).Value;
+        var quiz = QuizFactory.CreateQuiz(courseId: course.Id, course: course).Value;
         course.MarkAsCompeleted();
-        var quiz = QuizFactory.CreateQuiz().Value;
-        typeof(Quiz).GetProperty("Course")!.SetValue(quiz, course);
         var q = QuestionFactory.CreateTfQuestion(quizId: quiz.Id, displayOrder: 3).Value;
 
         // Act
-        var result = quiz.AddQuestion(q);
+        var result = quiz.AddQuestion(q, course);
 
         // Assert
         Assert.True(result.IsError);
@@ -378,12 +349,13 @@ public class QuizTests
     public void DeleteQuestion_ShouldSuccess_WhenQuizScheduledAndHasMoreThanThreeQuestions()
     {
         // Assert
-        var quiz = QuizFactory.CreateQuiz().Value;
+        var course = CourseFactory.CreateCourse(maximumMarks: 500).Value;
+        var quiz = QuizFactory.CreateQuiz(courseId: course.Id, course: course).Value;
         var newQuestion = QuestionFactory.CreateTfQuestion(quizId: quiz.Id, displayOrder: 3).Value;
-        quiz.AddQuestion(newQuestion);
+        quiz.AddQuestion(newQuestion, course);
         Assert.Equal(4, quiz.Questions.Count());
 
-        var result = quiz.DeleteQuestion(newQuestion);
+        var result = quiz.DeleteQuestion(newQuestion, course);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(3, quiz.Questions.Count());
@@ -393,14 +365,15 @@ public class QuizTests
     public void DeleteQuestion_ShouldFail_WhenDeletingLastQuestion()
     {
         // Arrange
-        var quiz = QuizFactory.CreateQuiz().Value;
+        var course = CourseFactory.CreateCourse(maximumMarks: 500).Value;
+        var quiz = QuizFactory.CreateQuiz(courseId: course.Id, course: course).Value;
         Assert.Equal(3, quiz.Questions.Count());
         var questions = quiz.Questions.ToList();
 
         // Act — delete down to 1 question (should succeed)
-        var result1 = quiz.DeleteQuestion(questions[0]);
-        var result2 = quiz.DeleteQuestion(questions[1]);
-        var result3 = quiz.DeleteQuestion(questions[2]);
+        var result1 = quiz.DeleteQuestion(questions[0], course);
+        var result2 = quiz.DeleteQuestion(questions[1], course);
+        var result3 = quiz.DeleteQuestion(questions[2], course);
 
         // Assert
         Assert.True(result1.IsSuccess);
@@ -413,11 +386,12 @@ public class QuizTests
     public void DeleteQuestion_ShouldFail_WhenQuestionNotFound()
     {
         // Arrange
-        var quiz = QuizFactory.CreateQuiz().Value;
+        var course = CourseFactory.CreateCourse(maximumMarks: 500).Value;
+        var quiz = QuizFactory.CreateQuiz(courseId: course.Id, course: course).Value;
         var notFoundQuestion = QuestionFactory.CreateTfQuestion(quizId: quiz.Id, displayOrder: 3).Value;
 
         // Act
-        var result = quiz.DeleteQuestion(notFoundQuestion);
+        var result = quiz.DeleteQuestion(notFoundQuestion, course);
 
         // Assert
         Assert.True(result.IsError);
@@ -428,14 +402,13 @@ public class QuizTests
     public void DeleteQuestion_ShouldFail_WhenAssociatedCourseCompleted()
     {
         // Arrange
-        var course = CourseFactory.CreateCourse().Value;
+        var course = CourseFactory.CreateCourse(maximumMarks: 500).Value;
+        var quiz = QuizFactory.CreateQuiz(courseId: course.Id, course: course).Value;
         course.MarkAsCompeleted();
-        var quiz = QuizFactory.CreateQuiz().Value;
-        typeof(Quiz).GetProperty("Course")!.SetValue(quiz, course);
         var q = quiz.Questions.First();
 
         // Act
-        var result = quiz.DeleteQuestion(q);
+        var result = quiz.DeleteQuestion(q, course);
 
         // Assert
         Assert.True(result.IsError);
@@ -446,17 +419,21 @@ public class QuizTests
     public void UpdateQuestion_ShouldFail_WhenAssociatedCourseCompleted()
     {
         // Arrange
-        var course = CourseFactory.CreateCourse().Value;
+        var course = CourseFactory.CreateCourse(maximumMarks: 500).Value;
+        var quiz = QuizFactory.CreateQuiz(courseId: course.Id, course: course).Value;
         course.MarkAsCompeleted();
-        var quiz = QuizFactory.CreateQuiz().Value;
-        typeof(Quiz).GetProperty("Course")!.SetValue(quiz, course);
 
         // Act
         var result = quiz.UpdateQuestion(
             questionId: Guid.NewGuid(),
             questionText: "Text",
             displayOrder: 1,
-            marks: 5);
+            marks: 5,
+            course: course,
+            correctChoiceId: null,
+            tfCorrectChoice: null,
+            choices: null,
+            answerReference: null);
 
         // Assert
         Assert.True(result.IsError);

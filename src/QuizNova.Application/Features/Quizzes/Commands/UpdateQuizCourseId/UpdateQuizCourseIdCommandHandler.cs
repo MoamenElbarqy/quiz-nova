@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Caching;
@@ -11,7 +10,6 @@ using QuizNova.Domain.Common.Results;
 namespace QuizNova.Application.Features.Quizzes.Commands.UpdateQuizCourseId;
 
 public sealed class UpdateQuizCourseIdCommandHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     ILogger<UpdateQuizCourseIdCommandHandler> logger,
     ICacheInvalidator cacheInvalidator)
@@ -34,8 +32,9 @@ public sealed class UpdateQuizCourseIdCommandHandler(
             return ApplicationErrors.QuizNotFound(request.QuizId);
         }
 
-        var courseExists = await dbContext.Courses
-            .AnyAsync(c => c.Id == request.NewCourseId, ct);
+        var courseExists = await mongoContext.Courses
+            .Find(c => c.Id == request.NewCourseId)
+            .AnyAsync(ct);
 
         if (!courseExists)
         {

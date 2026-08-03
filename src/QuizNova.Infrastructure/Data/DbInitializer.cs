@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
+using MongoDB.Driver;
+
 using Npgsql;
 
+using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.CourseChats;
 using QuizNova.Domain.Entities.Courses;
 using QuizNova.Domain.Entities.Enrollments;
+using QuizNova.Domain.Entities.Identity;
 using QuizNova.Domain.Entities.Users.Admins;
 using QuizNova.Domain.Entities.Users.Instructors;
 using QuizNova.Domain.Entities.Users.Student;
@@ -17,6 +21,7 @@ namespace QuizNova.Infrastructure.Data;
 
 public sealed class DbInitializer(
     AppDbContext dbContext,
+    IMongoDbContext mongoContext,
     UserManager<AppUser> userManager,
     RoleManager<IdentityRole> roleManager)
 {
@@ -35,51 +40,52 @@ public sealed class DbInitializer(
             }
         }
 
-        if (!await dbContext.Admins.AnyAsync(ct))
+        if (!await IsUserTypeSeededAsync(UserRole.Admin, ct))
         {
             var adminId = await SeedIdentityUserAsync("admin@quiznova.local", "Admin123!", "Admin");
             var admin = CreateAdmin(adminId);
-            await dbContext.Admins.AddAsync(admin, ct);
-            await dbContext.SaveChangesAsync(ct);
+            await mongoContext.Users.InsertOneAsync(admin, cancellationToken: ct);
         }
 
-        if (!await dbContext.Instructors.AnyAsync(ct))
+        if (!await IsUserTypeSeededAsync(UserRole.Instructor, ct))
         {
             var instructors = await CreateInstructorsAsync();
-            await dbContext.Instructors.AddRangeAsync(instructors, ct);
-            await dbContext.SaveChangesAsync(ct);
+            await mongoContext.Users.InsertManyAsync(instructors, cancellationToken: ct);
         }
 
-        if (!await dbContext.Courses.AnyAsync(ct))
+        if (!await mongoContext.Courses.Find(_ => true).AnyAsync(ct))
         {
-            var instructors = await dbContext.Instructors
-                .OrderBy(instructor => instructor.PersonalInformation.Email)
+            var instructors = await mongoContext.Users
+                .Find(u => u.UserRole == UserRole.Instructor)
                 .ToListAsync(ct);
 
             if (instructors.Count >= 2)
             {
-                var courses = CreateCourses(instructors);
-                await dbContext.Courses.AddRangeAsync(courses, ct);
-                await dbContext.SaveChangesAsync(ct);
+                var courses = CreateCourses(instructors.Cast<Instructor>().ToList());
+                await mongoContext.Courses.InsertManyAsync(courses, cancellationToken: ct);
             }
         }
 
-        if (!await dbContext.Students.AnyAsync(ct))
+        if (!await IsUserTypeSeededAsync(UserRole.Student, ct))
         {
             await SeedStudentsAsync(ct);
         }
 
-        await dbContext.SaveChangesAsync(ct);
-
-        if (!await dbContext.CourseChatRooms.AnyAsync(ct))
+        if (!await mongoContext.CourseChatRooms.Find(_ => true).AnyAsync(ct))
         {
             await SeedCourseChatRoomsAsync(ct);
         }
 
-        if (!await dbContext.Enrollments.AnyAsync(ct))
+        if (!await mongoContext.Enrollments.Find(_ => true).AnyAsync(ct))
         {
             await SeedEnrollmentsAsync(ct);
         }
+    }
+
+    private async Task<bool> IsUserTypeSeededAsync(UserRole role, CancellationToken ct)
+    {
+        var count = await mongoContext.Users.CountDocumentsAsync(u => u.UserRole == role, cancellationToken: ct);
+        return count > 0;
     }
 
     private async Task<Guid> SeedIdentityUserAsync(string email, string password, string role)
@@ -149,27 +155,9 @@ public sealed class DbInitializer(
 
         return
         [
-            EnsureSuccess(
-                Instructor.Create(
-                    i1Id,
-                    instructorOneInfo,
-                    [],
-                    []),
-                "instructor one"),
-            EnsureSuccess(
-                Instructor.Create(
-                    i2Id,
-                    instructorTwoInfo,
-                    [],
-                    []),
-                "instructor two"),
-            EnsureSuccess(
-                Instructor.Create(
-                    i3Id,
-                    instructorThreeInfo,
-                    [],
-                    []),
-                "instructor three"),
+            EnsureSuccess(Instructor.Create(i1Id, instructorOneInfo), "instructor one"),
+            EnsureSuccess(Instructor.Create(i2Id, instructorTwoInfo), "instructor two"),
+            EnsureSuccess(Instructor.Create(i3Id, instructorThreeInfo), "instructor three"),
         ];
     }
 
@@ -178,58 +166,24 @@ public sealed class DbInitializer(
         return
         [
             EnsureSuccess(
-                Course.Create(
-                    instructors[0].Id,
-                    "Data Structures & Algorithms",
-                    minimumPassingMarks: 50,
-                    maximumMarks: 500,
-                    quizzes: [],
-                    enrollments: []),
+                Course.Create(instructors[0].Id, "Data Structures & Algorithms", minimumPassingMarks: 50,
+                    maximumMarks: 500),
                 "course one"),
             EnsureSuccess(
-                Course.Create(
-                    instructors[0].Id,
-                    "Database Systems",
-                    minimumPassingMarks: 50,
-                    maximumMarks: 500,
-                    quizzes: [],
-                    enrollments: []),
+                Course.Create(instructors[0].Id, "Database Systems", minimumPassingMarks: 50, maximumMarks: 500),
                 "course two"),
             EnsureSuccess(
-                Course.Create(
-                    instructors[1].Id,
-                    "Web Development Fundamentals",
-                    minimumPassingMarks: 50,
-                    maximumMarks: 500,
-                    quizzes: [],
-                    enrollments: []),
+                Course.Create(instructors[1].Id, "Web Development Fundamentals", minimumPassingMarks: 50,
+                    maximumMarks: 500),
                 "course three"),
             EnsureSuccess(
-                Course.Create(
-                    instructors[1].Id,
-                    "Software Engineering",
-                    minimumPassingMarks: 50,
-                    maximumMarks: 500,
-                    quizzes: [],
-                    enrollments: []),
+                Course.Create(instructors[1].Id, "Software Engineering", minimumPassingMarks: 50, maximumMarks: 500),
                 "course four"),
             EnsureSuccess(
-                Course.Create(
-                    instructors[2].Id,
-                    "Machine Learning",
-                    minimumPassingMarks: 50,
-                    maximumMarks: 500,
-                    quizzes: [],
-                    enrollments: []),
+                Course.Create(instructors[2].Id, "Machine Learning", minimumPassingMarks: 50, maximumMarks: 500),
                 "course five"),
             EnsureSuccess(
-                Course.Create(
-                    instructors[2].Id,
-                    "Computer Networks",
-                    minimumPassingMarks: 50,
-                    maximumMarks: 500,
-                    quizzes: [],
-                    enrollments: []),
+                Course.Create(instructors[2].Id, "Computer Networks", minimumPassingMarks: 50, maximumMarks: 500),
                 "course six"),
         ];
     }
@@ -253,15 +207,9 @@ public sealed class DbInitializer(
             PersonalInformation.Create(name, email, phoneNumber),
             $"{name} personal information");
 
-        var student = EnsureSuccess(
-            Student.Create(
-                studentId,
-                personalInfo,
-                [],
-                []),
-            name);
+        var student = EnsureSuccess(Student.Create(studentId, personalInfo), name);
 
-        await dbContext.Students.AddAsync(student, ct);
+        await mongoContext.Users.InsertOneAsync(student, cancellationToken: ct);
     }
 
     private T EnsureSuccess<T>(Result<T> result, string entityName)
@@ -277,8 +225,13 @@ public sealed class DbInitializer(
 
     private async Task SeedEnrollmentsAsync(CancellationToken ct)
     {
-        var students = await dbContext.Students.ToListAsync(ct);
-        var courses = await dbContext.Courses.ToListAsync(ct);
+        var students = await mongoContext.Users
+            .Find(u => u.UserRole == UserRole.Student)
+            .ToListAsync(ct);
+
+        var courses = await mongoContext.Courses
+            .Find(_ => true)
+            .ToListAsync(ct);
 
         foreach (var student in students)
         {
@@ -287,27 +240,25 @@ public sealed class DbInitializer(
                 var enrollment = EnsureSuccess(
                     Enrollment.Create(Guid.NewGuid(), student.Id, course.Id, DateTimeOffset.UtcNow),
                     $"enrollment for {student.PersonalInformation.Email} in {course.Name}");
-                dbContext.Enrollments.Add(enrollment);
+                await mongoContext.Enrollments.InsertOneAsync(enrollment, cancellationToken: ct);
             }
         }
-
-        await dbContext.SaveChangesAsync(ct);
     }
 
     private async Task SeedCourseChatRoomsAsync(CancellationToken ct)
     {
-        var courses = await dbContext.Courses.ToListAsync(ct);
+        var courses = await mongoContext.Courses
+            .Find(_ => true)
+            .ToListAsync(ct);
 
         foreach (var course in courses)
         {
             var chatRoomResult = CourseChatRoom.Create(course.Id, course.InstructorId);
             if (chatRoomResult.IsSuccess)
             {
-                await dbContext.CourseChatRooms.AddAsync(chatRoomResult.Value, ct);
+                await mongoContext.CourseChatRooms.InsertOneAsync(chatRoomResult.Value, cancellationToken: ct);
             }
         }
-
-        await dbContext.SaveChangesAsync(ct);
     }
 
     private async Task EnsureOutboxTriggerAsync(CancellationToken ct)
@@ -317,31 +268,31 @@ public sealed class DbInitializer(
 
         await using var createFunction = connection.CreateCommand();
         createFunction.CommandText = """
-            CREATE OR REPLACE FUNCTION notify_outbox_insert()
-            RETURNS trigger
-            LANGUAGE plpgsql
-            AS $$
-            BEGIN
-                PERFORM pg_notify('outbox_channel', NEW."Id"::text);
-                RETURN NEW;
-            END;
-            $$;
-            """;
+                                     CREATE OR REPLACE FUNCTION notify_outbox_insert()
+                                     RETURNS trigger
+                                     LANGUAGE plpgsql
+                                     AS $$
+                                     BEGIN
+                                         PERFORM pg_notify('outbox_channel', NEW."Id"::text);
+                                         RETURN NEW;
+                                     END;
+                                     $$;
+                                     """;
         await createFunction.ExecuteNonQueryAsync(ct);
 
         await using var dropTrigger = connection.CreateCommand();
         dropTrigger.CommandText = """
-            DROP TRIGGER IF EXISTS outbox_insert_trigger ON "OutboxMessages";
-            """;
+                                  DROP TRIGGER IF EXISTS outbox_insert_trigger ON "OutboxMessages";
+                                  """;
         await dropTrigger.ExecuteNonQueryAsync(ct);
 
         await using var createTrigger = connection.CreateCommand();
         createTrigger.CommandText = """
-            CREATE TRIGGER outbox_insert_trigger
-                AFTER INSERT ON "OutboxMessages"
-                FOR EACH ROW
-                EXECUTE FUNCTION notify_outbox_insert();
-            """;
+                                    CREATE TRIGGER outbox_insert_trigger
+                                        AFTER INSERT ON "OutboxMessages"
+                                        FOR EACH ROW
+                                        EXECUTE FUNCTION notify_outbox_insert();
+                                    """;
         await createTrigger.ExecuteNonQueryAsync(ct);
     }
 }

@@ -1,34 +1,35 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Domain.Entities.Enrollments.Events;
+using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Application.Features.CourseChats.EventHandlers;
 
-public sealed class RemoveStudentFromCourseChatRoomOnEnrollmentDeletedHandler(
-    IAppDbContext dbContext,
-    ILogger<RemoveStudentFromCourseChatRoomOnEnrollmentDeletedHandler> logger)
-    : INotificationHandler<EnrollmentDeletedEvent>
+public sealed class RemoveStudentFromCourseChatRoomOnStudentDisenrolledHandler(
+    IMongoDbContext mongoContext,
+    ILogger<RemoveStudentFromCourseChatRoomOnStudentDisenrolledHandler> logger)
+    : INotificationHandler<StudentDisenrolledEvent>
 {
-    public async Task Handle(EnrollmentDeletedEvent notification, CancellationToken ct)
+    public async Task Handle(StudentDisenrolledEvent notification, CancellationToken ct)
     {
         logger.LogInformation("Removing student {StudentId} from chatroom of course {CourseId}", notification.StudentId, notification.CourseId);
 
-        var student = await dbContext.Students
-            .FirstOrDefaultAsync(u => u.Id == notification.StudentId, ct);
+        var studentExists = await mongoContext.Users
+            .Find(u => u.Id == notification.StudentId && u is Student)
+            .AnyAsync(ct);
 
-        if (student is null)
+        if (!studentExists)
         {
             logger.LogWarning("Could not remove student from chatroom: student {StudentId} not found.", notification.StudentId);
             return;
         }
 
-        var chatRoom = await dbContext.CourseChatRooms
-            .Include(r => r.Students)
-            .FirstOrDefaultAsync(r => r.CourseId == notification.CourseId, ct);
+        var chatRoom = await mongoContext.CourseChatRooms
+            .Find(r => r.CourseId == notification.CourseId)
+            .FirstOrDefaultAsync(ct);
 
         if (chatRoom is null)
         {
@@ -36,8 +37,9 @@ public sealed class RemoveStudentFromCourseChatRoomOnEnrollmentDeletedHandler(
             return;
         }
 
-        chatRoom.RemoveStudent(student);
-        await dbContext.SaveChangesAsync(ct);
+        chatRoom.RemoveStudent(notification.StudentId);
+
+        await mongoContext.CourseChatRooms.ReplaceOneAsync(r => r.Id == chatRoom.Id, chatRoom, cancellationToken: ct);
 
         logger.LogInformation("Successfully removed student {StudentId} from chatroom {RoomId}", notification.StudentId, chatRoom.Id);
     }

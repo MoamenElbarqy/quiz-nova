@@ -1,5 +1,4 @@
 using QuizNova.Domain.Common.Results;
-using QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.TrueFalse;
 
 namespace QuizNova.Domain.Entities.QuizAttempts.Answers.AutoGradedAnswers.TrueFalseAnswer;
 
@@ -7,22 +6,20 @@ public class TfAnswer : AutoGradedAnswer
 {
     public bool StudentChoice { get; private set; }
 
-    public Tf? Tf { get; init; }
-
     public void Update(bool studentChoice, bool isCorrect)
     {
         StudentChoice = studentChoice;
         UpdateIsCorrect(isCorrect);
     }
 
-    // Required by EF Core
     private TfAnswer()
         : base(
             Guid.Empty,
             Guid.Empty,
             Guid.Empty,
             Guid.Empty,
-            false)
+            false,
+            0)
     {
     }
 
@@ -32,8 +29,9 @@ public class TfAnswer : AutoGradedAnswer
         Guid questionId,
         Guid quizAttemptId,
         bool studentChoice,
-        bool isCorrect)
-        : base(id, studentId, questionId, quizAttemptId, isCorrect)
+        bool isCorrect,
+        int marks)
+        : base(id, studentId, questionId, quizAttemptId, isCorrect, marks)
     {
         StudentChoice = studentChoice;
     }
@@ -44,7 +42,8 @@ public class TfAnswer : AutoGradedAnswer
         Guid questionId,
         Guid quizAttemptId,
         bool studentChoice,
-        bool isCorrect)
+        bool isCorrect,
+        int marks)
     {
         var commonValidationError = ValidateCommon(studentId, questionId, quizAttemptId);
 
@@ -59,6 +58,7 @@ public class TfAnswer : AutoGradedAnswer
             questionId,
             quizAttemptId,
             studentChoice,
-            isCorrect);
+            isCorrect,
+            marks);
     }
 }

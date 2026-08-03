@@ -6,14 +6,14 @@ public class EssayAnswer : ManuallyGradedAnswers
 {
     public string StudentResponse { get; private set; }
 
-    // Required by EF Core
     private EssayAnswer()
         : base(
             Guid.Empty,
             Guid.Empty,
             Guid.Empty,
             Guid.Empty,
-            null)
+            null,
+            0)
     {
         StudentResponse = string.Empty;
     }
@@ -24,8 +24,9 @@ public class EssayAnswer : ManuallyGradedAnswers
         Guid questionId,
         Guid quizAttemptId,
         string studentResponse,
-        int? score)
-        : base(id, studentId, questionId, quizAttemptId, score)
+        int? score,
+        int maxMarks)
+        : base(id, studentId, questionId, quizAttemptId, score, maxMarks)
     {
         StudentResponse = studentResponse;
     }
@@ -36,6 +37,7 @@ public class EssayAnswer : ManuallyGradedAnswers
         Guid questionId,
         Guid quizAttemptId,
         string studentResponse,
+        int marks,
         int? score = null)
     {
         var commonValidationError = ValidateCommon(studentId, questionId, quizAttemptId);
@@ -68,7 +70,8 @@ public class EssayAnswer : ManuallyGradedAnswers
             questionId,
             quizAttemptId,
             trimmedResponse,
-            score);
+            score,
+            marks);
     }
 
     public void Update(string studentResponse)

@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Caching;
@@ -16,14 +15,29 @@ using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 namespace QuizNova.Application.Features.Admins.Commands.CreateAdmin;
 
 public sealed class CreateAdminCommandHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     IAuthService authService,
     ILogger<CreateAdminCommandHandler> logger,
-    ICacheInvalidator cacheInvalidator)
+    ICacheInvalidator cacheInvalidator,
+    IUser currentUser)
     : IRequestHandler<CreateAdminCommand, Result<AdminDto>>
 {
     public async Task<Result<AdminDto>> Handle(CreateAdminCommand request, CancellationToken ct)
     {
+        if (string.IsNullOrEmpty(currentUser.Id) || !Guid.TryParse(currentUser.Id, out var currentUserId))
+        {
+            return ApplicationErrors.UserIdClaimInvalid;
+        }
+
+        var isExecutingUserAdmin = await mongoContext.Users
+            .Find(u => u.Id == currentUserId && u is Admin)
+            .AnyAsync(ct);
+
+        if (!isExecutingUserAdmin)
+        {
+            return ApplicationErrors.AdminNotFound(currentUserId);
+        }
+
         logger.LogInformation("Creating admin with email: {Email}", request.PersonalInformation.Email);
 
         if (!Enum.TryParse<UserRole>(request.Role, true, out var role))
@@ -38,15 +52,17 @@ public sealed class CreateAdminCommandHandler(
             return ApplicationErrors.CreateAdminRoleInvalid(request.Role);
         }
 
-        if (await dbContext.Users
-                .AnyAsync(user => user.PersonalInformation.Email == request.PersonalInformation.Email, ct))
+        if (await mongoContext.Users.CountDocumentsAsync(
+                u => u.PersonalInformation.Email == request.PersonalInformation.Email,
+                cancellationToken: ct) > 0)
         {
             logger.LogWarning("Admin creation failed: Email {Email} already exists", request.PersonalInformation.Email);
             return ApplicationErrors.UserEmailAlreadyExists(request.PersonalInformation.Email);
         }
 
-        if (await dbContext.Users
-                .AnyAsync(user => user.PersonalInformation.PhoneNumber == request.PersonalInformation.PhoneNumber, ct))
+        if (await mongoContext.Users.CountDocumentsAsync(
+                u => u.PersonalInformation.PhoneNumber == request.PersonalInformation.PhoneNumber,
+                cancellationToken: ct) > 0)
         {
             logger.LogWarning("Admin creation failed: Phone number {PhoneNumber} already exists", request.PersonalInformation.PhoneNumber);
             return ApplicationErrors.UserPhoneNumberAlreadyExists(request.PersonalInformation.PhoneNumber);
@@ -92,8 +108,7 @@ public sealed class CreateAdminCommandHandler(
             return createAdminResult.TopError;
         }
 
-        await dbContext.Admins.AddAsync(createAdminResult.Value, ct);
-        await dbContext.SaveChangesAsync(ct);
+        await mongoContext.Users.InsertOneAsync(createAdminResult.Value, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync([CacheTags.Admins], ct);
 
         logger.LogInformation("Successfully created admin {AdminId} with email {Email}", createAdminResult.Value.Id,

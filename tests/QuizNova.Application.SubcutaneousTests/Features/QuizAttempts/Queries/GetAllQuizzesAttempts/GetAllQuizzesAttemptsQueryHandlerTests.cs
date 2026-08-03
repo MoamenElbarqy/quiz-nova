@@ -2,6 +2,8 @@ using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using MongoDB.Driver;
+
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.QuizAttempts.Queries.GetAllQuizzesAttempts;
 using QuizNova.Application.SubcutaneousTests.Common;
@@ -60,13 +62,12 @@ public class GetAllQuizzesAttemptsQueryHandlerTests(CustomWebApplicationFactory 
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
             await QuizNova.Infrastructure.Data.MongoDb.MongoDbInitializer.InitializeIndexesAsync(mongoContext);
-            dbContext.Students.AddRange(student1, student2);
-            dbContext.Instructors.Add(instructor);
-            dbContext.Courses.Add(course);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Users.InsertManyAsync([student1, student2]);
+            await mongoContext.Users.InsertOneAsync(instructor);
+            await mongoContext.Courses.InsertOneAsync(course);
+
             await mongoContext.Quizzes.InsertOneAsync(quiz);
             await mongoContext.QuizAttempts.InsertManyAsync([attempt1, attempt2]);
         }
@@ -103,12 +104,11 @@ public class GetAllQuizzesAttemptsQueryHandlerTests(CustomWebApplicationFactory 
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
-            dbContext.Students.Add(student);
-            dbContext.Instructors.Add(instructor);
-            dbContext.Courses.Add(course);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            await mongoContext.Users.InsertOneAsync(student);
+            await mongoContext.Users.InsertOneAsync(instructor);
+            await mongoContext.Courses.InsertOneAsync(course);
+
             await mongoContext.Quizzes.InsertOneAsync(quiz);
             await mongoContext.QuizAttempts.InsertOneAsync(attempt);
         }

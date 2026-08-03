@@ -9,7 +9,7 @@ namespace QuizNova.Domain.Entities.Quizzes.Questions.AutoGradedQuestions.Mcq;
 
 public class Mcq : AutoGradedQuestion<Guid>
 {
-    private readonly List<Choice> _choices;
+    private List<Choice> _choices = [];
 
     [SetsRequiredMembers]
     private Mcq()
@@ -37,7 +37,11 @@ public class Mcq : AutoGradedQuestion<Guid>
 
     public Choice? CorrectChoice { get; init; }
 
-    public IEnumerable<Choice> Choices => _choices.AsReadOnly();
+    public IEnumerable<Choice> Choices
+    {
+        get => _choices.AsReadOnly();
+        private set => _choices = [.. value];
+    }
 
     public static Result<Mcq> Create(
         Guid id,

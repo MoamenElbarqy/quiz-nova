@@ -49,9 +49,9 @@ public class GetAllAdminsQueryHandlerTests(CustomWebApplicationFactory factory)
 
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            dbContext.Admins.AddRange(admin1, admin2);
-            await dbContext.SaveChangesAsync(CancellationToken.None);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            await mongoContext.Users.InsertManyAsync([admin1, admin2]);
+
         }
 
         var query = new GetAllAdminsQuery(SearchTerm: uniqueSearchTerm);

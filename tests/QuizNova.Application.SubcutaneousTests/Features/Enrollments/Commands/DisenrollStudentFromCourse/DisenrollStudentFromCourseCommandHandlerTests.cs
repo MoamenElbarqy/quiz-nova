@@ -1,13 +1,14 @@
 using FluentAssertions;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+
+using MongoDB.Driver;
 
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.Commands.CreateCourse;
+using QuizNova.Application.Features.Enrollments.Commands.DisenrollStudentFromCourse;
 using QuizNova.Application.Features.Enrollments.Commands.EnrollStudentInCourse;
-using QuizNova.Application.Features.Enrollments.Commands.RemoveStudentFromCourse;
 using QuizNova.Application.Features.Students.Commands.CreateStudent;
 using QuizNova.Application.Features.Users.DTOs;
 using QuizNova.Application.SubcutaneousTests.Common;
@@ -16,17 +17,18 @@ using QuizNova.Domain.Entities.Users.Admins;
 using QuizNova.Domain.Entities.Users.UserPersonalInformation;
 using QuizNova.Tests.Common.Security;
 
-namespace QuizNova.Application.SubcutaneousTests.Features.Enrollments.Commands.RemoveStudentFromCourse;
+namespace QuizNova.Application.SubcutaneousTests.Features.Enrollments.Commands.DisenrollStudentFromCourse;
 
-public class RemoveStudentFromCourseCommandHandlerTests(CustomWebApplicationFactory factory)
+public class DisenrollStudentFromCourseCommandHandlerTests(CustomWebApplicationFactory factory)
     : IClassFixture<CustomWebApplicationFactory>
 {
     [Fact]
     public async Task Handle_WithEmptyEnrollmentId_ShouldReturnValidationError()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
-        var command = new RemoveStudentFromCourseCommand(Guid.Empty, Guid.NewGuid());
+        var command = new DisenrollStudentFromCourseCommand(Guid.Empty, Guid.NewGuid());
 
         // Act
         var result = await mediator.Send(command);
@@ -40,8 +42,9 @@ public class RemoveStudentFromCourseCommandHandlerTests(CustomWebApplicationFact
     public async Task Handle_WithEmptyStudentId_ShouldReturnValidationError()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
-        var command = new RemoveStudentFromCourseCommand(Guid.NewGuid(), Guid.Empty);
+        var command = new DisenrollStudentFromCourseCommand(Guid.NewGuid(), Guid.Empty);
 
         // Act
         var result = await mediator.Send(command);
@@ -55,8 +58,9 @@ public class RemoveStudentFromCourseCommandHandlerTests(CustomWebApplicationFact
     public async Task Handle_WithNonExistentEnrollment_ShouldReturnNotFoundError()
     {
         // Arrange
+        EnsureAdminContext();
         var mediator = factory.CreateMediator();
-        var command = new RemoveStudentFromCourseCommand(Guid.NewGuid(), Guid.NewGuid());
+        var command = new DisenrollStudentFromCourseCommand(Guid.NewGuid(), Guid.NewGuid());
 
         // Act
         var result = await mediator.Send(command);
@@ -100,15 +104,14 @@ public class RemoveStudentFromCourseCommandHandlerTests(CustomWebApplicationFact
         Guid enrollmentId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            var enrollment = await dbContext.Enrollments
-                .FirstOrDefaultAsync(e => e.StudentId == studentId && e.CourseId == courseId);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            var enrollment = await mongoContext.Enrollments.Find(e => e.StudentId == studentId && e.CourseId == courseId).FirstOrDefaultAsync();
             enrollment.Should().NotBeNull();
             enrollmentId = enrollment.Id;
         }
 
         // Act
-        var removeResult = await mediator.Send(new RemoveStudentFromCourseCommand(enrollmentId, studentId));
+        var removeResult = await mediator.Send(new DisenrollStudentFromCourseCommand(enrollmentId, studentId));
 
         // Assert
         removeResult.IsSuccess.Should()
@@ -116,9 +119,8 @@ public class RemoveStudentFromCourseCommandHandlerTests(CustomWebApplicationFact
 
         // Verify enrollment is gone from database
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var enrollmentInDb = await verifyDb.Enrollments
-            .FirstOrDefaultAsync(e => e.Id == enrollmentId);
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var enrollmentInDb = await verifyDb.Enrollments.Find(e => e.Id == enrollmentId).FirstOrDefaultAsync();
         enrollmentInDb.Should().BeNull();
     }
 
@@ -156,14 +158,13 @@ public class RemoveStudentFromCourseCommandHandlerTests(CustomWebApplicationFact
         Guid enrollmentId;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-            var enrollment = await dbContext.Enrollments
-                .FirstOrDefaultAsync(e => e.StudentId == studentId && e.CourseId == courseId);
+            var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+            var enrollment = await mongoContext.Enrollments.Find(e => e.StudentId == studentId && e.CourseId == courseId).FirstOrDefaultAsync();
             enrollment.Should().NotBeNull();
             enrollmentId = enrollment.Id;
         }
 
-        var removeCommand = new RemoveStudentFromCourseCommand(enrollmentId, studentId);
+        var removeCommand = new DisenrollStudentFromCourseCommand(enrollmentId, studentId);
 
         // Act
         var removeResult1 = await mediator.Send(removeCommand);
@@ -176,9 +177,8 @@ public class RemoveStudentFromCourseCommandHandlerTests(CustomWebApplicationFact
 
         // Verify enrollment is still absent in database
         using var verifyScope = factory.Services.CreateScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var enrollmentInDb = await verifyDb.Enrollments
-            .FirstOrDefaultAsync(e => e.Id == enrollmentId);
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        var enrollmentInDb = await verifyDb.Enrollments.Find(e => e.Id == enrollmentId).FirstOrDefaultAsync();
         enrollmentInDb.Should().BeNull();
     }
 
@@ -186,13 +186,12 @@ public class RemoveStudentFromCourseCommandHandlerTests(CustomWebApplicationFact
     {
         var adminId = Guid.Parse(TestUsers.Admin.User.Id);
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        if (!dbContext.Admins.Any(a => a.Id == adminId))
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
+        if (!mongoContext.Users.Find(u => u.UserRole == UserRole.Admin && u.Id == adminId).Any())
         {
             var personalInfo = PersonalInformation.Create("Admin User", "admin@quiznova.local", "01000000000").Value;
             var admin = Admin.Create(adminId, personalInfo).Value;
-            dbContext.Admins.Add(admin);
-            dbContext.SaveChangesAsync().GetAwaiter().GetResult();
+            mongoContext.Users.InsertOne(admin);
         }
 
         TestCurrentUser.Set(TestUsers.Admin.User);

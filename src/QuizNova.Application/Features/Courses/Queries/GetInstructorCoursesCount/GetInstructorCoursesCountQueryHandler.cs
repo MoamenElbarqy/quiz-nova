@@ -1,17 +1,17 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Application.Features.Courses.Queries.GetInstructorCoursesCount;
 
 public sealed class GetInstructorCoursesCountQueryHandler(
-    IAppDbContext dbContext,
+    IMongoDbContext mongoContext,
     ILogger<GetInstructorCoursesCountQueryHandler> logger)
     : IRequestHandler<GetInstructorCoursesCountQuery, Result<CoursesCountDto>>
 {
@@ -19,20 +19,21 @@ public sealed class GetInstructorCoursesCountQueryHandler(
     {
         logger.LogInformation("Retrieving courses count for instructor with ID: {InstructorId}", request.InstructorId);
 
-        var countInfo = await dbContext.Instructors
-            .Where(instructor => instructor.Id == request.InstructorId)
-            .Select(instructor => new { Count = instructor.Courses.Count() })
-            .FirstOrDefaultAsync(ct);
+        var instructorExists = await mongoContext.Users
+            .Find(u => u.Id == request.InstructorId && u is Instructor)
+            .AnyAsync(ct);
 
-        if (countInfo is null)
+        if (!instructorExists)
         {
             logger.LogWarning("Retrieval failed: Instructor with ID {InstructorId} not found", request.InstructorId);
             return ApplicationErrors.InstructorNotFound(request.InstructorId);
         }
 
-        logger.LogInformation("Successfully retrieved courses count for instructor {InstructorId}: {Count}", request.InstructorId, countInfo.Count);
+        var count = (int)await mongoContext.Courses
+            .CountDocumentsAsync(course => course.InstructorId == request.InstructorId, cancellationToken: ct);
 
-        return new CoursesCountDto(countInfo.Count);
+        logger.LogInformation("Successfully retrieved courses count for instructor {InstructorId}: {Count}", request.InstructorId, count);
+
+        return new CoursesCountDto(count);
     }
 }
-

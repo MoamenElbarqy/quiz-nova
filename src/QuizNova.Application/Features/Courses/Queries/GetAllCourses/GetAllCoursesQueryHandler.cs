@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Interfaces;
@@ -8,11 +7,11 @@ using QuizNova.Application.Common.Models;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses;
+using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Application.Features.Courses.Queries.GetAllCourses;
 
 public sealed class GetAllCoursesQueryHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     ILogger<GetAllCoursesQueryHandler> logger)
     : IRequestHandler<GetAllCoursesQuery, Result<PaginatedList<CourseDto>>>
@@ -21,33 +20,38 @@ public sealed class GetAllCoursesQueryHandler(
     {
         logger.LogInformation("Retrieving all courses");
 
-        IQueryable<Course> query = dbContext.Courses
-            .AsNoTracking()
-            .AsQueryable();
+        var filterBuilder = Builders<Course>.Filter;
+        var filter = filterBuilder.Empty;
+        filter = await ApplyFilteringAsync(filter, request, ct);
+        filter = ApplySearchTerm(filter, request);
 
-        query = ApplySearchTerm(query, request, dbContext);
-        query = ApplyFiltering(query, request, dbContext);
-        query = ApplySorting(query);
+        var totalCount = (int)await mongoContext.Courses.CountDocumentsAsync(filter, cancellationToken: ct);
 
-        var totalCount = await query.CountAsync(ct);
-
-        var coursesList = await query
+        var coursesList = await mongoContext.Courses
+            .Find(filter)
+            .SortBy(c => c.Name)
             .Skip((request.PageNumber - 1) * request.PageSize)
-            .Take(request.PageSize)
+            .Limit(request.PageSize)
             .ToListAsync(ct);
 
         var courseIds = coursesList.Select(c => c.Id).ToList();
-        var instructorIds = coursesList.Select(c => c.InstructorId).Distinct().ToList();
+        var instructorIds = coursesList
+            .Select(c => c.InstructorId)
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToList();
 
-        var instructorNames = await dbContext.Instructors
-            .Where(i => instructorIds.Contains(i.Id))
-            .ToDictionaryAsync(i => i.Id, i => i.PersonalInformation.Name, ct);
-
-        var enrollmentsCounts = await dbContext.Enrollments
-            .Where(e => courseIds.Contains(e.CourseId))
-            .GroupBy(e => e.CourseId)
-            .Select(g => new { CourseId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(g => g.CourseId, g => g.Count, ct);
+        var instructorNames = new Dictionary<Guid, string>();
+        if (instructorIds.Count != 0)
+        {
+            var instructors = await mongoContext.Users
+                .Find(u => instructorIds.Contains(u.Id) && u is Instructor)
+                .ToListAsync(ct);
+            instructorNames = instructors
+                .Cast<Instructor>()
+                .ToDictionary(i => i.Id, i => i.PersonalInformation.Name);
+        }
 
         var quizzes = await mongoContext.Quizzes
             .Find(q => courseIds.Contains(q.CourseId))
@@ -59,7 +63,6 @@ public sealed class GetAllCoursesQueryHandler(
         {
             var courseQuizzes = quizGroup.TryGetValue(course.Id, out var qList) ? qList : [];
             var quizzesCount = courseQuizzes.Count;
-
             var consumedMarks = courseQuizzes.Sum(q => q.Questions.Sum(question => question.Marks));
             return new CourseDto(
                 course.Id,
@@ -68,7 +71,7 @@ public sealed class GetAllCoursesQueryHandler(
                 course.InstructorId.HasValue && instructorNames.TryGetValue(course.InstructorId.Value, out var iName)
                     ? iName
                     : string.Empty,
-                enrollmentsCounts.GetValueOrDefault(course.Id, 0),
+                course.EnrollmentsCount,
                 quizzesCount,
                 course.MaximumMarks - consumedMarks);
         }).ToList();
@@ -85,53 +88,91 @@ public sealed class GetAllCoursesQueryHandler(
         return response;
     }
 
-    private static IQueryable<Course> ApplyFiltering(
-        IQueryable<Course> query,
+    private static FilterDefinition<Course> ApplySearchTerm(
+        FilterDefinition<Course> filter,
+        GetAllCoursesQuery request)
+    {
+        if (string.IsNullOrWhiteSpace(request.SearchTerm))
+        {
+            return filter;
+        }
+
+        return filter & Builders<Course>.Filter.Where(course =>
+            course.Name.Contains(request.SearchTerm));
+    }
+
+    private async Task<FilterDefinition<Course>> ApplyFilteringAsync(
+        FilterDefinition<Course> filter,
         GetAllCoursesQuery request,
-        IAppDbContext dbContext)
+        CancellationToken ct)
     {
         if (request.InstructorId.HasValue)
         {
-            query = query.Where(course => course.InstructorId == request.InstructorId.Value);
+            filter &= Builders<Course>.Filter.Eq(course => course.InstructorId, request.InstructorId.Value);
         }
 
         if (request.StudentId.HasValue)
         {
-            query = query.Where(course =>
-                dbContext.Enrollments.Any(sc => sc.StudentId == request.StudentId.Value && sc.CourseId == course.Id));
+            var enrolledCourseIds = await mongoContext.Enrollments
+                .Find(e => e.StudentId == request.StudentId.Value)
+                .Project(e => e.CourseId)
+                .ToListAsync(ct);
+
+            filter &= Builders<Course>.Filter.In(course => course.Id, enrolledCourseIds);
         }
 
         if (request.EnrolledStudentsCount.HasValue)
         {
-            query = query.Where(course =>
-                dbContext.Enrollments.Count(enrollment => enrollment.CourseId == course.Id) ==
-                request.EnrolledStudentsCount.Value);
+            var courseEnrollmentCounts = await mongoContext.Enrollments
+                .Aggregate()
+                .Group(e => e.CourseId, g => new { CourseId = g.Key, Count = g.Count() })
+                .ToListAsync(ct);
+
+            var matchingCourseIds = courseEnrollmentCounts
+                .Where(x => x.Count == request.EnrolledStudentsCount.Value)
+                .Select(x => x.CourseId)
+                .ToList();
+
+            if (request.EnrolledStudentsCount.Value == 0)
+            {
+                var allEnrolledCourseIds = courseEnrollmentCounts.Select(x => x.CourseId).ToHashSet();
+                if (allEnrolledCourseIds.Count > 0)
+                {
+                    filter &= Builders<Course>.Filter.Nin(course => course.Id, allEnrolledCourseIds);
+                }
+            }
+            else
+            {
+                filter &= Builders<Course>.Filter.In(course => course.Id, matchingCourseIds);
+            }
         }
 
-        return query;
-    }
-
-    private static IQueryable<Course> ApplySearchTerm(
-        IQueryable<Course> query,
-        GetAllCoursesQuery request,
-        IAppDbContext dbContext)
-    {
-        if (string.IsNullOrWhiteSpace(request.SearchTerm))
+        if (request.QuizzesCount.HasValue)
         {
-            return query;
+            var courseQuizCounts = await mongoContext.Quizzes
+                .Aggregate()
+                .Group(q => q.CourseId, g => new { CourseId = g.Key, Count = g.Count() })
+                .ToListAsync(ct);
+
+            var matchingCourseIds = courseQuizCounts
+                .Where(x => x.Count == request.QuizzesCount.Value)
+                .Select(x => x.CourseId)
+                .ToList();
+
+            if (request.QuizzesCount.Value == 0)
+            {
+                var allCoursesWithQuizzes = courseQuizCounts.Select(x => x.CourseId).ToHashSet();
+                if (allCoursesWithQuizzes.Count > 0)
+                {
+                    filter &= Builders<Course>.Filter.Nin(course => course.Id, allCoursesWithQuizzes);
+                }
+            }
+            else
+            {
+                filter &= Builders<Course>.Filter.In(course => course.Id, matchingCourseIds);
+            }
         }
 
-        return query.Where(course =>
-            course.Name.Contains(request.SearchTerm) ||
-            dbContext.Instructors
-                .Where(instructor => instructor.Id == course.InstructorId)
-                .Select(instructor => instructor.PersonalInformation.Name)
-                .FirstOrDefault()!
-                .Contains(request.SearchTerm));
-    }
-
-    private static IOrderedQueryable<Course> ApplySorting(IQueryable<Course> query)
-    {
-        return query.OrderBy(course => course.Name);
+        return filter;
     }
 }

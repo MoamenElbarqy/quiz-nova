@@ -1,6 +1,5 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Caching;
@@ -38,6 +37,16 @@ public sealed class AddQuestionCommandHandler(
             return ApplicationErrors.QuizNotFound(request.QuizId);
         }
 
+        var course = await mongoContext.Courses
+            .Find(c => c.Id == quiz.CourseId)
+            .FirstOrDefaultAsync(ct);
+
+        if (course is null)
+        {
+            logger.LogWarning("Course {CourseId} not found for quiz {QuizId}", quiz.CourseId, request.QuizId);
+            return ApplicationErrors.QuizCourseNotFound(quiz.CourseId);
+        }
+
         var questionCommand = request.Question;
 
         var displayOrder = quiz.Questions.Any()
@@ -62,7 +71,7 @@ public sealed class AddQuestionCommandHandler(
             return createQuestionResult.TopError;
         }
 
-        var addResult = quiz.AddQuestion(createQuestionResult.Value);
+        var addResult = quiz.AddQuestion(createQuestionResult.Value, course);
 
         if (addResult.IsError)
         {
@@ -74,6 +83,7 @@ public sealed class AddQuestionCommandHandler(
         }
 
         await mongoContext.Quizzes.ReplaceOneAsync(q => q.Id == quiz.Id, quiz, cancellationToken: ct);
+        await mongoContext.Courses.ReplaceOneAsync(c => c.Id == course.Id, course, cancellationToken: ct);
         await cacheInvalidator.InvalidateAsync([CacheTags.Quizzes], ct);
 
         logger.LogInformation(

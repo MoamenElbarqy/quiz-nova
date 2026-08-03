@@ -53,9 +53,8 @@ public class GetInstructorQuizzesCountQueryHandlerTests(CustomWebApplicationFact
         int initialCount;
         using (var scope = factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
-            var course = await dbContext.Courses.FirstAsync();
+            var course = await mongoContext.Courses.Find(_ => true).FirstAsync();
             courseId = course.Id;
             instructorId = course.InstructorId!.Value;
 

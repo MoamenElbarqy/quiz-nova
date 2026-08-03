@@ -5,17 +5,13 @@ using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.Courses.Enums;
 using QuizNova.Domain.Entities.Courses.Events;
 using QuizNova.Domain.Entities.Enrollments;
-using QuizNova.Domain.Entities.Quizzes;
-using QuizNova.Domain.Entities.Users.Instructors;
+using QuizNova.Domain.Entities.Enrollments.Events;
 using QuizNova.Domain.Entities.Users.Student;
 
 namespace QuizNova.Domain.Entities.Courses;
 
 public sealed class Course : Entity
 {
-    private readonly List<Quiz> _quizzes;
-    private readonly List<Enrollment> _enrollments;
-
     [SetsRequiredMembers]
     private Course()
     {
@@ -27,18 +23,15 @@ public sealed class Course : Entity
         Guid? instructorId,
         string name,
         int minimumPassingMarks,
-        int maximumMarks,
-        List<Quiz> quizzes,
-        List<Enrollment> enrollments)
+        int maximumMarks)
         : base(id)
     {
         InstructorId = instructorId;
         Name = name;
         MinimumPassingMarks = minimumPassingMarks;
         MaximumMarks = maximumMarks;
+        RemainingMarks = maximumMarks;
         Status = CourseStatus.Active;
-        _quizzes = quizzes;
-        _enrollments = enrollments;
     }
 
     public Guid? InstructorId { get; private set; }
@@ -47,26 +40,19 @@ public sealed class Course : Entity
 
     public required string Name { get; init; }
 
+    public int EnrollmentsCount { get; private set; }
+
     public int MinimumPassingMarks { get; private set; }
 
     public int MaximumMarks { get; private set; }
 
-    // Remaining marks available to create quizzes in this course.
-    public int RemainingMarks => MaximumMarks - Quizzes.Sum(q => q.Marks);
-
-    public Instructor? Instructor { get; }
-
-    public IEnumerable<Quiz> Quizzes => _quizzes.AsReadOnly();
-
-    public IEnumerable<Enrollment> Enrollments => _enrollments.AsReadOnly();
+    public int RemainingMarks { get; private set; }
 
     public static Result<Course> Create(
         Guid? instructorId,
         string name,
         int minimumPassingMarks,
-        int maximumMarks,
-        List<Quiz> quizzes,
-        List<Enrollment> enrollments)
+        int maximumMarks)
     {
         var id = Guid.NewGuid();
 
@@ -106,9 +92,7 @@ public sealed class Course : Entity
             instructorId,
             trimmedName,
             minimumPassingMarks,
-            maximumMarks,
-            quizzes,
-            enrollments);
+            maximumMarks);
         course.AddDomainEvent(new CourseCreatedEvent(id));
         return course;
     }
@@ -118,11 +102,6 @@ public sealed class Course : Entity
         if (Status == CourseStatus.Completed)
         {
             return CourseErrors.CannotEnrollInCompletedCourse;
-        }
-
-        if (_enrollments.Any(sc => sc.StudentId == student.Id))
-        {
-            return CourseErrors.StudentAlreadyEnrolled(student.Id);
         }
 
         var enrollmentResult = Enrollment.Create(
@@ -136,10 +115,61 @@ public sealed class Course : Entity
             return enrollmentResult.TopError;
         }
 
-        _enrollments.Add(enrollmentResult.Value);
+        EnrollmentsCount++;
+
         AddDomainEvent(new StudentEnrolledEvent(Id, student.Id));
 
         return enrollmentResult.Value;
+    }
+
+    public Result<Deleted> Disenroll(Student student)
+    {
+        if (Status == CourseStatus.Completed)
+        {
+            return CourseErrors.CannotDisenrollFromCompletedCourse;
+        }
+
+        if (EnrollmentsCount > 0)
+        {
+            EnrollmentsCount--;
+        }
+
+        AddDomainEvent(new StudentDisenrolledEvent(Id, student.Id));
+
+        return Result.Deleted;
+    }
+
+    public Result<Updated> ConsumeMarks(int marks)
+    {
+        if (marks <= 0)
+        {
+            return CourseErrors.MarksInvalid;
+        }
+
+        if (marks > RemainingMarks)
+        {
+            return CourseErrors.InsufficientRemainingMarks(RemainingMarks, marks);
+        }
+
+        RemainingMarks -= marks;
+        return Result.Updated;
+    }
+
+    public Result<Updated> ReleaseMarks(int marks)
+    {
+        if (marks <= 0)
+        {
+            return CourseErrors.MarksInvalid;
+        }
+
+        RemainingMarks += marks;
+
+        if (RemainingMarks > MaximumMarks)
+        {
+            RemainingMarks = MaximumMarks;
+        }
+
+        return Result.Updated;
     }
 
     public Result<Course> UpdateInstructor(Guid? instructorId)

@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace QuizNova.Api.Infrastructure;
 
-public class GlobalExceptionHandler(IProblemDetailsService problemDetailsService) : IExceptionHandler
+public class GlobalExceptionHandler(
+    IProblemDetailsService problemDetailsService,
+    ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
@@ -11,6 +13,8 @@ public class GlobalExceptionHandler(IProblemDetailsService problemDetailsService
         CancellationToken ct)
     {
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+
+        logger.LogCritical(exception, "An unxpected error occurred: {Exception}", exception.Message);
 
         return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
         {

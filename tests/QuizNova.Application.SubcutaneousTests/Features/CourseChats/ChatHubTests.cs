@@ -5,8 +5,9 @@ using FluentAssertions;
 using MediatR;
 
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+
+using MongoDB.Driver;
 
 using NSubstitute;
 
@@ -21,6 +22,7 @@ using QuizNova.Application.SubcutaneousTests.Common;
 using QuizNova.Domain.Common.Results;
 using QuizNova.Domain.Entities.CourseChats;
 using QuizNova.Domain.Entities.Courses;
+using QuizNova.Domain.Entities.Identity;
 
 namespace QuizNova.Application.SubcutaneousTests.Features.CourseChats;
 
@@ -32,17 +34,16 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
 
-        var student = await dbContext.Students.FirstAsync();
-        var instructor = await dbContext.Instructors.FirstAsync();
-        var course = Course.Create(instructor.Id, $"Course {Guid.NewGuid().ToString()[..8]}", 50, 100, [], []).Value;
-        await dbContext.Courses.AddAsync(course);
+        var student = await mongoContext.Users.Find(u => u.UserRole == UserRole.Student).FirstAsync();
+        var instructor = await mongoContext.Users.Find(u => u.UserRole == UserRole.Instructor).FirstAsync();
+        var course = Course.Create(instructor.Id, $"Course {Guid.NewGuid().ToString()[..8]}", 50, 100).Value;
+        await mongoContext.Courses.InsertOneAsync(course);
 
         var room = CourseChatRoom.Create(course.Id, instructor.Id).Value;
-        room.AddStudent(student);
-        await dbContext.CourseChatRooms.AddAsync(room);
-        await dbContext.SaveChangesAsync(CancellationToken.None);
+        room.AddStudent(student.Id);
+        await mongoContext.CourseChatRooms.InsertOneAsync(room);
 
         var mockUser = Substitute.For<IUser>();
         mockUser.Id.Returns(student.Id.ToString());
@@ -54,7 +55,7 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
 
         var groups = Substitute.For<IGroupManager>();
 
-        var hub = new ChatHub(dbContext, mockUser, mockMediator)
+        var hub = new ChatHub(mongoContext, mockUser, mockMediator)
         {
             Context = hubContext,
             Groups = groups,
@@ -73,15 +74,14 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
 
-        var instructor = await dbContext.Instructors.FirstAsync();
-        var course = Course.Create(instructor.Id, $"Course {Guid.NewGuid().ToString()[..8]}", 50, 100, [], []).Value;
-        await dbContext.Courses.AddAsync(course);
+        var instructor = await mongoContext.Users.Find(u => u.UserRole == UserRole.Instructor).FirstAsync();
+        var course = Course.Create(instructor.Id, $"Course {Guid.NewGuid().ToString()[..8]}", 50, 100).Value;
+        await mongoContext.Courses.InsertOneAsync(course);
 
         var room = CourseChatRoom.Create(course.Id, instructor.Id).Value;
-        await dbContext.CourseChatRooms.AddAsync(room);
-        await dbContext.SaveChangesAsync(CancellationToken.None);
+        await mongoContext.CourseChatRooms.InsertOneAsync(room);
 
         var randomUserId = Guid.NewGuid();
 
@@ -91,7 +91,7 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
         var mockMediator = Substitute.For<IMediator>();
 
         var hubContext = Substitute.For<HubCallerContext>();
-        var hub = new ChatHub(dbContext, mockUser, mockMediator)
+        var hub = new ChatHub(mongoContext, mockUser, mockMediator)
         {
             Context = hubContext,
         };
@@ -109,15 +109,14 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
 
-        var instructor = await dbContext.Instructors.FirstAsync();
-        var course = Course.Create(instructor.Id, $"Course {Guid.NewGuid().ToString()[..8]}", 50, 100, [], []).Value;
-        await dbContext.Courses.AddAsync(course);
+        var instructor = await mongoContext.Users.Find(u => u.UserRole == UserRole.Instructor).FirstAsync();
+        var course = Course.Create(instructor.Id, $"Course {Guid.NewGuid().ToString()[..8]}", 50, 100).Value;
+        await mongoContext.Courses.InsertOneAsync(course);
 
         var room = CourseChatRoom.Create(course.Id, instructor.Id).Value;
-        await dbContext.CourseChatRooms.AddAsync(room);
-        await dbContext.SaveChangesAsync(CancellationToken.None);
+        await mongoContext.CourseChatRooms.InsertOneAsync(room);
 
         var mockUser = Substitute.For<IUser>();
         mockUser.Id.Returns(instructor.Id.ToString());
@@ -135,14 +134,14 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
             []);
 
         mockMediator.Send(Arg.Is<SendMessageCommand>(c => c.RoomId == room.Id))
-            .Returns((Result<MessageDto>)expectedDto);
+            .Returns(expectedDto);
 
         var hubContext = Substitute.For<HubCallerContext>();
         var clients = Substitute.For<IHubCallerClients>();
         var clientProxy = Substitute.For<IClientProxy>();
         clients.Group(room.Id.ToString()).Returns(clientProxy);
 
-        var hub = new ChatHub(dbContext, mockUser, mockMediator)
+        var hub = new ChatHub(mongoContext, mockUser, mockMediator)
         {
             Context = hubContext,
             Clients = clients,
@@ -166,22 +165,19 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
 
-        var student = await dbContext.Students.FirstAsync();
-        var instructor = await dbContext.Instructors.FirstAsync();
-        var course = Course.Create(instructor.Id, $"Course {Guid.NewGuid().ToString()[..8]}", 50, 100, [], []).Value;
-        await dbContext.Courses.AddAsync(course);
+        var student = await mongoContext.Users.Find(u => u.UserRole == UserRole.Student).FirstAsync();
+        var instructor = await mongoContext.Users.Find(u => u.UserRole == UserRole.Instructor).FirstAsync();
+        var course = Course.Create(instructor.Id, $"Course {Guid.NewGuid().ToString()[..8]}", 50, 100).Value;
+        await mongoContext.Courses.InsertOneAsync(course);
 
         var room = CourseChatRoom.Create(course.Id, instructor.Id).Value;
-        room.AddStudent(student);
-        await dbContext.CourseChatRooms.AddAsync(room);
+        room.AddStudent(student.Id);
 
         var content = JsonDocument.Parse("{\"text\":\"hello world\"}");
-        var message = Message.Create(room.Id, instructor.Id, null, content).Value;
-        await dbContext.CourseChatRoomMessages.AddAsync(message);
-        await dbContext.SaveChangesAsync(CancellationToken.None);
-        ((DbContext)dbContext).ChangeTracker.Clear();
+        var message = room.SendMessage(instructor.Id, null, content).Value;
+        await mongoContext.CourseChatRooms.InsertOneAsync(room);
 
         var mockUser = Substitute.For<IUser>();
         mockUser.Id.Returns(student.Id.ToString());
@@ -190,14 +186,14 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
         var expectedDto = new ReactDto(Guid.NewGuid(), message.Id, student.Id, "👍", DateTimeOffset.UtcNow);
 
         mockMediator.Send(Arg.Is<ReactToMessageCommand>(c => c.RoomId == room.Id && c.MessageId == message.Id))
-            .Returns((Result<ReactDto>)expectedDto);
+            .Returns(expectedDto);
 
         var hubContext = Substitute.For<HubCallerContext>();
         var clients = Substitute.For<IHubCallerClients>();
         var clientProxy = Substitute.For<IClientProxy>();
         clients.Group(room.Id.ToString()).Returns(clientProxy);
 
-        var hub = new ChatHub(dbContext, mockUser, mockMediator)
+        var hub = new ChatHub(mongoContext, mockUser, mockMediator)
         {
             Context = hubContext,
             Clients = clients,
@@ -221,26 +217,23 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        var mongoContext = scope.ServiceProvider.GetRequiredService<IMongoDbContext>();
 
-        var student = await dbContext.Students.FirstAsync();
-        var instructor = await dbContext.Instructors.FirstAsync();
-        var course = Course.Create(instructor.Id, $"Course {Guid.NewGuid().ToString()[..8]}", 50, 100, [], []).Value;
-        await dbContext.Courses.AddAsync(course);
+        var student = await mongoContext.Users.Find(u => u.UserRole == UserRole.Student).FirstAsync();
+        var instructor = await mongoContext.Users.Find(u => u.UserRole == UserRole.Instructor).FirstAsync();
+        var course = Course.Create(instructor.Id, $"Course {Guid.NewGuid().ToString()[..8]}", 50, 100).Value;
+        await mongoContext.Courses.InsertOneAsync(course);
 
         var room = CourseChatRoom.Create(course.Id, instructor.Id).Value;
-        room.AddStudent(student);
-        await dbContext.CourseChatRooms.AddAsync(room);
+        room.AddStudent(student.Id);
 
         var content = JsonDocument.Parse("{\"text\":\"hello world\"}");
-        var message = Message.Create(room.Id, instructor.Id, null, content).Value;
+        var message = room.SendMessage(instructor.Id, null, content).Value;
 
         var reaction = Reaction.Create(message.Id, student.Id, "👍").Value;
         message.AddReaction(reaction);
 
-        await dbContext.CourseChatRoomMessages.AddAsync(message);
-        await dbContext.SaveChangesAsync(CancellationToken.None);
-        ((DbContext)dbContext).ChangeTracker.Clear();
+        await mongoContext.CourseChatRooms.InsertOneAsync(room);
 
         var mockUser = Substitute.For<IUser>();
         mockUser.Id.Returns(student.Id.ToString());
@@ -257,7 +250,7 @@ public class ChatHubTests(CustomWebApplicationFactory factory)
         var clientProxy = Substitute.For<IClientProxy>();
         clients.Group(room.Id.ToString()).Returns(clientProxy);
 
-        var hub = new ChatHub(dbContext, mockUser, mockMediator)
+        var hub = new ChatHub(mongoContext, mockUser, mockMediator)
         {
             Context = hubContext,
             Clients = clients,

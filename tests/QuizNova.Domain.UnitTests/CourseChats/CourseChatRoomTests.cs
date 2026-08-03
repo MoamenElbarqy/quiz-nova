@@ -21,7 +21,7 @@ public class CourseChatRoomTests
         Assert.NotEqual(Guid.Empty, result.Value.Id);
         Assert.Equal(courseId, result.Value.CourseId);
         Assert.Equal(instructorId, result.Value.InstructorId);
-        Assert.Empty(result.Value.Students);
+        Assert.Empty(result.Value.StudentIds);
         Assert.Empty(result.Value.Messages);
     }
 
@@ -73,12 +73,12 @@ public class CourseChatRoomTests
         var student = StudentFactory.CreateStudent().Value;
 
         // Act
-        var result = room.AddStudent(student);
+        var result = room.AddStudent(student.Id);
 
         // Assert
         Assert.True(result.IsSuccess);
-        Assert.Single(room.Students);
-        Assert.Contains(room.Students, s => s.Id == student.Id);
+        Assert.Single(room.StudentIds);
+        Assert.Contains(room.StudentIds, id => id == student.Id);
     }
 
     [Fact]
@@ -87,10 +87,10 @@ public class CourseChatRoomTests
         // Arrange
         var room = CourseChatRoom.Create(Guid.NewGuid(), null).Value;
         var student = StudentFactory.CreateStudent().Value;
-        room.AddStudent(student);
+        room.AddStudent(student.Id);
 
         // Act
-        var result = room.AddStudent(student);
+        var result = room.AddStudent(student.Id);
 
         // Assert
         Assert.True(result.IsError);
@@ -103,14 +103,14 @@ public class CourseChatRoomTests
         // Arrange
         var room = CourseChatRoom.Create(Guid.NewGuid(), null).Value;
         var student = StudentFactory.CreateStudent().Value;
-        room.AddStudent(student);
+        room.AddStudent(student.Id);
 
         // Act
-        var result = room.RemoveStudent(student);
+        var result = room.RemoveStudent(student.Id);
 
         // Assert
         Assert.True(result.IsSuccess);
-        Assert.Empty(room.Students);
+        Assert.Empty(room.StudentIds);
     }
 
     [Fact]
@@ -121,7 +121,7 @@ public class CourseChatRoomTests
         var student = StudentFactory.CreateStudent().Value;
 
         // Act
-        var result = room.RemoveStudent(student);
+        var result = room.RemoveStudent(student.Id);
 
         // Assert
         Assert.True(result.IsError);
@@ -148,7 +148,7 @@ public class CourseChatRoomTests
         // Arrange
         var room = CourseChatRoom.Create(Guid.NewGuid(), Guid.NewGuid()).Value;
         var student = StudentFactory.CreateStudent().Value;
-        room.AddStudent(student);
+        room.AddStudent(student.Id);
 
         // Act
         var result = room.CanJoin(student.Id);
@@ -177,7 +177,7 @@ public class CourseChatRoomTests
         var instructorId = Guid.NewGuid();
         var room = CourseChatRoom.Create(Guid.NewGuid(), instructorId).Value;
         var student = StudentFactory.CreateStudent().Value;
-        room.AddStudent(student);
+        room.AddStudent(student.Id);
 
         // Act & Assert
         Assert.True(room.CanSend(instructorId));

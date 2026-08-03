@@ -2,7 +2,8 @@ using MediatR;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
+
+using MongoDB.Driver;
 
 using QuizNova.Api.DTOs.Requests;
 using QuizNova.Application.Common.Errors;
@@ -17,7 +18,7 @@ using QuizNova.Domain.Entities.CourseChats;
 namespace QuizNova.Api.Hubs;
 
 [Authorize]
-public class ChatHub(IAppDbContext dbContext, IUser currentUser, IMediator mediator) : Hub
+public class ChatHub(IMongoDbContext mongoContext, IUser currentUser, IMediator mediator) : Hub
 {
     public async Task<Result<Success>> JoinRoom(Guid roomId)
     {
@@ -28,9 +29,9 @@ public class ChatHub(IAppDbContext dbContext, IUser currentUser, IMediator media
             return CourseChatErrors.CannotJoin;
         }
 
-        var room = await dbContext.CourseChatRooms
-            .Include(r => r.Students)
-            .FirstOrDefaultAsync(r => r.Id == roomId, ct);
+        var room = await mongoContext.CourseChatRooms
+            .Find(r => r.Id == roomId)
+            .FirstOrDefaultAsync(ct);
 
         if (room == null)
         {
@@ -39,13 +40,16 @@ public class ChatHub(IAppDbContext dbContext, IUser currentUser, IMediator media
 
         if (!room.CanJoin(userId))
         {
-            var isCourseInstructor = await dbContext.Courses
-                .AnyAsync(c => c.Id == room.CourseId && c.InstructorId == userId, ct);
+            var isCourseInstructor = (await mongoContext.Courses
+                                         .CountDocumentsAsync(c => c.Id == room.CourseId && c.InstructorId == userId,
+                                             cancellationToken: ct)) >
+                                     0;
 
             if (!isCourseInstructor)
             {
-                var isEnrolled = await dbContext.Enrollments
-                    .AnyAsync(e => e.CourseId == room.CourseId && e.StudentId == userId, ct);
+                var isEnrolled = (await mongoContext.Enrollments
+                    .CountDocumentsAsync(e => e.CourseId == room.CourseId && e.StudentId == userId,
+                        cancellationToken: ct)) > 0;
 
                 if (!isEnrolled)
                 {
@@ -57,11 +61,6 @@ public class ChatHub(IAppDbContext dbContext, IUser currentUser, IMediator media
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString(), ct);
 
         return Result.Success;
-    }
-
-    public async Task LeaveRoom(Guid roomId)
-    {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId.ToString());
     }
 
     public async Task<Result<MessageDto>> SendMessage(Guid roomId, SendMessageRequest request)

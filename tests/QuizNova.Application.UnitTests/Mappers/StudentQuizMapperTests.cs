@@ -25,7 +25,6 @@ public class StudentQuizMapperTests
         Assert.Equal(quiz.EndsAtUtc, dto.EndsAtUtc);
         Assert.Equal(quiz.Status, dto.QuizStatus);
 
-        // Graceful fallback since navigation property is null
-        Assert.Equal(string.Empty, dto.CourseName);
+        Assert.Equal(quiz.CourseName, dto.CourseName);
     }
 }

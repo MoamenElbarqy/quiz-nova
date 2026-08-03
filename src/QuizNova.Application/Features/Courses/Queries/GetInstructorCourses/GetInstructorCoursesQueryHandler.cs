@@ -1,17 +1,16 @@
 using MediatR;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using QuizNova.Application.Common.Errors;
 using QuizNova.Application.Common.Interfaces;
 using QuizNova.Application.Features.Courses.DTOs;
 using QuizNova.Domain.Common.Results;
+using QuizNova.Domain.Entities.Users.Instructors;
 
 namespace QuizNova.Application.Features.Courses.Queries.GetInstructorCourses;
 
 public sealed class GetInstructorCoursesQueryHandler(
-    IAppDbContext dbContext,
     IMongoDbContext mongoContext,
     ILogger<GetInstructorCoursesQueryHandler> logger)
     : IRequestHandler<GetInstructorCoursesQuery, Result<List<CourseDto>>>
@@ -20,25 +19,24 @@ public sealed class GetInstructorCoursesQueryHandler(
     {
         logger.LogInformation("Retrieving courses for instructor with ID: {InstructorId}", request.InstructorId);
 
-        var instructorExists = await dbContext.Instructors.AnyAsync(i => i.Id == request.InstructorId, ct);
+        var instructorExists = await mongoContext.Users
+            .Find(u => u.Id == request.InstructorId && u is Instructor)
+            .AnyAsync(ct);
+
         if (!instructorExists)
         {
             logger.LogWarning("Retrieval failed: Instructor with ID {InstructorId} not found", request.InstructorId);
             return ApplicationErrors.InstructorNotFound(request.InstructorId);
         }
 
-        var courses = await dbContext.Courses
-            .Where(c => c.InstructorId == request.InstructorId)
-            .Select(c => new
-            {
-                c.Id,
-                c.Name,
-                c.InstructorId,
-                InstructorName = c.Instructor != null ? c.Instructor.PersonalInformation.Name : string.Empty,
-                StudentsCount = c.Enrollments.Count(),
-                c.MaximumMarks,
-            })
-            .AsNoTracking()
+        var instructor = await mongoContext.Users
+            .Find(u => u.Id == request.InstructorId && u is Instructor)
+            .FirstOrDefaultAsync(ct) as Instructor;
+
+        var instructorName = instructor?.PersonalInformation.Name ?? string.Empty;
+
+        var courses = await mongoContext.Courses
+            .Find(c => c.InstructorId == request.InstructorId)
             .ToListAsync(ct);
 
         var courseIds = courses.Select(c => c.Id).ToList();
@@ -58,8 +56,8 @@ public sealed class GetInstructorCoursesQueryHandler(
                 c.Id,
                 c.Name,
                 c.InstructorId,
-                c.InstructorName,
-                c.StudentsCount,
+                instructorName,
+                0,
                 quizzesCount,
                 remainingMarks);
         }).ToList();
