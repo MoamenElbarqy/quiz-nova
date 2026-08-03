@@ -25,24 +25,18 @@ resource "azurerm_key_vault" "main" {
   sku_name                   = "standard"
   soft_delete_retention_days = 7
   purge_protection_enabled   = true
-}
 
-# Grant ACA identity read-only access to Key Vault secrets
-resource "azurerm_key_vault_access_policy" "aca" {
-  key_vault_id = azurerm_key_vault.main.id
-  tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = azurerm_user_assigned_identity.aca.principal_id
+  access_policy {
+    tenant_id          = data.azurerm_client_config.current.tenant_id
+    object_id          = data.azurerm_client_config.current.object_id
+    secret_permissions = ["Get", "List", "Set", "Delete", "Purge"]
+  }
 
-  secret_permissions = ["Get", "List"]
-}
-
-# Grant current user full access for secret management
-resource "azurerm_key_vault_access_policy" "current_user" {
-  key_vault_id = azurerm_key_vault.main.id
-  tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = data.azurerm_client_config.current.object_id
-
-  secret_permissions = ["Get", "List", "Set", "Delete", "Purge"]
+  access_policy {
+    tenant_id          = data.azurerm_client_config.current.tenant_id
+    object_id          = azurerm_user_assigned_identity.aca.principal_id
+    secret_permissions = ["Get", "List"]
+  }
 }
 
 resource "azurerm_key_vault_secret" "db_connection" {
@@ -301,7 +295,7 @@ resource "azurerm_container_app" "backend_app" {
     }
   }
 
-  # CRITICAL: Ignore changes to application configurations that are 
+  # CRITICAL: Ignore changes to application configurations that are
   # managed by GitHub Actions, Azure Portal, or contain sensitive secrets.
   lifecycle {
     ignore_changes = [
@@ -310,7 +304,6 @@ resource "azurerm_container_app" "backend_app" {
   }
 
   depends_on = [
-    azurerm_key_vault_access_policy.aca,
     azurerm_key_vault_secret.db_connection,
     azurerm_key_vault_secret.jwt_secret,
     azurerm_key_vault_secret.mongodb_connection,
@@ -335,4 +328,3 @@ resource "mongodbatlas_project_ip_access_list" "aca_ips" {
   ip_address = each.value
   comment    = "Outbound IP from Azure Container App (QuizNova API)"
 }
-
