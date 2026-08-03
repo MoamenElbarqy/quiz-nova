@@ -58,3 +58,45 @@ variable "allowed_origins" {
     "https://www.quiznova.dev"
   ]
 }
+
+variable "postgres_maximum_pool_size" {
+  type        = number
+  description = "Maximum connection pool size for PostgreSQL"
+  default     = 100
+}
+
+variable "postgres_minimum_pool_size" {
+  type        = number
+  description = "Minimum connection pool size for PostgreSQL"
+  default     = 0
+}
+
+variable "postgres_connection_timeout_seconds" {
+  type        = number
+  description = "Connection timeout in seconds for PostgreSQL"
+  default     = 15
+}
+
+variable "mongodb_max_connection_pool_size" {
+  type        = number
+  description = "Maximum connection pool size for MongoDB"
+  default     = 100
+}
+
+variable "mongodb_min_connection_pool_size" {
+  type        = number
+  description = "Minimum connection pool size for MongoDB"
+  default     = 0
+}
+
+variable "mongodb_max_connecting" {
+  type        = number
+  description = "Maximum connections currently being established for MongoDB"
+  default     = 2
+}
+
+variable "mongodb_wait_queue_timeout_minutes" {
+  type        = number
+  description = "Wait queue timeout in minutes for MongoDB"
+  default     = 2
+}

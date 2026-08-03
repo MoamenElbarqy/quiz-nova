@@ -26,7 +26,7 @@ services:
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_DATABASE: QuizNovaMongoDb
+      MONGO_INITDB_DATABASE: quiznova-mongodb-dev
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
     volumes:
@@ -51,12 +51,14 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_healthy
+    volumes:
+        - /tmp:/tmp
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       PostgresSettings__DefaultConnection: Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       MongoDbSettings__ConnectionString: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017
-      MongoDbSettings__DatabaseName: QuizNovaMongoDb
+      MongoDbSettings__DatabaseName: quiznova-mongodb-dev
       JwtSettings__Issuer: QuizNova.Api
       JwtSettings__Audiences__0: QuizNova.Client
       JwtSettings__Secret: ${JWT_SECRET:-QuizNova-Development-Secret-Key-Change-This-2026}
@@ -68,6 +70,7 @@ services:
       Serilog__WriteTo__1__Args__serverUrl: "http://seq:5341"
       OTEL_EXPORTER_OTLP_ENDPOINT: http://seq:5341/ingest/otlp
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      DOTNET_DiagnosticPorts: /tmp/quiznova-api.socket,listen,nosuspend
     ports:
       - "8080:8080"
     networks:

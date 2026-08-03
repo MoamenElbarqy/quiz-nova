@@ -166,12 +166,40 @@ resource "azurerm_container_app" "backend_app" {
         secret_name = "db-connection-string"
       }
       env {
+        name  = "PostgresSettings__MaximumPoolSize"
+        value = tostring(var.postgres_maximum_pool_size)
+      }
+      env {
+        name  = "PostgresSettings__MinimumPoolSize"
+        value = tostring(var.postgres_minimum_pool_size)
+      }
+      env {
+        name  = "PostgresSettings__ConnectionTimeoutSeconds"
+        value = tostring(var.postgres_connection_timeout_seconds)
+      }
+      env {
         name        = "MongoDbSettings__ConnectionString"
         secret_name = "mongodb-connection-string"
       }
       env {
         name  = "MongoDbSettings__DatabaseName"
-        value = "QuizNovaMongoDb"
+        value = "quiznova-mongodb-prod"
+      }
+      env {
+        name  = "MongoDbSettings__MaxConnectionPoolSize"
+        value = tostring(var.mongodb_max_connection_pool_size)
+      }
+      env {
+        name  = "MongoDbSettings__MinConnectionPoolSize"
+        value = tostring(var.mongodb_min_connection_pool_size)
+      }
+      env {
+        name  = "MongoDbSettings__MaxConnecting"
+        value = tostring(var.mongodb_max_connecting)
+      }
+      env {
+        name  = "MongoDbSettings__WaitQueueTimeoutMinutes"
+        value = tostring(var.mongodb_wait_queue_timeout_minutes)
       }
 
       env {
